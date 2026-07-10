@@ -1,0 +1,16 @@
+{
+  "name": "tektona",
+  "version": "1.0.0",
+  "description": "פורטל SaaS לניהול משרדי אדריכלים עם AI",
+  "scripts": {
+    "build": "node node_modules/.bin/babel app.jsx -o app.compiled.js && python3 build.py",
+    "compile": "node node_modules/.bin/babel app.jsx -o app.compiled.js",
+    "watch": "node node_modules/.bin/babel app.jsx -o app.compiled.js --watch"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.23.0",
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "@babel/preset-react": "^7.22.15"
+  }
+}
