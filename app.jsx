@@ -1239,24 +1239,16 @@ function AIAgentTab({ project }) {
     {role:'assistant', content:`שלום! אני Tektona AI, העוזר החכם שלך לפרויקט "${project.name}". אני יכול לעזור בניתוח תמונות, הצעות עיצוב, כתיבת תיאורים מקצועיים, ניתוח מסמכים וסיכום פגישות. במה אוכל לסייע?`}
   ]);
   const [loading, setLoading] = React.useState(false);
-  const [apiKey, setApiKey] = React.useState(localStorage.getItem('openai_key')||'');
-  const [showKeyInput, setShowKeyInput] = React.useState(!localStorage.getItem('openai_key'));
   const chatRef = React.useRef();
-
-  const saveKey = () => { localStorage.setItem('openai_key',apiKey); setShowKeyInput(false); };
 
   const send = async () => {
     if (!msg.trim()) return;
     const userMsg = msg.trim(); setMsg('');
     const newChat = [...chat, {role:'user', content:userMsg}];
     setChat(newChat); setLoading(true);
-    if (!apiKey) {
-      setChat(c=>[...c,{role:'assistant',content:'נדרש OpenAI API Key. לחץ על ⚙️ למעלה להגדרה.'}]);
-      setLoading(false); return;
-    }
     try {
-      const res = await fetch('https://api.openai.com/v1/chat/completions',{
-        method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+      const res = await fetch('/api/chat',{
+        method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
           model:'gpt-4.1',
           messages:[
@@ -1266,10 +1258,11 @@ function AIAgentTab({ project }) {
         })
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'שגיאת שרת');
       const reply = data.choices?.[0]?.message?.content || 'שגיאה בקבלת תשובה';
       setChat(c=>[...c,{role:'assistant',content:reply}]);
     } catch(e) {
-      setChat(c=>[...c,{role:'assistant',content:'שגיאה בחיבור ל-API: '+e.message}]);
+      setChat(c=>[...c,{role:'assistant',content:'שגיאה בחיבור ל-AI: '+e.message}]);
     }
     setLoading(false);
     setTimeout(()=>chatRef.current?.scrollTo({top:9999,behavior:'smooth'}),100);
@@ -1282,18 +1275,7 @@ function AIAgentTab({ project }) {
           <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>🤖 AI Agent</h3>
           <p style={{color:C.sub,fontSize:13}}>GPT-4.1 · עוזר חכם לפרויקט</p>
         </div>
-        <button onClick={()=>setShowKeyInput(s=>!s)}
-          style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,padding:'6px 12px',cursor:'pointer',color:C.sub,fontSize:13}}>
-          ⚙️ API Key
-        </button>
       </div>
-      {showKeyInput && (
-        <div style={{background:C.card,borderRadius:12,padding:16,marginBottom:16,border:`1px solid ${C.border}`,display:'flex',gap:10}}>
-          <input type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="sk-..."
-            style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:C.inputBg,color:C.text,fontSize:13,outline:'none',direction:'ltr'}}/>
-          <Btn onClick={saveKey} size="sm">שמור</Btn>
-        </div>
-      )}
       <div ref={chatRef} style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:12,marginBottom:16}}>
         {chat.map((m,i)=>(
           <div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-start':'flex-end'}}>

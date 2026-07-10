@@ -3546,13 +3546,7 @@ function AIAgentTab({
     content: `שלום! אני Tektona AI, העוזר החכם שלך לפרויקט "${project.name}". אני יכול לעזור בניתוח תמונות, הצעות עיצוב, כתיבת תיאורים מקצועיים, ניתוח מסמכים וסיכום פגישות. במה אוכל לסייע?`
   }]);
   const [loading, setLoading] = React.useState(false);
-  const [apiKey, setApiKey] = React.useState(localStorage.getItem('openai_key') || '');
-  const [showKeyInput, setShowKeyInput] = React.useState(!localStorage.getItem('openai_key'));
   const chatRef = React.useRef();
-  const saveKey = () => {
-    localStorage.setItem('openai_key', apiKey);
-    setShowKeyInput(false);
-  };
   const send = async () => {
     if (!msg.trim()) return;
     const userMsg = msg.trim();
@@ -3563,20 +3557,11 @@ function AIAgentTab({
     }];
     setChat(newChat);
     setLoading(true);
-    if (!apiKey) {
-      setChat(c => [...c, {
-        role: 'assistant',
-        content: 'נדרש OpenAI API Key. לחץ על ⚙️ למעלה להגדרה.'
-      }]);
-      setLoading(false);
-      return;
-    }
     try {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      const res = await fetch('/api/chat', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + apiKey
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           model: 'gpt-4.1',
@@ -3590,6 +3575,7 @@ function AIAgentTab({
         })
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'שגיאת שרת');
       const reply = data.choices?.[0]?.message?.content || 'שגיאה בקבלת תשובה';
       setChat(c => [...c, {
         role: 'assistant',
@@ -3598,7 +3584,7 @@ function AIAgentTab({
     } catch (e) {
       setChat(c => [...c, {
         role: 'assistant',
-        content: 'שגיאה בחיבור ל-API: ' + e.message
+        content: 'שגיאה בחיבור ל-AI: ' + e.message
       }]);
     }
     setLoading(false);
@@ -3633,47 +3619,7 @@ function AIAgentTab({
       color: C.sub,
       fontSize: 13
     }
-  }, "GPT-4.1 \xB7 \u05E2\u05D5\u05D6\u05E8 \u05D7\u05DB\u05DD \u05DC\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8")), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setShowKeyInput(s => !s),
-    style: {
-      background: C.bg,
-      border: `1px solid ${C.border}`,
-      borderRadius: 8,
-      padding: '6px 12px',
-      cursor: 'pointer',
-      color: C.sub,
-      fontSize: 13
-    }
-  }, "\u2699\uFE0F API Key")), showKeyInput && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.card,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 16,
-      border: `1px solid ${C.border}`,
-      display: 'flex',
-      gap: 10
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    type: "password",
-    value: apiKey,
-    onChange: e => setApiKey(e.target.value),
-    placeholder: "sk-...",
-    style: {
-      flex: 1,
-      padding: '8px 12px',
-      borderRadius: 8,
-      border: `1px solid ${C.border}`,
-      background: C.inputBg,
-      color: C.text,
-      fontSize: 13,
-      outline: 'none',
-      direction: 'ltr'
-    }
-  }), /*#__PURE__*/React.createElement(Btn, {
-    onClick: saveKey,
-    size: "sm"
-  }, "\u05E9\u05DE\u05D5\u05E8")), /*#__PURE__*/React.createElement("div", {
+  }, "GPT-4.1 \xB7 \u05E2\u05D5\u05D6\u05E8 \u05D7\u05DB\u05DD \u05DC\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8"))), /*#__PURE__*/React.createElement("div", {
     ref: chatRef,
     style: {
       flex: 1,
