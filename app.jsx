@@ -67,9 +67,16 @@ const THEMES = {
     success:'#4A8A6A', warning:'#C0A020', danger:'#B04050', info:'#3080B0',
     ai:'#704A90', sidebar:'#162030', sidebarAccent:'#5B8FB0', sidebarText:'#EEF3F7',
     inputBg:'#FFFFFF', archBg:false
+  },
+  calqNoir: {
+    id:'calqNoir', name:'Calq Noir', primary:'#FFFFFF', accent:'#CCCCCC',
+    bg:'#080808', card:'#111111', border:'#1E1E1E', text:'#F5F5F5', sub:'#555555',
+    success:'#3DBA7A', warning:'#C8902A', danger:'#D94F4F', info:'#4A90C0',
+    ai:'#9B6EFF', sidebar:'#000000', sidebarAccent:'#FFFFFF', sidebarText:'#F5F5F5',
+    inputBg:'#161616', archBg:false
   }
 };
-(function(){ C = THEMES.lightStone; })();
+(function(){ C = THEMES.calqNoir; })();
 
 // ─── PLAN FEATURES ───────────────────────────────────────────────────────────
 const _BASE = ['portal','timeline','documents','gallery','approvals','messages',
@@ -590,7 +597,7 @@ function LoginScreen({ onLogin }) {
   const [pinError, setPinError] = React.useState('');
   const [showLegal, setShowLegal] = React.useState(null);
   const [showPricing, setShowPricing] = React.useState(false);
-  const [themeId, setThemeId] = React.useState('lightStone');
+  const [themeId, setThemeId] = React.useState('calqNoir');
   const [showTheme, setShowTheme] = React.useState(false);
 
   const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
@@ -613,95 +620,108 @@ function LoginScreen({ onLogin }) {
   };
 
   const roles = [
-    { id:'admin',  icon:'🏢', label:'מנהל משרד',   desc:'גישה מלאה לכל הפרויקטים' },
-    { id:'arch',   icon:'📐', label:'אדריכל',        desc:'גישה לפרויקטים שהוקצו' },
-    { id:'client', icon:'👤', label:'לקוח',          desc:'גישה לפרויקט אישי' },
-    { id:'super',  icon:'⚡', label:'Super Admin',   desc:'PIN נדרש' }
+    { id:'admin',  label:'מנהל משרד',   desc:'גישה מלאה' },
+    { id:'arch',   label:'אדריכל',        desc:'פרויקטים שהוקצו' },
+    { id:'client', label:'לקוח',          desc:'פרויקט אישי' },
+    { id:'super',  label:'Super Admin',   desc:'PIN נדרש' }
   ];
 
   return (
-    <div style={{ width:'100vw', height:'100vh', background:C.bg, display:'flex',
-      alignItems:'center', justifyContent:'center', direction:'rtl', position:'relative' }}>
-      {C.archBg && <ArchBackground />}
+    <div style={{ width:'100vw', height:'100vh', background:C.bg, direction:'rtl',
+      display:'flex', flexDirection:'column', position:'relative', overflow:'hidden' }}>
 
-      {/* Top bar */}
-      <div style={{ position:'absolute', top:0, left:0, right:0, padding:'16px 24px',
-        display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <button onClick={() => setShowPricing(true)}
-          style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:20,
-            padding:'6px 16px', color:C.sub, cursor:'pointer', fontSize:13 }}>
-          תמחור
-        </button>
-        <div style={{ display:'flex', gap:8 }}>
-          <button onClick={() => setShowLegal('terms')}
-            style={{ background:'none', border:'none', color:C.sub, cursor:'pointer', fontSize:12 }}>
-            תנאי שימוש
+      {/* Calq-style top nav */}
+      <div style={{ position:'absolute', top:0, left:0, right:0, zIndex:10,
+        display:'flex', justifyContent:'space-between', alignItems:'center',
+        padding:'24px 40px', borderBottom:`1px solid ${C.border}` }}>
+        <div style={{ fontSize:20, fontWeight:700, color:C.text, letterSpacing:'0.08em',
+          fontFamily:"'Space Grotesk',sans-serif" }}>
+          TEKTONA
+        </div>
+        <div style={{ display:'flex', gap:28, alignItems:'center' }}>
+          <button onClick={() => setShowPricing(true)}
+            style={{ background:'none', border:'none', color:C.sub, cursor:'pointer',
+              fontSize:13, letterSpacing:'0.05em', fontFamily:"'Space Grotesk',sans-serif" }}>
+            תמחור
           </button>
-          <button onClick={() => setShowLegal('privacy')}
-            style={{ background:'none', border:'none', color:C.sub, cursor:'pointer', fontSize:12 }}>
-            פרטיות
+          <button onClick={() => setShowLegal('terms')}
+            style={{ background:'none', border:'none', color:C.sub, cursor:'pointer',
+              fontSize:13, letterSpacing:'0.05em' }}>
+            תנאי שימוש
           </button>
           {canUse('themes') && (
             <button onClick={() => setShowTheme(true)}
-              style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:20,
-                padding:'6px 14px', color:C.sub, cursor:'pointer', fontSize:12 }}>
-              🎨 ערכת נושא
+              style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:0,
+                padding:'6px 16px', color:C.sub, cursor:'pointer', fontSize:12,
+                letterSpacing:'0.06em' }}>
+              THEME
             </button>
           )}
         </div>
       </div>
 
-      {/* Main card */}
-      <div style={{ background:C.card, borderRadius:24, padding:40, width:440, maxWidth:'95vw',
-        boxShadow:'0 20px 60px rgba(0,0,0,0.15)', position:'relative', zIndex:1,
-        animation:'fadeIn .4s ease' }}>
+      {/* Center content */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center',
+        justifyContent:'center', animation:'pageEnter .6s ease', padding:'0 20px' }}>
 
-        {/* Logo */}
-        <div style={{ textAlign:'center', marginBottom:32 }}>
-          {OFFICE_PLAN.logo
-            ? <img src={OFFICE_PLAN.logo} style={{ height:48 }} alt="לוגו" />
-            : <div style={{ fontSize:36, fontWeight:800, color:C.primary,
-                letterSpacing:'-1px', marginBottom:4 }}>Tektona</div>
-          }
-          <div style={{ color:C.sub, fontSize:13 }}>ניהול משרד אדריכלים</div>
+        {/* Giant heading */}
+        <div style={{ textAlign:'center', marginBottom:60 }}>
+          <div style={{ fontSize:'clamp(52px,8vw,96px)', fontWeight:700, color:C.text,
+            letterSpacing:'-0.02em', lineHeight:1, fontFamily:"'Space Grotesk',sans-serif",
+            marginBottom:16 }}>
+            TEKTONA
+          </div>
+          <div style={{ width:40, height:1, background:C.sub, margin:'0 auto 20px' }}/>
+          <div style={{ color:C.sub, fontSize:14, letterSpacing:'0.1em', textTransform:'uppercase' }}>
+            ניהול משרד אדריכלים
+          </div>
         </div>
 
-        {/* Role select */}
-        <div style={{ marginBottom:24 }}>
-          <div style={{ fontSize:12, fontWeight:600, color:C.sub, marginBottom:10 }}>כניסה כ:</div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-            {roles.map(r => (
-              <button key={r.id} onClick={() => { setRole(r.id); setPin(''); setPinError(''); }}
-                style={{ padding:'12px 10px', borderRadius:12, textAlign:'right',
-                  border: role===r.id ? `2px solid ${C.primary}` : `1px solid ${C.border}`,
-                  background: role===r.id ? C.primary+'15' : 'transparent',
-                  cursor:'pointer', transition:'all .15s' }}>
-                <div style={{ fontSize:20, marginBottom:4 }}>{r.icon}</div>
-                <div style={{ fontSize:13, fontWeight:700, color:C.text }}>{r.label}</div>
-                <div style={{ fontSize:11, color:C.sub, marginTop:2 }}>{r.desc}</div>
-              </button>
-            ))}
-          </div>
+        {/* Role buttons - calq style */}
+        <div style={{ display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center', marginBottom:32 }}>
+          {roles.map(r => (
+            <button key={r.id} onClick={() => { setRole(r.id); setPin(''); setPinError(''); }}
+              style={{ padding:'14px 28px', border:`1px solid ${role===r.id ? C.text : C.border}`,
+                background: role===r.id ? C.text : 'transparent',
+                color: role===r.id ? C.bg : C.sub,
+                cursor:'pointer', fontSize:13, fontWeight:600, letterSpacing:'0.06em',
+                fontFamily:"'Space Grotesk',sans-serif", borderRadius:0,
+                transition:'all .2s ease', minWidth:140 }}>
+              <div style={{ marginBottom:2 }}>{r.label}</div>
+              <div style={{ fontSize:11, opacity:0.6, fontWeight:400 }}>{r.desc}</div>
+            </button>
+          ))}
         </div>
 
         {/* PIN for super */}
         {role === 'super' && (
-          <div style={{ marginBottom:20 }}>
-            <Input label="PIN" type="password" value={pin}
-              onChange={v => { setPin(v); setPinError(''); }}
-              placeholder="הכנס PIN" />
-            {pinError && <div style={{ color:C.danger, fontSize:12, marginTop:6 }}>{pinError}</div>}
+          <div style={{ marginBottom:20, width:'100%', maxWidth:320 }}>
+            <input type="password" value={pin} onChange={e=>{setPin(e.target.value);setPinError('');}}
+              placeholder="הכנס PIN"
+              style={{ width:'100%', padding:'14px 20px', background:C.inputBg,
+                border:`1px solid ${C.border}`, borderRadius:0, color:C.text,
+                fontSize:16, outline:'none', fontFamily:"'Space Grotesk',sans-serif",
+                textAlign:'center', letterSpacing:'0.2em' }}
+              onKeyDown={e=>{if(e.key==='Enter')handleLogin();}}/>
+            {pinError && <div style={{ color:C.danger, fontSize:12, marginTop:6, textAlign:'center' }}>{pinError}</div>}
           </div>
         )}
 
-        <Btn onClick={handleLogin} style={{ width:'100%' }} size="lg">
-          כניסה למערכת
-        </Btn>
+        {/* Enter button */}
+        <button onClick={handleLogin}
+          style={{ padding:'16px 56px', background:C.text, color:C.bg, border:'none',
+            cursor:'pointer', fontSize:14, fontWeight:700, letterSpacing:'0.1em',
+            fontFamily:"'Space Grotesk',sans-serif", borderRadius:0 }}>
+          ENTER →
+        </button>
 
-        <div style={{ textAlign:'center', marginTop:16, color:C.sub, fontSize:12 }}>
-          סביבת DEMO — ללא backend
+        <div style={{ marginTop:24, color:C.sub, fontSize:11, letterSpacing:'0.08em' }}>
+          DEMO ENVIRONMENT
         </div>
       </div>
+
+      {/* Bottom border line */}
+      <div style={{ position:'absolute', bottom:0, left:0, right:0, height:1, background:C.border }}/>
 
       {showLegal && <LegalModal tab={showLegal} onClose={() => setShowLegal(null)} />}
       {showPricing && <PricingScreen onBack={() => setShowPricing(false)} />}
@@ -2267,55 +2287,74 @@ function ProjectView({ projectId, data, setData, user, onBack }) {
   };
 
   return (
-    <div style={{width:'100vw',height:'100vh',display:'flex',background:C.bg,direction:'rtl'}}>
-      {/* Sidebar */}
-      <div style={{width:220,background:C.sidebar,display:'flex',flexDirection:'column',flexShrink:0,
-        boxShadow:'2px 0 12px rgba(0,0,0,0.15)',zIndex:10}}>
-        {/* Back + project name */}
-        <div style={{padding:'16px 14px',borderBottom:`1px solid ${C.sidebarAccent}33`}}>
-          <button onClick={onBack} style={{background:'none',border:'none',color:C.sidebarAccent,
-            cursor:'pointer',fontSize:13,display:'flex',alignItems:'center',gap:6,marginBottom:10}}>
-            ← חזור
-          </button>
-          <div style={{color:C.sidebarText,fontWeight:800,fontSize:14,lineHeight:1.4}}>{project.name}</div>
-          <div style={{color:C.sidebarAccent,fontSize:11,marginTop:2}}>{project.clientName}</div>
-          <div style={{marginTop:8,height:4,background:'rgba(255,255,255,0.15)',borderRadius:2,overflow:'hidden'}}>
-            <div style={{width:(project.progress||0)+'%',height:'100%',background:C.sidebarAccent,borderRadius:2}}/>
+    <div style={{width:'100vw',height:'100vh',display:'flex',flexDirection:'column',
+      background:C.bg,direction:'rtl'}}>
+
+      {/* Calq-style top header */}
+      <div style={{background:C.sidebar,borderBottom:`1px solid ${C.border}`,
+        padding:'0 40px',flexShrink:0,zIndex:10,position:'relative'}}>
+        {/* Project identity row */}
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+          height:56,borderBottom:`1px solid ${C.border}`}}>
+          <div style={{display:'flex',alignItems:'center',gap:20}}>
+            <button onClick={onBack}
+              style={{background:'none',border:'none',color:C.sub,cursor:'pointer',
+                fontSize:13,letterSpacing:'0.05em',fontFamily:"'Space Grotesk',sans-serif",
+                display:'flex',alignItems:'center',gap:6}}>
+              ← PROJECTS
+            </button>
+            <div style={{width:1,height:16,background:C.border}}/>
+            <span style={{color:C.text,fontWeight:700,fontSize:15,letterSpacing:'-0.01em',
+              fontFamily:"'Space Grotesk',sans-serif"}}>{project.name}</span>
+            <span style={{color:C.sub,fontSize:13}}>{project.clientName}</span>
           </div>
-          <div style={{color:'rgba(255,255,255,0.5)',fontSize:11,marginTop:4}}>{project.progress||0}% הושלם</div>
+          <div style={{display:'flex',alignItems:'center',gap:16}}>
+            {/* Progress */}
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <div style={{width:80,height:1,background:C.border,position:'relative'}}>
+                <div style={{position:'absolute',top:0,right:0,height:'100%',
+                  width:(project.progress||0)+'%',background:C.text,transition:'width 1s'}}/>
+              </div>
+              <span style={{color:C.sub,fontSize:11,letterSpacing:'0.08em'}}>
+                {project.progress||0}%
+              </span>
+            </div>
+            {canUse('share') && (
+              <button onClick={()=>setShowShare(true)}
+                style={{background:'none',border:`1px solid ${C.border}`,padding:'5px 14px',
+                  color:C.sub,cursor:'pointer',fontSize:12,letterSpacing:'0.06em',borderRadius:0}}>
+                SHARE
+              </button>
+            )}
+          </div>
         </div>
-        {/* Nav tabs */}
-        <nav style={{flex:1,overflowY:'auto',padding:'8px 0'}}>
+
+        {/* Horizontal tab nav — calq style */}
+        <div style={{display:'flex',overflowX:'auto',gap:0,
+          scrollbarWidth:'none',msOverflowStyle:'none'}}>
           {visibleTabs.map(tab=>(
             <button key={tab.id} onClick={()=>setActiveTab(tab.id)}
-              style={{width:'100%',padding:'10px 14px',display:'flex',alignItems:'center',gap:10,
-                background:activeTab===tab.id?C.sidebarAccent+'25':'transparent',
-                border:'none',borderRight:activeTab===tab.id?`3px solid ${C.sidebarAccent}`:'3px solid transparent',
-                color:activeTab===tab.id?C.sidebarAccent:C.sidebarText,
-                cursor:'pointer',fontSize:13,fontWeight:activeTab===tab.id?700:400,
-                textAlign:'right',fontFamily:'Heebo,Arial,sans-serif',transition:'all .15s'}}>
-              <span style={{fontSize:16}}>{tab.icon}</span>
+              className="tab-btn"
+              style={{padding:'14px 20px',background:'transparent',border:'none',
+                borderBottom:activeTab===tab.id?`2px solid ${C.text}`:'2px solid transparent',
+                color:activeTab===tab.id?C.text:C.sub,
+                cursor:'pointer',fontSize:12,fontWeight:activeTab===tab.id?700:400,
+                letterSpacing:'0.05em',whiteSpace:'nowrap',flexShrink:0,
+                fontFamily:"'Space Grotesk',sans-serif",transition:'color .15s'}}>
               {tab.label}
             </button>
           ))}
-        </nav>
-        {/* Share button */}
-        {canUse('share') && (
-          <div style={{padding:'12px 14px',borderTop:`1px solid ${C.sidebarAccent}33`}}>
-            <button onClick={()=>setShowShare(true)}
-              style={{width:'100%',padding:'9px 0',borderRadius:8,border:`1px solid ${C.sidebarAccent}`,
-                background:'transparent',color:C.sidebarAccent,cursor:'pointer',fontSize:13,
-                fontFamily:'Heebo,Arial,sans-serif'}}>
-              🔗 שתף עם לקוח
-            </button>
-          </div>
-        )}
+        </div>
       </div>
+
       {/* Main content */}
       <div style={{flex:1,overflowY:'auto',position:'relative'}}>
-        {C.archBg && <ArchBackground/>}
-        <div style={{position:'relative',zIndex:1}}>{renderTab()}</div>
+        <div style={{position:'relative',zIndex:1,animation:'pageEnter .3s ease'}}
+          key={activeTab}>
+          {renderTab()}
+        </div>
       </div>
+
       {showShare && <SharePanel project={project} onClose={()=>setShowShare(false)}/>}
     </div>
   );
@@ -2358,122 +2397,146 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
 
   return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
-      {C.archBg && <ArchBackground/>}
-      {/* Top bar */}
-      <div style={{background:C.sidebar,padding:'0 24px',display:'flex',alignItems:'center',
-        justifyContent:'space-between',height:60,flexShrink:0,position:'relative',zIndex:10,
-        boxShadow:'0 2px 12px rgba(0,0,0,0.15)'}}>
-        <div style={{display:'flex',alignItems:'center',gap:16}}>
-          {OFFICE_PLAN.logo
-            ? <img src={OFFICE_PLAN.logo} style={{height:32}} alt="לוגו"/>
-            : <span style={{fontSize:22,fontWeight:800,color:C.sidebarAccent}}>Tektona</span>
-          }
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="חיפוש פרויקט..."
-            style={{padding:'7px 14px',borderRadius:20,border:`1px solid ${C.sidebarAccent}44`,
-              background:'rgba(255,255,255,0.1)',color:C.sidebarText,fontSize:13,outline:'none',
-              direction:'rtl',fontFamily:'Heebo,Arial,sans-serif',width:200}}/>
-        </div>
-        <div style={{display:'flex',alignItems:'center',gap:10}}>
-          {canUse('themes') && (
-            <button onClick={()=>setShowTheme(true)}
-              style={{background:'none',border:`1px solid ${C.sidebarAccent}44`,borderRadius:20,
-                padding:'5px 12px',color:C.sidebarAccent,cursor:'pointer',fontSize:12}}>🎨</button>
-          )}
+      {/* Calq-style top nav */}
+      <div style={{background:C.sidebar,padding:'0 40px',display:'flex',alignItems:'center',
+        justifyContent:'space-between',height:64,flexShrink:0,position:'relative',zIndex:10,
+        borderBottom:`1px solid ${C.border}`}}>
+        <div style={{display:'flex',alignItems:'center',gap:40}}>
+          <span style={{fontSize:18,fontWeight:700,color:C.sidebarText,letterSpacing:'0.08em',
+            fontFamily:"'Space Grotesk',sans-serif"}}>TEKTONA</span>
+          <div style={{width:1,height:20,background:C.border}}/>
           {user.role==='admin' && (
-            <>
+            <div style={{display:'flex',gap:24}}>
               <button onClick={onSystemDash}
-                style={{background:'none',border:`1px solid ${C.sidebarAccent}44`,borderRadius:20,
-                  padding:'5px 12px',color:C.sidebarAccent,cursor:'pointer',fontSize:12}}>⚙️ מערכת</button>
+                style={{background:'none',border:'none',color:C.sub,cursor:'pointer',
+                  fontSize:13,letterSpacing:'0.05em',fontFamily:"'Space Grotesk',sans-serif"}}>
+                מערכת
+              </button>
               <button onClick={onUsers}
-                style={{background:'none',border:`1px solid ${C.sidebarAccent}44`,borderRadius:20,
-                  padding:'5px 12px',color:C.sidebarAccent,cursor:'pointer',fontSize:12}}>👥 משתמשים</button>
+                style={{background:'none',border:'none',color:C.sub,cursor:'pointer',
+                  fontSize:13,letterSpacing:'0.05em',fontFamily:"'Space Grotesk',sans-serif"}}>
+                משתמשים
+              </button>
               <button onClick={onBackup}
-                style={{background:'none',border:`1px solid ${C.sidebarAccent}44`,borderRadius:20,
-                  padding:'5px 12px',color:C.sidebarAccent,cursor:'pointer',fontSize:12}}>💾 גיבוי</button>
+                style={{background:'none',border:'none',color:C.sub,cursor:'pointer',
+                  fontSize:13,letterSpacing:'0.05em',fontFamily:"'Space Grotesk',sans-serif"}}>
+                גיבוי
+              </button>
               <button onClick={onSecurity}
-                style={{background:'none',border:`1px solid ${C.sidebarAccent}44`,borderRadius:20,
-                  padding:'5px 12px',color:C.sidebarAccent,cursor:'pointer',fontSize:12}}>🔐 אבטחה</button>
-            </>
-          )}
-          <div style={{display:'flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.1)',
-            borderRadius:20,padding:'5px 12px 5px 6px'}}>
-            <span style={{color:C.sidebarText,fontSize:13,fontWeight:600}}>{user.name}</span>
-            <div style={{width:28,height:28,borderRadius:'50%',background:C.sidebarAccent,color:C.sidebar,
-              display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700}}>
-              {user.avatar}
+                style={{background:'none',border:'none',color:C.sub,cursor:'pointer',
+                  fontSize:13,letterSpacing:'0.05em',fontFamily:"'Space Grotesk',sans-serif"}}>
+                אבטחה
+              </button>
             </div>
+          )}
+          <div style={{display:'flex',alignItems:'center',gap:20}}>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="חיפוש..."
+              style={{padding:'6px 14px',border:'none',borderBottom:`1px solid ${C.border}`,
+                background:'transparent',color:C.sidebarText,fontSize:13,outline:'none',
+                direction:'rtl',fontFamily:"'Space Grotesk',sans-serif",width:180}}/>
+            {canUse('themes') && (
+              <button onClick={()=>setShowTheme(true)}
+                style={{background:'none',border:`1px solid ${C.border}`,padding:'5px 12px',
+                  color:C.sub,cursor:'pointer',fontSize:11,letterSpacing:'0.06em',borderRadius:0}}>
+                THEME
+              </button>
+            )}
+            <div style={{width:1,height:20,background:C.border}}/>
+            <span style={{color:C.sub,fontSize:13}}>{user.name}</span>
+            <button onClick={onLogout}
+              style={{background:'none',border:`1px solid ${C.border}`,padding:'5px 14px',
+                color:C.sub,cursor:'pointer',fontSize:12,letterSpacing:'0.06em',borderRadius:0}}>
+              יציאה
+            </button>
           </div>
-          <button onClick={onLogout}
-            style={{background:'none',border:'none',color:'rgba(255,255,255,0.5)',cursor:'pointer',fontSize:13}}>
-            יציאה
-          </button>
         </div>
       </div>
 
-      <div style={{flex:1,overflowY:'auto',padding:28,position:'relative',zIndex:1}}>
-        {/* Stats */}
-        <div style={{display:'flex',gap:24,marginBottom:28,justifyContent:'center',flexWrap:'wrap',
-          background:C.card,padding:24,borderRadius:20,border:`1px solid ${C.border}`}}>
-          <SVGCircle value={projects.length} max={OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}
-            color={C.primary} label="פרויקטים" sublabel={`מסלול ${OFFICE_PLAN.plan}`} size={90}/>
-          <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" size={90}/>
-          <SVGCircle value={projects.filter(p=>p.status==='planning').length} max={projects.length||1} color={C.info} label="בתכנון" size={90}/>
-          <SVGCircle value={completed} max={projects.length||1} color={C.sub} label="הושלמו" size={90}/>
-        </div>
-
-        {/* Header + add button */}
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-          <h2 style={{color:C.text,fontSize:22,fontWeight:800}}>
-            {user.role==='client'?'הפרויקטים שלי':'כל הפרויקטים'}
-          </h2>
+      <div style={{flex:1,overflowY:'auto',position:'relative',zIndex:1}}>
+        {/* Stats bar — calq horizontal */}
+        <div style={{borderBottom:`1px solid ${C.border}`,padding:'24px 40px',
+          display:'flex',gap:40,alignItems:'center',animation:'pageEnter .4s ease'}}>
+          {[
+            {label:'PROJECTS', value:projects.length, max:OFFICE_PLAN.plan==='studio'?30:15, color:C.text},
+            {label:'ACTIVE', value:active, max:projects.length||1, color:C.success},
+            {label:'PLANNING', value:projects.filter(p=>p.status==='planning').length, max:projects.length||1, color:C.info},
+            {label:'COMPLETED', value:completed, max:projects.length||1, color:C.sub}
+          ].map((s,i)=>(
+            <div key={i} style={{display:'flex',alignItems:'baseline',gap:10}}>
+              <span style={{fontSize:36,fontWeight:700,color:s.color,letterSpacing:'-0.02em',
+                fontFamily:"'Space Grotesk',sans-serif"}}>{s.value}</span>
+              <div>
+                <div style={{fontSize:10,letterSpacing:'0.12em',color:C.sub,fontWeight:500}}>{s.label}</div>
+                <div style={{width:s.max>0?(s.value/s.max*60):0,height:1,background:s.color,marginTop:4,transition:'width 1s'}}/>
+              </div>
+              {i<3 && <div style={{width:1,height:32,background:C.border,marginLeft:20}}/>}
+            </div>
+          ))}
           {user.role!=='client' && (
-            <Btn onClick={()=>setShowNewProject(true)}>+ פרויקט חדש</Btn>
+            <button onClick={()=>setShowNewProject(true)}
+              style={{marginRight:'auto',padding:'10px 28px',background:C.text,color:C.bg,
+                border:'none',cursor:'pointer',fontSize:13,fontWeight:700,letterSpacing:'0.08em',
+                fontFamily:"'Space Grotesk',sans-serif",borderRadius:0}}>
+              + פרויקט
+            </button>
           )}
         </div>
 
-        {/* Projects grid */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:20}}>
-          {projects.map(p=>{
+        {/* Projects section header */}
+        <div style={{padding:'32px 40px 16px',animation:'pageEnter .5s ease'}}>
+          <div style={{display:'flex',alignItems:'baseline',gap:12,marginBottom:4}}>
+            <h2 style={{color:C.text,fontSize:13,fontWeight:700,letterSpacing:'0.15em',
+              fontFamily:"'Space Grotesk',sans-serif"}}>
+              {user.role==='client'?'MY PROJECTS':'PROJECTS'}
+            </h2>
+            <span style={{color:C.sub,fontSize:13}}>{projects.length}</span>
+          </div>
+          <div style={{width:32,height:1,background:C.sub}}/>
+        </div>
+
+        {/* Projects grid — calq editorial style */}
+        <div style={{padding:'0 40px 40px',display:'grid',
+          gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:1,
+          border:`1px solid ${C.border}`,margin:'0 40px 40px',animation:'pageEnter .6s ease'}}>
+          {projects.map((p,idx)=>{
             const paid = (p.payments||[]).filter(py=>py.status==='paid').reduce((s,py)=>s+py.amount,0);
             const total = (p.payments||[]).reduce((s,py)=>s+py.amount,0);
             return (
-              <div key={p.id} onClick={()=>onOpenProject(p.id)}
-                style={{background:C.card,borderRadius:18,overflow:'hidden',cursor:'pointer',
-                  border:`1px solid ${C.border}`,transition:'all .2s',
-                  boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+              <div key={p.id} className="proj-card" onClick={()=>onOpenProject(p.id)}
+                style={{background:C.card,cursor:'pointer',padding:28,
+                  borderBottom:`1px solid ${C.border}`,borderRight:`1px solid ${C.border}`,
+                  position:'relative',animation:`pageEnter ${.4+idx*.08}s ease`}}>
                 {/* Cover */}
-                <div style={{height:140,background:p.coverImage?'transparent':`linear-gradient(135deg,${C.primary}33,${C.accent}22)`,
-                  position:'relative',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  {p.coverImage
-                    ? <img src={p.coverImage} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="cover"/>
-                    : <span style={{fontSize:44}}>🏗️</span>
-                  }
-                  <div style={{position:'absolute',top:10,left:10}}>
-                    <StatusBadge status={p.status}/>
+                {p.coverImage && (
+                  <div style={{height:180,marginBottom:20,overflow:'hidden'}}>
+                    <img src={p.coverImage} style={{width:'100%',height:'100%',objectFit:'cover',
+                      filter:'grayscale(20%)'}} alt="cover"/>
                   </div>
-                  <div style={{position:'absolute',bottom:0,left:0,right:0,height:60,
-                    background:'linear-gradient(transparent,rgba(0,0,0,0.6))'}}/>
+                )}
+                {/* Number */}
+                <div style={{fontSize:11,color:C.sub,letterSpacing:'0.12em',marginBottom:8,
+                  fontFamily:"'Space Grotesk',sans-serif"}}>
+                  {String(idx+1).padStart(2,'0')} — {PHASES[(p.currentPhase||1)-1]?.name}
                 </div>
-                {/* Content */}
-                <div style={{padding:18}}>
-                  <div style={{fontWeight:800,color:C.text,fontSize:17,marginBottom:4}}>{p.name}</div>
-                  <div style={{color:C.sub,fontSize:13,marginBottom:12}}>{p.clientName} · {p.address}</div>
-                  {/* Progress bar */}
-                  <div style={{marginBottom:12}}>
-                    <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                      <span style={{color:C.sub,fontSize:12}}>{PHASES[(p.currentPhase||1)-1]?.name}</span>
-                      <span style={{color:C.text,fontSize:12,fontWeight:700}}>{p.progress||0}%</span>
-                    </div>
-                    <div style={{height:6,background:C.border,borderRadius:3,overflow:'hidden'}}>
-                      <div style={{width:(p.progress||0)+'%',height:'100%',background:C.primary,borderRadius:3,transition:'width 1s'}}/>
-                    </div>
-                  </div>
-                  {/* Footer stats */}
-                  <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:C.sub}}>
-                    <span>💰 {fmtCurrency(paid)}/{fmtCurrency(total)}</span>
-                    <span>🏗️ {p.area||'—'}מ"ר</span>
-                    <span>📅 {fmtDate(p.endDate)}</span>
-                  </div>
+                {/* Name */}
+                <div style={{fontWeight:700,color:C.text,fontSize:22,marginBottom:6,
+                  letterSpacing:'-0.01em',lineHeight:1.2,fontFamily:"'Space Grotesk',sans-serif"}}>
+                  {p.name}
+                </div>
+                <div style={{color:C.sub,fontSize:13,marginBottom:16}}>{p.clientName} · {p.address}</div>
+                {/* Progress line */}
+                <div style={{height:1,background:C.border,marginBottom:16,position:'relative'}}>
+                  <div style={{position:'absolute',top:0,right:0,height:'100%',
+                    width:(p.progress||0)+'%',background:C.text,transition:'width 1.2s ease'}}/>
+                </div>
+                {/* Footer */}
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:C.sub,
+                  fontFamily:"'Space Grotesk',sans-serif"}}>
+                  <span>{fmtCurrency(paid)} / {fmtCurrency(total)}</span>
+                  <span style={{color:p.status==='active'?C.success:C.sub,fontWeight:600,
+                    letterSpacing:'0.08em',fontSize:11}}>
+                    {p.status==='active'?'ACTIVE':p.status==='completed'?'DONE':'PLANNING'}
+                  </span>
                 </div>
               </div>
             );
