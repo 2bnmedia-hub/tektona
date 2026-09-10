@@ -1,9 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import json
+import os
 import sys
 
 with open('app.compiled.js', 'r', encoding='utf-8') as f:
     compiled_js = f.read()
+
+supabase_url = os.environ.get('SUPABASE_URL', '')
+supabase_anon_key = os.environ.get('SUPABASE_ANON_KEY', '')
+if not supabase_url or not supabase_anon_key:
+    print('⚠️  SUPABASE_URL / SUPABASE_ANON_KEY not set — the build will ship without backend config.')
+
+config_script = 'window.__SUPABASE_URL__ = ' + json.dumps(supabase_url) + ';\n' \
+    'window.__SUPABASE_ANON_KEY__ = ' + json.dumps(supabase_anon_key) + ';'
 
 html = '''<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -16,6 +26,8 @@ html = '''<!DOCTYPE html>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>''' + config_script + '''</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }

@@ -258,63 +258,34 @@ const MOCK_USERS = [
   { id:'u6', name:'אור שמיר', email:'or@shamir.co.il', role:'client', active:true, avatar:'א', projects:['p2'] }
 ];
 
-// ─── STORAGE ─────────────────────────────────────────────────────────────────
-const DB_NAME = 'TektonaDB';
-let _db = null;
+// ─── SUPABASE BACKEND ────────────────────────────────────────────────────────
+// window.__SUPABASE_URL__ / __SUPABASE_ANON_KEY__ are injected by build.py at build time.
+const sb = supabase.createClient(window.__SUPABASE_URL__, window.__SUPABASE_ANON_KEY__);
 
-function openDB() {
-  return new Promise((resolve, reject) => {
-    if (_db) return resolve(_db);
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('appData')) {
-        db.createObjectStore('appData', { keyPath: 'id' });
-      }
-    };
-    req.onsuccess = (e) => { _db = e.target.result; resolve(_db); };
-    req.onerror = () => reject(req.error);
-  });
+// A logged-in user's row in office_members tells us which office they belong to
+// and what role they have — this is what real login replaces the old DEMO_USERS with.
+async function fetchOfficeMember(authUserId) {
+  const { data, error } = await sb.from('office_members')
+    .select('id, office_id, role, display_name, ai_enabled')
+    .eq('user_id', authUserId).single();
+  if (error || !data) return null;
+  return data;
+}
+function buildAppUser(member, email) {
+  return { id: member.id, officeId: member.office_id, role: member.role,
+    name: member.display_name, avatar: member.display_name[0], email, aiEnabled: member.ai_enabled };
 }
 
-async function saveD(data) {
-  let idbOk = false;
-  try {
-    const db = await openDB();
-    const tx = db.transaction('appData', 'readwrite');
-    tx.objectStore('appData').put({ id:'main', ...data });
-    idbOk = true;
-  } catch(e) {}
-  try {
-    localStorage.setItem('tektona_backup', JSON.stringify({ ts: Date.now(), data }));
-  } catch(e) {
-    // Attachments (PDFs/images) can push the mirror past the localStorage quota.
-    // IndexedDB has no such limit, so skip the mirror rather than losing the save.
-    if (!idbOk) throw e;
-  }
+async function saveD(officeId, data) {
+  if (!officeId) return;
+  const { error } = await sb.from('offices').update({ data }).eq('id', officeId);
+  if (error) console.error('saveD failed:', error.message);
 }
 
-function loadFromIDB() {
-  return new Promise(async (resolve) => {
-    try {
-      const db = await openDB();
-      const tx = db.transaction('appData', 'readonly');
-      const req = tx.objectStore('appData').get('main');
-      req.onsuccess = () => {
-        if (req.result) {
-          const { id, ...data } = req.result;
-          resolve(data);
-        } else {
-          const bk = localStorage.getItem('tektona_backup');
-          resolve(bk ? JSON.parse(bk).data : null);
-        }
-      };
-      req.onerror = () => resolve(null);
-    } catch(e) {
-      const bk = localStorage.getItem('tektona_backup');
-      resolve(bk ? JSON.parse(bk).data : null);
-    }
-  });
+async function loadOfficeData(officeId) {
+  const { data, error } = await sb.from('offices').select('data').eq('id', officeId).single();
+  if (error || !data) return null;
+  return data.data;
 }
 
 function exportData(data) {
@@ -324,21 +295,6 @@ function exportData(data) {
   a.href = url; a.download = 'tektona-backup-' + today() + '.json';
   a.click(); URL.revokeObjectURL(url);
 }
-
-// ─── SESSION ─────────────────────────────────────────────────────────────────
-const SESSION_KEY = 'tektona_session';
-function sessionSave(user) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify({ user, ts: Date.now() }));
-}
-function sessionLoad() {
-  try {
-    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-    if (!s) return null;
-    if (Date.now() - s.ts > 4*60*60*1000) { localStorage.removeItem(SESSION_KEY); return null; }
-    return s.user;
-  } catch { return null; }
-}
-function sessionClear() { localStorage.removeItem(SESSION_KEY); }
 
 // ─── RATE LIMIT ──────────────────────────────────────────────────────────────
 let _loginAttempts = 0, _lastAttempt = 0;
@@ -1088,10 +1044,10 @@ function LegalModal({ tab='terms', onClose }) {
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
 function LoginScreen({ onLogin }) {
-  const [role, setRole] = React.useState('admin');
-  const [superEmail, setSuperEmail] = React.useState('');
-  const [superPass, setSuperPass] = React.useState('');
-  const [pinError, setPinError] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [loginError, setLoginError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
   const [showLegal, setShowLegal] = React.useState(null);
   const [showPricing, setShowPricing] = React.useState(false);
   const [themeId, setThemeId] = React.useState('calqNoir');
@@ -1100,34 +1056,26 @@ function LoginScreen({ onLogin }) {
 
   const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
 
-  const SUPER_CREDS = [
-    { email:'2bnbussiness@gmail.com', pass:'wassim11' },
-    { email:'tameratalla.cpa@gmail.com', pass:'tamer1!@#' }
-  ];
+  // Demo accounts — role button just pre-fills the email; a real password is still required.
+  const DEMO_EMAILS = { admin:'admin@tektona.io', arch:'dana@tektona.io', client:'david@levy.co.il' };
+  const pickRole = (id) => { setEmail(DEMO_EMAILS[id]||''); setLoginError(''); };
 
-  const DEMO_USERS = {
-    admin:  { id:'u1', name:'מנהל משרד', role:'admin',  avatar:'מ', email:'admin@tektona.io' },
-    arch:   { id:'u2', name:'אדר. דנה כהן', role:'arch', avatar:'ד', email:'dana@tektona.io', aiEnabled:false },
-    client: { id:'u5', name:'דוד לוי', role:'client', avatar:'ד', email:'david@levy.co.il', projectId:'p1' }
-  };
-
-  const handleLogin = () => {
-    if (role === 'super') {
-      if (!checkRateLimit()) { setPinError('יותר מדי ניסיונות. נסה שוב בעוד דקה.'); return; }
-      const matched = SUPER_CREDS.find(c => c.email === superEmail && c.pass === superPass);
-      if (!matched) { setPinError('אימייל או סיסמה שגויים'); return; }
-      const superUser = { id:'su0', name:'Super Admin', role:'super', avatar:'⚡', email:matched.email };
-      sessionSave(superUser); onLogin(superUser); return;
-    }
-    const user = DEMO_USERS[role];
-    if (user) { sessionSave(user); onLogin(user); }
+  const handleLogin = async () => {
+    if (!checkRateLimit()) { setLoginError('יותר מדי ניסיונות. נסה שוב בעוד דקה.'); return; }
+    if (!email || !password) { setLoginError('נא למלא אימייל וסיסמה'); return; }
+    setLoading(true); setLoginError('');
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { setLoading(false); setLoginError('אימייל או סיסמה שגויים'); return; }
+    const member = await fetchOfficeMember(data.user.id);
+    if (!member) { setLoading(false); setLoginError('המשתמש לא משויך לאף משרד'); await sb.auth.signOut(); return; }
+    setLoading(false);
+    onLogin(buildAppUser(member, email));
   };
 
   const roles = [
     { id:'admin',  label:'מנהל משרד',   desc:'גישה מלאה' },
     { id:'arch',   label:'אדריכל',        desc:'פרויקטים שהוקצו' },
-    { id:'client', label:'לקוח',          desc:'פרויקט אישי' },
-    { id:'super',  label:'Super Admin',   desc:'Email + סיסמה' }
+    { id:'client', label:'לקוח',          desc:'פרויקט אישי' }
   ];
 
   return (
@@ -1186,15 +1134,15 @@ function LoginScreen({ onLogin }) {
           </div>
         </div>
 
-        {/* Role buttons - calq style */}
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4,1fr)',
-          gap:8, marginBottom:32, width:'100%', maxWidth: isMobile ? '100%' : 600 }}>
+        {/* Role buttons - calq style (pre-fill demo email only; password still required) */}
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3,1fr)',
+          gap:8, marginBottom:24, width:'100%', maxWidth: isMobile ? '100%' : 460 }}>
           {roles.map(r => (
-            <button key={r.id} onClick={() => { setRole(r.id); setPin(''); setPinError(''); }}
+            <button key={r.id} onClick={() => pickRole(r.id)}
               style={{ padding: isMobile ? '12px 10px' : '14px 20px',
-                border:`1px solid ${role===r.id ? C.text : C.border}`,
-                background: role===r.id ? C.text : 'transparent',
-                color: role===r.id ? C.bg : C.sub,
+                border:`1px solid ${email===DEMO_EMAILS[r.id] ? C.text : C.border}`,
+                background: email===DEMO_EMAILS[r.id] ? C.text : 'transparent',
+                color: email===DEMO_EMAILS[r.id] ? C.bg : C.sub,
                 cursor:'pointer', fontSize: isMobile ? 12 : 13, fontWeight:600, letterSpacing:'0.04em',
                 fontFamily:"'Space Grotesk',sans-serif", borderRadius:0,
                 transition:'all .2s ease' }}>
@@ -1204,33 +1152,31 @@ function LoginScreen({ onLogin }) {
           ))}
         </div>
 
-        {/* Email + password for super */}
-        {role === 'super' && (
-          <div style={{ marginBottom:20, width:'100%', maxWidth:340, display:'flex', flexDirection:'column', gap:10 }}>
-            <input type="email" value={superEmail} onChange={e=>{setSuperEmail(e.target.value);setPinError('');}}
-              placeholder="אימייל"
-              style={{ width:'100%', padding:'13px 18px', background:C.inputBg,
-                border:`1px solid ${C.border}`, borderRadius:0, color:C.text,
-                fontSize:16, outline:'none', fontFamily:"'Space Grotesk',sans-serif",
-                textAlign:'right', direction:'ltr' }}
-              onKeyDown={e=>{if(e.key==='Enter')handleLogin();}}/>
-            <input type="password" value={superPass} onChange={e=>{setSuperPass(e.target.value);setPinError('');}}
-              placeholder="סיסמה"
-              style={{ width:'100%', padding:'13px 18px', background:C.inputBg,
-                border:`1px solid ${C.border}`, borderRadius:0, color:C.text,
-                fontSize:16, outline:'none', fontFamily:"'Space Grotesk',sans-serif",
-                textAlign:'right' }}
-              onKeyDown={e=>{if(e.key==='Enter')handleLogin();}}/>
-            {pinError && <div style={{ color:C.danger, fontSize:14, textAlign:'center' }}>{pinError}</div>}
-          </div>
-        )}
+        {/* Email + password */}
+        <div style={{ marginBottom:20, width:'100%', maxWidth:340, display:'flex', flexDirection:'column', gap:10 }}>
+          <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setLoginError('');}}
+            placeholder="אימייל"
+            style={{ width:'100%', padding:'13px 18px', background:C.inputBg,
+              border:`1px solid ${C.border}`, borderRadius:0, color:C.text,
+              fontSize:16, outline:'none', fontFamily:"'Space Grotesk',sans-serif",
+              textAlign:'right', direction:'ltr' }}
+            onKeyDown={e=>{if(e.key==='Enter')handleLogin();}}/>
+          <input type="password" value={password} onChange={e=>{setPassword(e.target.value);setLoginError('');}}
+            placeholder="סיסמה"
+            style={{ width:'100%', padding:'13px 18px', background:C.inputBg,
+              border:`1px solid ${C.border}`, borderRadius:0, color:C.text,
+              fontSize:16, outline:'none', fontFamily:"'Space Grotesk',sans-serif",
+              textAlign:'right' }}
+            onKeyDown={e=>{if(e.key==='Enter')handleLogin();}}/>
+          {loginError && <div style={{ color:C.danger, fontSize:14, textAlign:'center' }}>{loginError}</div>}
+        </div>
 
         {/* Enter button */}
-        <button onClick={handleLogin} className="btn-pulse"
+        <button onClick={handleLogin} className="btn-pulse" disabled={loading}
           style={{ padding:'16px 56px', background:C.text, color:C.bg, border:'none',
-            cursor:'pointer', fontSize:17, fontWeight:700, letterSpacing:'0.1em',
-            fontFamily:"'Space Grotesk',sans-serif", borderRadius:0 }}>
-          ENTER →
+            cursor: loading ? 'wait' : 'pointer', fontSize:17, fontWeight:700, letterSpacing:'0.1em',
+            fontFamily:"'Space Grotesk',sans-serif", borderRadius:0, opacity: loading?0.7:1 }}>
+          {loading ? '...' : 'ENTER →'}
         </button>
 
         <div style={{ marginTop:24, color:C.sub, fontSize:13, letterSpacing:'0.08em' }}>
@@ -1335,111 +1281,6 @@ function PricingScreen({ onBack }) {
   );
 }
 
-// ─── SUPER ADMIN DASHBOARD ───────────────────────────────────────────────────
-function SuperAdminDashboard({ onBack, onGoHome = onBack, onSecurity }) {
-  const isMobile = useIsMobile();
-  const offices = [
-    { name:'Studio Levi', plan:'studio', mrr:2990, projects:18, users:8, health:95, since:'2023-01' },
-    { name:'Cohen Arch', plan:'pro',    mrr:1690, projects:11, users:5, health:88, since:'2023-06' },
-    { name:'Carmel Design', plan:'pro', mrr:1690, projects:9,  users:4, health:72, since:'2024-01' },
-    { name:'Haifa Build', plan:'starter',mrr:890, projects:4,  users:2, health:91, since:'2024-03' },
-    { name:'Tektona Demo', plan:'pro',  mrr:0,    projects:3,  users:6, health:100,since:'2024-08' }
-  ];
-  const totalMRR = offices.reduce((s,o)=>s+o.mrr, 0);
-  const totalARR = totalMRR * 12;
-  const stats = [
-    { label:'משרדות פעילים', value:offices.length, color:C.primary },
-    { label:'MRR', value:'₪'+totalMRR.toLocaleString(), color:C.success },
-    { label:'ARR', value:'₪'+totalARR.toLocaleString(), color:C.accent },
-    { label:'ממוצע בריאות', value:Math.round(offices.reduce((s,o)=>s+o.health,0)/offices.length)+'%', color:C.info }
-  ];
-  return (
-    <div style={{ width:'100vw', height:'100vh', background:C.bg, direction:'rtl',
-      display:'flex', flexDirection:'column' }}>
-      {C.archBg && <ArchBackground />}
-      <AppNavBar onGoHome={onGoHome} title="Super Admin" subtitle="תצוגת בעל הפלטפורמה" onBack={onBack}
-        rightContent={onSecurity && <Btn size="sm" variant="ghost" onClick={onSecurity}>🔐 ביקורת אבטחה</Btn>}/>
-      <div style={{ flex:1, overflowY:'auto', padding: isMobile ? 16 : 28, paddingBottom:56, position:'relative', zIndex:1 }}>
-        <div style={{ marginBottom:24 }}>
-          <h1 style={{ color:C.text, fontSize: isMobile ? 22 : 29, fontWeight:800 }}>⚡ Super Admin</h1>
-        </div>
-        {/* KPI circles */}
-        <div style={{ display:'flex', gap:24, flexWrap:'wrap', marginBottom:28, justifyContent:'center' }}>
-          {stats.map((s,i) => (
-            <div key={i} style={{ background:C.card, borderRadius:16, padding:'20px 28px',
-              border:`1px solid ${C.border}`, textAlign:'center' }}>
-              <div style={{ fontSize:34, fontWeight:800, color:s.color }}>{s.value}</div>
-              <div style={{ color:C.sub, fontSize:16, marginTop:4 }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-        {/* Offices table */}
-        <div style={{ background:C.card, borderRadius:16, border:`1px solid ${C.border}`, overflow:'hidden' }}>
-          <div style={{ padding:'16px 20px', borderBottom:`1px solid ${C.border}` }}>
-            <h3 style={{ color:C.text, fontSize:19, fontWeight:700 }}>משרדות רשומות</h3>
-          </div>
-          <div style={{ overflowX:'auto' }}>
-            <table style={{ width:'100%', borderCollapse:'collapse' }}>
-              <thead>
-                <tr style={{ background:C.bg }}>
-                  {['משרד','מסלול','MRR','פרויקטים','משתמשים','בריאות','מאז'].map(h => (
-                    <th key={h} style={{ padding:'10px 16px', textAlign:'right', fontSize:14,
-                      color:C.sub, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {offices.map((o,i) => (
-                  <tr key={i} style={{ borderBottom:`1px solid ${C.border}` }}>
-                    <td style={{ padding:'12px 16px', fontSize:16, fontWeight:600, color:C.text }}>{o.name}</td>
-                    <td style={{ padding:'12px 16px' }}><Badge text={o.plan} color={o.plan==='studio'?C.ai:o.plan==='pro'?C.primary:C.sub}/></td>
-                    <td style={{ padding:'12px 16px', fontSize:16, color:C.text }}>₪{o.mrr.toLocaleString()}</td>
-                    <td style={{ padding:'12px 16px', fontSize:16, color:C.text }}>{o.projects}</td>
-                    <td style={{ padding:'12px 16px', fontSize:16, color:C.text }}>{o.users}</td>
-                    <td style={{ padding:'12px 16px' }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                        <div style={{ width:50, height:6, background:C.border, borderRadius:3, overflow:'hidden' }}>
-                          <div style={{ width:o.health+'%', height:'100%', borderRadius:3,
-                            background: o.health>85?C.success:o.health>65?C.warning:C.danger }}/>
-                        </div>
-                        <span style={{ fontSize:14, color:C.sub }}>{o.health}%</span>
-                      </div>
-                    </td>
-                    <td style={{ padding:'12px 16px', fontSize:14, color:C.sub }}>{o.since}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        {/* Roadmap */}
-        <div style={{ marginTop:20, background:C.card, borderRadius:16, padding:20,
-          border:`1px solid ${C.border}` }}>
-          <h3 style={{ color:C.text, fontSize:19, fontWeight:700, marginBottom:16 }}>🗺️ Roadmap — Q3/Q4 2024</h3>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:10 }}>
-            {[
-              { label:'Supabase Migration', status:'planned', quarter:'Q4 2024' },
-              { label:'Mobile App (React Native)', status:'planned', quarter:'Q1 2025' },
-              { label:'DocuSign Integration', status:'in-progress', quarter:'Q3 2024' },
-              { label:'WhatsApp Notifications', status:'planned', quarter:'Q4 2024' },
-              { label:'AutoDesk Viewer', status:'backlog', quarter:'2025' },
-              { label:'Multi-language (EN/AR)', status:'backlog', quarter:'2025' }
-            ].map((r,i) => (
-              <div key={i} style={{ padding:'12px 14px', background:C.bg, borderRadius:10 }}>
-                <div style={{ fontSize:16, fontWeight:600, color:C.text, marginBottom:4 }}>{r.label}</div>
-                <div style={{ display:'flex', justifyContent:'space-between' }}>
-                  <StatusBadge status={r.status==='planned'?'pending':r.status==='in-progress'?'in-progress':'todo'} />
-                  <span style={{ fontSize:13, color:C.sub }}>{r.quarter}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── SYSTEM DASHBOARD ─────────────────────────────────────────────────────────
 function SystemDashboard({ data, user, onBack, onGoHome = onBack }) {
   const isMobile = useIsMobile();
@@ -1537,62 +1378,31 @@ function SystemDashboard({ data, user, onBack, onGoHome = onBack }) {
   );
 }
 
-// ─── SECURITY AUDIT ───────────────────────────────────────────────────────────
-function SecurityAudit({ onBack, onGoHome = onBack }) {
-  const isMobile = useIsMobile();
-  const checks = [
-    { name:'הצפנת נתונים (AES-256)', status:'pass', detail:'כל הנתונים מוצפנים בזמן מנוחה ובתעבורה' },
-    { name:'HTTPS / TLS 1.3', status:'pass', detail:'תעבורה מאובטחת לחלוטין' },
-    { name:'Rate Limiting', status:'pass', detail:'מגבלת 5 ניסיונות כניסה לדקה' },
-    { name:'Session Timeout', status:'pass', detail:'פג תוקף ב-4 שעות חוסר פעילות' },
-    { name:'XSS Prevention', status:'pass', detail:'Sanitize על כל input' },
-    { name:'CSRF Protection', status:'pass', detail:'Tokens על כל בקשה מוגנת' },
-    { name:'Audit Log', status:'pass', detail:'כל פעולה רגישה מתועדת' },
-    { name:'Backup Integrity', status:'warning', detail:'גיבוי אוטומטי — אחסון ב-localStorage בלבד כרגע' },
-    { name:'Multi-Factor Auth', status:'planned', detail:'MFA — ב-Roadmap Q4 2024' },
-    { name:'Penetration Test', status:'planned', detail:'בדיקת חדירה חיצונית — מתוכנן' }
-  ];
-  const passed = checks.filter(c=>c.status==='pass').length;
-  const score = Math.round((passed/checks.length)*100);
-  return (
-    <div style={{ width:'100vw', height:'100vh', background:C.bg, direction:'rtl',
-      display:'flex', flexDirection:'column' }}>
-      <AppNavBar onGoHome={onGoHome} title="ביקורת אבטחה" onBack={onBack}/>
-      <div style={{ flex:1, overflowY:'auto', padding: isMobile ? 16 : 28, paddingBottom:56 }}>
-        <h1 style={{ color:C.text, fontSize: isMobile ? 22 : 29, fontWeight:800, marginBottom:20 }}>🔐 ביקורת אבטחה</h1>
-      <div style={{ display:'flex', gap:20, marginBottom:24, justifyContent:'center' }}>
-        <SVGCircle value={score} max={100} color={score>80?C.success:score>60?C.warning:C.danger}
-          label="ציון אבטחה" sublabel={`${passed}/${checks.length} עברו`} size={100}/>
-      </div>
-      <div style={{ background:C.card, borderRadius:16, border:`1px solid ${C.border}`, overflow:'hidden' }}>
-        {checks.map((c,i) => (
-          <div key={i} style={{ padding:'14px 20px', borderBottom:i<checks.length-1?`1px solid ${C.border}`:'none',
-            display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <div>
-              <div style={{ fontWeight:600, color:C.text, fontSize:17 }}>{c.name}</div>
-              <div style={{ color:C.sub, fontSize:14 }}>{c.detail}</div>
-            </div>
-            <Badge text={c.status==='pass'?'✓ עבר':c.status==='warning'?'⚠ אזהרה':'📋 מתוכנן'}
-              color={c.status==='pass'?C.success:c.status==='warning'?C.warning:C.info}/>
-          </div>
-        ))}
-      </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── USERS SCREEN ─────────────────────────────────────────────────────────────
-function UsersScreen({ data, setData, onBack, onGoHome = onBack }) {
+function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
   const isMobile = useIsMobile();
   const [showInvite, setShowInvite] = React.useState(false);
   const [form, setForm] = React.useState({ name:'', email:'', role:'arch' });
+  const [inviteError, setInviteError] = React.useState('');
+  const [inviting, setInviting] = React.useState(false);
   const users = data.users || MOCK_USERS;
-  const invite = () => {
+  const invite = async () => {
     if (!form.name || !form.email) return;
-    const nu = { id:'u'+uid(), name:form.name, email:form.email, role:form.role, active:true, avatar:form.name[0], projects:[], aiEnabled:false };
-    setData(d=>({...d, users:[...(d.users||MOCK_USERS), nu]}));
-    setForm({name:'',email:'',role:'arch'}); setShowInvite(false);
+    setInviting(true); setInviteError('');
+    try {
+      const res = await fetch('/api/invite-user', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ officeId, name:form.name, email:form.email, role:form.role })
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'שגיאה בהזמנת המשתמש');
+      const nu = { id:'u'+uid(), name:form.name, email:form.email, role:form.role, active:true, avatar:form.name[0], projects:[], aiEnabled:false };
+      setData(d=>({...d, users:[...(d.users||MOCK_USERS), nu]}));
+      setForm({name:'',email:'',role:'arch'}); setShowInvite(false);
+    } catch(e) {
+      setInviteError(e.message);
+    }
+    setInviting(false);
   };
   const toggleAI = (uid) => setData(d=>({...d, users:(d.users||MOCK_USERS).map(u=>u.id===uid?{...u,aiEnabled:!u.aiEnabled}:u)}));
   const roleLabel = { admin:'מנהל', arch:'אדריכל', client:'לקוח' };
@@ -1641,9 +1451,10 @@ function UsersScreen({ data, setData, onBack, onGoHome = onBack }) {
             <Input label="אימייל" type="email" value={form.email} onChange={v=>setForm(f=>({...f,email:v}))} required/>
             <Select label="תפקיד" value={form.role} onChange={v=>setForm(f=>({...f,role:v}))}
               options={[{value:'arch',label:'אדריכל'},{value:'client',label:'לקוח'},{value:'admin',label:'מנהל'}]}/>
+            {inviteError && <div style={{color:C.danger,fontSize:14}}>{inviteError}</div>}
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
               <Btn onClick={()=>setShowInvite(false)} variant="ghost">ביטול</Btn>
-              <Btn onClick={invite}>שלח הזמנה</Btn>
+              <Btn onClick={invite} disabled={inviting}>{inviting?'שולח...':'שלח הזמנה'}</Btn>
             </div>
           </div>
         </Modal>
@@ -1657,15 +1468,12 @@ function BackupPanel({ data, setData, onBack, onGoHome = onBack }) {
   const isMobile = useIsMobile();
   const [msg, setMsg] = React.useState('');
   const inputRef = React.useRef();
-  const lastBackupTs = (() => { try { const b=JSON.parse(localStorage.getItem('tektona_backup')||'{}'); return b.ts||null; } catch(e){return null;} })();
-  const daysSince = lastBackupTs ? Math.floor((Date.now()-lastBackupTs)/86400000) : null;
-  const needsReminder = daysSince===null || daysSince>=7;
   const doExport = () => { exportData(data); setMsg('גיבוי יוצא בהצלחה!'); };
   const doImport = (e) => {
     const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      try { const imported = JSON.parse(ev.target.result); setData(imported); saveD(imported); setMsg('נתונים יובאו בהצלחה!'); }
+      try { const imported = JSON.parse(ev.target.result); setData(imported); setMsg('נתונים יובאו בהצלחה!'); }
       catch { setMsg('שגיאה: קובץ לא תקין'); }
     };
     reader.readAsText(file);
@@ -1675,21 +1483,10 @@ function BackupPanel({ data, setData, onBack, onGoHome = onBack }) {
       <AppNavBar onGoHome={onGoHome} title="גיבוי ושחזור" onBack={onBack}/>
       <div style={{flex:1,overflowY:'auto',padding: isMobile ? 16 : 28, paddingBottom:56}}>
         <h2 style={{color:C.text,fontSize: isMobile ? 20 : 24,fontWeight:800,marginBottom:12}}>💾 גיבוי ושחזור</h2>
-        {needsReminder && (
-          <div style={{background:C.warning+'22',border:`1px solid ${C.warning}`,borderRadius:10,padding:'10px 16px',marginBottom:16,
-            display:'flex',alignItems:'center',gap:10}}>
-            <span style={{fontSize:20}}>⚠️</span>
-            <span style={{color:C.warning,fontWeight:600,fontSize:15}}>
-              {daysSince===null ? 'לא בוצע גיבוי אף פעם — מומלץ לגבות עכשיו!' : `הגיבוי האחרון לפני ${daysSince} ימים — מומלץ לגבות מדי שבוע`}
-            </span>
-          </div>
-        )}
-        {!needsReminder && lastBackupTs && (
-          <div style={{background:C.success+'15',border:`1px solid ${C.success}`,borderRadius:10,padding:'8px 16px',marginBottom:16,
-            display:'flex',alignItems:'center',gap:8}}>
-            <span style={{color:C.success,fontSize:15}}>✓ גיבוי אחרון: לפני {daysSince} ימים ({new Date(lastBackupTs).toLocaleDateString('he-IL')})</span>
-          </div>
-        )}
+        <div style={{background:C.success+'15',border:`1px solid ${C.success}`,borderRadius:10,padding:'8px 16px',marginBottom:16,
+          display:'flex',alignItems:'center',gap:8}}>
+          <span style={{color:C.success,fontSize:15}}>✓ הנתונים נשמרים באופן שוטף במסד נתונים מרכזי (Supabase). היצוא/יבוא כאן הוא כלי גיבוי ידני נוסף בלבד.</span>
+        </div>
         <div style={{display:'grid',gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',gap:20,maxWidth:700}}>
         <div style={{background:C.card,borderRadius:16,padding:24,border:`1px solid ${C.border}`}}>
           <div style={{fontSize:38,marginBottom:12}}>📤</div>
@@ -3517,7 +3314,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
 }
 
 // ─── PROJECTS LIST ────────────────────────────────────────────────────────────
-function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDash, onUsers, onBackup, onSuperAdmin, onSecurity }) {
+function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDash, onUsers, onBackup }) {
   const [showNewProject, setShowNewProject] = React.useState(false);
   const [showTheme, setShowTheme] = React.useState(false);
   const [themeId, setThemeId] = React.useState('calqNoir');
@@ -3855,32 +3652,51 @@ function App() {
   const [data, setData] = React.useState(null);
   const [activeProject, setActiveProject] = React.useState(null);
   const [themeId, setThemeId] = React.useState('lightStone');
+  const officeIdRef = React.useRef(null);
 
   const updateData = (updater) => {
     setData(d => {
       const nd = typeof updater==='function' ? updater(d) : updater;
-      saveD(nd);
+      saveD(officeIdRef.current, nd);
       return nd;
     });
   };
 
-  const screenForUser = (u) => u.role==='super'?'superadmin':u.role==='admin'?'systemdash':'projects';
+  const screenForUser = (u) => u.role==='admin'?'systemdash':'projects';
+
+  const enterOffice = async (u) => {
+    officeIdRef.current = u.officeId;
+    setUser(u);
+    const officeData = await loadOfficeData(u.officeId);
+    setData(officeData || { projects: [], users: [] });
+    setScreen(screenForUser(u));
+  };
 
   React.useEffect(()=>{
     const initApp = async () => {
-      const savedUser = sessionLoad();
-      const savedData = await loadFromIDB();
-      const appData = savedData || { projects: MOCK_PROJECTS, users: MOCK_USERS };
-      setData(appData);
-      if (!savedData) saveD(appData);
-      if (savedUser) { setUser(savedUser); setScreen(screenForUser(savedUser)); }
-      else setScreen('login');
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        const member = await fetchOfficeMember(session.user.id);
+        if (member) { await enterOffice(buildAppUser(member, session.user.email)); return; }
+        await sb.auth.signOut();
+      }
+      setScreen('login');
     };
     initApp();
   },[]);
 
-  const handleLogin = (u) => { setUser(u); setScreen(screenForUser(u)); };
-  const handleLogout = () => { sessionClear(); setUser(null); setActiveProject(null); setScreen('login'); };
+  // Live sync: when any office member saves, everyone else's screen updates too.
+  React.useEffect(()=>{
+    if (!user?.officeId) return;
+    const channel = sb.channel('office-'+user.officeId)
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'offices', filter:'id=eq.'+user.officeId },
+        payload => setData(payload.new.data))
+      .subscribe();
+    return () => sb.removeChannel(channel);
+  },[user?.officeId]);
+
+  const handleLogin = (u) => { enterOffice(u); };
+  const handleLogout = () => { sb.auth.signOut(); officeIdRef.current = null; setUser(null); setData(null); setActiveProject(null); setScreen('login'); };
 
   if (screen==='loading') return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -3896,23 +3712,19 @@ function App() {
   const goHome = () => setScreen('projects');
   return (
     <>
-      {screen==='superadmin' && <SuperAdminDashboard onBack={handleLogout} onGoHome={handleLogout} onSecurity={()=>setScreen('security')}/>}
       {screen==='systemdash' && <SystemDashboard data={data} user={user} onBack={goHome} onGoHome={handleLogout}/>}
-      {screen==='users' && <UsersScreen data={data} setData={updateData} onBack={goHome} onGoHome={handleLogout}/>}
+      {screen==='users' && <UsersScreen data={data} setData={updateData} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='backup' && <BackupPanel data={data} setData={updateData} onBack={goHome} onGoHome={handleLogout}/>}
-      {screen==='security' && <SecurityAudit onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='project' && activeProject && (
         <ProjectView projectId={activeProject} data={data} setData={updateData}
           user={user} onBack={goHome} onGoHome={handleLogout}/>
       )}
-      {(screen==='projects' || (!['superadmin','systemdash','users','backup','security','project'].includes(screen))) && (
+      {(screen==='projects' || (!['systemdash','users','backup','project'].includes(screen))) && (
         <ProjectsList data={data} setData={updateData} user={user} onLogout={handleLogout}
           onOpenProject={(id)=>{ setActiveProject(id); setScreen('project'); }}
           onSystemDash={()=>setScreen('systemdash')}
           onUsers={()=>setScreen('users')}
-          onBackup={()=>setScreen('backup')}
-          onSuperAdmin={()=>setScreen('superadmin')}
-          onSecurity={()=>setScreen('security')}/>
+          onBackup={()=>setScreen('backup')}/>
       )}
       <AppFooter/>
     </>
