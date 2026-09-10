@@ -3432,9 +3432,11 @@ function CustomBlocksTab({ project, setProject }) {
 }
 
 // ─── PROJECT VIEW (main container) ───────────────────────────────────────────
-function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack, onOpenProject }) {
+function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack, onOpenProject, activeTab: activeTabProp, onTabChange }) {
   const project = (data.projects||[]).find(p=>p.id===projectId);
-  const [activeTab, setActiveTab] = React.useState('dashboard');
+  const [localTab, setLocalTab] = React.useState('dashboard');
+  const activeTab = activeTabProp || localTab;
+  const setActiveTab = onTabChange || setLocalTab;
   const [showShare, setShowShare] = React.useState(false);
   const isMobile = useIsMobile();
 
@@ -3469,6 +3471,10 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
     : user.role==='arch'
       ? allTabs.filter(t=>canUse(t.feature) && !['payments','quotes'].includes(t.id) && (t.id!=='ai' || user.aiEnabled))
       : allTabs.filter(t=>canUse(t.feature));
+
+  React.useEffect(()=>{
+    if (!visibleTabs.some(t=>t.id===activeTab)) setActiveTab('dashboard');
+  },[activeTab]);
 
   const renderTab = () => {
     switch(activeTab) {
@@ -4147,11 +4153,47 @@ function PlatformAdminDashboard({ onLogout }) {
 }
 
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
+// ─── ROUTING ──────────────────────────────────────────────────────────────────
+const SCREEN_PATHS = {
+  login: '/login',
+  projects: '/projects',
+  systemdash: '/system',
+  users: '/users',
+  backup: '/backup',
+  platformadmin: '/platform',
+  suspended: '/suspended',
+};
+const PATH_SCREENS = Object.fromEntries(Object.entries(SCREEN_PATHS).map(([s,p])=>[p,s]));
+
+function buildPath(screen, projectId, tab) {
+  if (screen === 'project' && projectId) {
+    return `/project/${projectId}${tab && tab !== 'dashboard' ? '/' + tab : ''}`;
+  }
+  return SCREEN_PATHS[screen] || '/projects';
+}
+
+function parsePath(pathname) {
+  const parts = pathname.split('/').filter(Boolean);
+  if (parts[0] === 'project' && parts[1]) {
+    return { screen: 'project', projectId: parts[1], tab: parts[2] || 'dashboard' };
+  }
+  const screen = PATH_SCREENS['/' + parts.join('/')];
+  return screen ? { screen, projectId: null, tab: null } : null;
+}
+
+const ROLE_SCREENS = {
+  owner: ['platformadmin'],
+  admin: ['systemdash','users','backup','project','projects'],
+  arch: ['project','projects'],
+  client: ['project','projects'],
+};
+
 function App() {
   const [screen, setScreen] = React.useState('loading');
   const [user, setUser] = React.useState(null);
   const [data, setData] = React.useState(null);
   const [activeProject, setActiveProject] = React.useState(null);
+  const [activeTab, setActiveTab] = React.useState('dashboard');
   const [themeId, setThemeId] = React.useState('lightStone');
   const officeIdRef = React.useRef(null);
 
@@ -4165,20 +4207,49 @@ function App() {
 
   const screenForUser = (u) => u.role==='owner'?'platformadmin':u.role==='admin'?'systemdash':'projects';
 
+  const navigate = (targetScreen, opts={}) => {
+    const { projectId=null, tab=null, replace=false } = opts;
+    setScreen(targetScreen);
+    if (targetScreen === 'project') {
+      setActiveProject(projectId);
+      setActiveTab(tab || 'dashboard');
+    }
+    const path = buildPath(targetScreen, projectId, tab);
+    if (window.location.pathname !== path) {
+      window.history[replace ? 'replaceState' : 'pushState']({ screen: targetScreen, projectId, tab }, '', path);
+    }
+  };
+
   const enterOffice = async (u) => {
-    if (u.role === 'owner') { setUser(u); setScreen('platformadmin'); return; }
+    if (u.role === 'owner') { setUser(u); navigate('platformadmin', { replace:true }); return; }
     officeIdRef.current = u.officeId;
     setUser(u);
     const office = await loadOffice(u.officeId);
-    if (office && office.active === false) { setScreen('suspended'); return; }
+    if (office && office.active === false) { navigate('suspended', { replace:true }); return; }
     if (office) {
       OFFICE_PLAN.plan = office.plan || 'pro';
       OFFICE_PLAN.logo = office.logo || null;
       OFFICE_PLAN.officeName = office.name || 'Tektona';
       OFFICE_PLAN.slogan = office.slogan || '';
     }
-    setData((office && office.data) || { projects: [], users: [] });
-    setScreen(screenForUser(u));
+    const officeData = (office && office.data) || { projects: [], users: [] };
+    setData(officeData);
+
+    // Restore a deep link from the current URL if it's valid for this user; otherwise land on the role's default screen.
+    const parsed = parsePath(window.location.pathname);
+    const allowed = ROLE_SCREENS[u.role] || [];
+    if (parsed && allowed.includes(parsed.screen)) {
+      if (parsed.screen === 'project') {
+        if ((officeData.projects||[]).some(p=>p.id===parsed.projectId)) {
+          navigate('project', { projectId: parsed.projectId, tab: parsed.tab, replace:true });
+          return;
+        }
+      } else {
+        navigate(parsed.screen, { replace:true });
+        return;
+      }
+    }
+    navigate(screenForUser(u), { replace:true });
   };
 
   React.useEffect(()=>{
@@ -4191,10 +4262,32 @@ function App() {
         if (member) { await enterOffice(buildAppUser(member, session.user.email)); return; }
         await sb.auth.signOut();
       }
-      setScreen('login');
+      navigate('login', { replace:true });
     };
     initApp();
   },[]);
+
+  // Browser back/forward: reflect the URL the user landed on without pushing a new entry.
+  React.useEffect(()=>{
+    const onPopState = () => {
+      if (!user) return;
+      const parsed = parsePath(window.location.pathname);
+      const allowed = ROLE_SCREENS[user.role] || [];
+      if (parsed && allowed.includes(parsed.screen)) {
+        if (parsed.screen === 'project') {
+          setActiveProject(parsed.projectId);
+          setActiveTab(parsed.tab || 'dashboard');
+          setScreen('project');
+        } else {
+          setScreen(parsed.screen);
+        }
+      } else {
+        setScreen(screenForUser(user));
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  },[user]);
 
   // Live sync: when any office member saves, everyone else's screen updates too.
   React.useEffect(()=>{
@@ -4207,7 +4300,7 @@ function App() {
   },[user?.officeId]);
 
   const handleLogin = (u) => { enterOffice(u); };
-  const handleLogout = () => { sb.auth.signOut(); officeIdRef.current = null; setUser(null); setData(null); setActiveProject(null); setScreen('login'); };
+  const handleLogout = () => { sb.auth.signOut(); officeIdRef.current = null; setUser(null); setData(null); setActiveProject(null); setActiveTab('dashboard'); navigate('login'); };
 
   if (screen==='loading') return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -4234,24 +4327,26 @@ function App() {
     </div>
   );
 
-  const goHome = () => setScreen('projects');
+  const goHome = () => navigate('projects');
+  const openProject = (id, tab) => navigate('project', { projectId: id, tab });
   return (
     <>
       {screen==='systemdash' && <SystemDashboard data={data} user={user} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}
-        onOpenProject={(id)=>{ setActiveProject(id); setScreen('project'); }}/>}
+        onOpenProject={openProject}/>}
       {screen==='users' && <UsersScreen data={data} setData={updateData} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='backup' && <BackupPanel data={data} setData={updateData} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='project' && activeProject && (
         <ProjectView projectId={activeProject} data={data} setData={updateData}
           user={user} onBack={goHome} onGoHome={handleLogout}
-          onOpenProject={(id)=>{ setActiveProject(id); setScreen('project'); }}/>
+          activeTab={activeTab} onTabChange={(tab)=>navigate('project', { projectId: activeProject, tab, replace:true })}
+          onOpenProject={openProject}/>
       )}
       {(screen==='projects' || (!['systemdash','users','backup','project','platformadmin','suspended'].includes(screen))) && (
         <ProjectsList data={data} setData={updateData} user={user} onLogout={handleLogout}
-          onOpenProject={(id)=>{ setActiveProject(id); setScreen('project'); }}
-          onSystemDash={()=>setScreen('systemdash')}
-          onUsers={()=>setScreen('users')}
-          onBackup={()=>setScreen('backup')}/>
+          onOpenProject={openProject}
+          onSystemDash={()=>navigate('systemdash')}
+          onUsers={()=>navigate('users')}
+          onBackup={()=>navigate('backup')}/>
       )}
       <AppFooter/>
     </>
