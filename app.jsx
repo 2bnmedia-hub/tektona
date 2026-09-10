@@ -1294,7 +1294,7 @@ function PricingScreen({ onBack }) {
 }
 
 // ─── SYSTEM DASHBOARD ─────────────────────────────────────────────────────────
-function SystemDashboard({ data, user, officeId, onBack, onGoHome = onBack }) {
+function SystemDashboard({ data, user, officeId, onBack, onGoHome = onBack, onOpenProject }) {
   const isMobile = useIsMobile();
   const logoRef = React.useRef();
   const [officeLogo, setOfficeLogo] = React.useState(OFFICE_PLAN.logo);
@@ -1385,8 +1385,10 @@ function SystemDashboard({ data, user, officeId, onBack, onGoHome = onBack }) {
             <h3 style={{ color:C.text, fontSize:18, fontWeight:700 }}>כל הפרויקטים</h3>
           </div>
           {projects.map(p => (
-            <div key={p.id} style={{ padding:'14px 20px', borderBottom:`1px solid ${C.border}`,
-              display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div key={p.id} onClick={()=>onOpenProject && onOpenProject(p.id)}
+              style={{ padding:'14px 20px', borderBottom:`1px solid ${C.border}`,
+              display:'flex', justifyContent:'space-between', alignItems:'center',
+              cursor: onOpenProject ? 'pointer' : 'default' }}>
               <div>
                 <div style={{ fontWeight:600, color:C.text, fontSize:17 }}>{p.name}</div>
                 <div style={{ color:C.sub, fontSize:14 }}>{p.clientName} · {p.architectName}</div>
@@ -3871,7 +3873,8 @@ function App() {
   const goHome = () => setScreen('projects');
   return (
     <>
-      {screen==='systemdash' && <SystemDashboard data={data} user={user} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}/>}
+      {screen==='systemdash' && <SystemDashboard data={data} user={user} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}
+        onOpenProject={(id)=>{ setActiveProject(id); setScreen('project'); }}/>}
       {screen==='users' && <UsersScreen data={data} setData={updateData} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='backup' && <BackupPanel data={data} setData={updateData} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='project' && activeProject && (
