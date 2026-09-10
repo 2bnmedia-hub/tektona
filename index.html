@@ -680,6 +680,15 @@ const sanitize = s => String(s || '').replace(/[<>"'&]/g, c => ({
   "'": '&#39;',
   '&': '&amp;'
 })[c]);
+const readFileAsDataURL = (file, cb) => {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => cb(ev.target.result, file.name);
+  reader.readAsDataURL(file);
+};
+const openAttachment = dataUrl => {
+  if (dataUrl) window.open(dataUrl, '_blank');
+};
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
 const MOCK_PROJECTS = [{
@@ -1205,6 +1214,7 @@ function openDB() {
   });
 }
 async function saveD(data) {
+  let idbOk = false;
   try {
     const db = await openDB();
     const tx = db.transaction('appData', 'readwrite');
@@ -1212,15 +1222,17 @@ async function saveD(data) {
       id: 'main',
       ...data
     });
+    idbOk = true;
+  } catch (e) {}
+  try {
     localStorage.setItem('tektona_backup', JSON.stringify({
       ts: Date.now(),
       data
     }));
   } catch (e) {
-    localStorage.setItem('tektona_backup', JSON.stringify({
-      ts: Date.now(),
-      data
-    }));
+    // Attachments (PDFs/images) can push the mirror past the localStorage quota.
+    // IndexedDB has no such limit, so skip the mirror rather than losing the save.
+    if (!idbOk) throw e;
   }
 }
 function loadFromIDB() {
@@ -7578,14 +7590,10 @@ function DocumentsTab({
       name: f.name || file.name.replace(/\.[^.]+$/, ''),
       fileType: ext
     }));
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = ev => setForm(f => ({
-        ...f,
-        fileData: ev.target.result
-      }));
-      reader.readAsDataURL(file);
-    }
+    readFileAsDataURL(file, dataUrl => setForm(f => ({
+      ...f,
+      fileData: dataUrl
+    })));
   };
   const typeIcons = {
     drawing: '📐',
@@ -7636,6 +7644,7 @@ function DocumentsTab({
     }
   }, "\u05D0\u05D9\u05DF \u05DE\u05E1\u05DE\u05DB\u05D9\u05DD"), docs.map(doc => /*#__PURE__*/React.createElement("div", {
     key: doc.id,
+    onClick: () => openAttachment(doc.fileData),
     style: {
       background: C.card,
       borderRadius: 12,
@@ -7643,7 +7652,8 @@ function DocumentsTab({
       border: `1px solid ${C.border}`,
       display: 'flex',
       alignItems: 'center',
-      gap: 14
+      gap: 14,
+      cursor: doc.fileData ? 'pointer' : 'default'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7665,7 +7675,7 @@ function DocumentsTab({
       fontSize: 14,
       marginTop: 4
     }
-  }, typeLabels[doc.type] || doc.type, " \xB7 ", fmtDate(doc.date), doc.uploadedBy && ' · ' + doc.uploadedBy)), /*#__PURE__*/React.createElement(Badge, {
+  }, typeLabels[doc.type] || doc.type, " \xB7 ", fmtDate(doc.date), doc.uploadedBy && ' · ' + doc.uploadedBy, !doc.fileData && ' · אין קובץ מצורף')), /*#__PURE__*/React.createElement(Badge, {
     text: doc.fileType?.toUpperCase() || 'PDF',
     color: C.info
   })))), showAdd && /*#__PURE__*/React.createElement(Modal, {
@@ -7769,9 +7779,13 @@ function QuotesTab({
   const [form, setForm] = React.useState({
     title: '',
     amount: '',
-    validUntil: ''
+    validUntil: '',
+    fileName: null,
+    fileData: null
   });
   const [sigModal, setSigModal] = React.useState(null);
+  const fileRefs = React.useRef({});
+  const formFileRef = React.useRef();
   const quotes = project.quotes || [];
   const add = () => {
     if (!form.title || !form.amount) return;
@@ -7789,7 +7803,9 @@ function QuotesTab({
     setForm({
       title: '',
       amount: '',
-      validUntil: ''
+      validUntil: '',
+      fileName: null,
+      fileData: null
     });
     setShowAdd(false);
   };
@@ -7811,6 +7827,14 @@ function QuotesTab({
     }));
     setSigModal(null);
   };
+  const attachFile = (id, file) => readFileAsDataURL(file, (dataUrl, name) => setProject(p => ({
+    ...p,
+    quotes: quotes.map(q => q.id === id ? {
+      ...q,
+      fileName: name,
+      fileData: dataUrl
+    } : q)
+  })));
   return /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 24,
@@ -7882,7 +7906,16 @@ function QuotesTab({
       fontSize: 16,
       color: C.success
     }
-  }, "\u2713 \u05D7\u05EA\u05D5\u05DD: ", q.signature), /*#__PURE__*/React.createElement("div", {
+  }, "\u2713 \u05D7\u05EA\u05D5\u05DD: ", q.signature), q.fileName && /*#__PURE__*/React.createElement("div", {
+    onClick: () => openAttachment(q.fileData),
+    style: {
+      fontSize: 13,
+      color: C.info,
+      marginBottom: 10,
+      cursor: q.fileData ? 'pointer' : 'default',
+      textDecoration: q.fileData ? 'underline' : 'none'
+    }
+  }, "\uD83D\uDCCE ", q.fileName), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 8,
@@ -7899,7 +7932,19 @@ function QuotesTab({
     size: "sm",
     variant: "ghost",
     onClick: () => updateStatus(q.id, 'rejected')
-  }, "\u05D3\u05D7\u05D4"), /*#__PURE__*/React.createElement(Btn, {
+  }, "\u05D3\u05D7\u05D4"), /*#__PURE__*/React.createElement("input", {
+    type: "file",
+    accept: ".pdf,image/*",
+    style: {
+      display: 'none'
+    },
+    ref: el => fileRefs.current[q.id] = el,
+    onChange: e => attachFile(q.id, e.target.files[0])
+  }), /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    variant: "ghost",
+    onClick: () => fileRefs.current[q.id]?.click()
+  }, "\uD83D\uDCCE ", q.fileName ? 'החלף קובץ' : 'צרף PDF'), /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
     onClick: () => {
@@ -7952,7 +7997,42 @@ function QuotesTab({
       ...f,
       validUntil: v
     }))
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 14,
+      fontWeight: 600,
+      color: C.sub,
+      display: 'block',
+      marginBottom: 6
+    }
+  }, "\u05E6\u05E8\u05E3 \u05DE\u05E1\u05DE\u05DA PDF (\u05D0\u05D5\u05E4\u05E6\u05D9\u05D5\u05E0\u05DC\u05D9)"), /*#__PURE__*/React.createElement("input", {
+    ref: formFileRef,
+    type: "file",
+    accept: ".pdf,image/*",
+    style: {
+      display: 'none'
+    },
+    onChange: e => readFileAsDataURL(e.target.files[0], (dataUrl, name) => setForm(f => ({
+      ...f,
+      fileName: name,
+      fileData: dataUrl
+    })))
   }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    variant: "ghost",
+    onClick: () => formFileRef.current?.click()
+  }, "\uD83D\uDCCE \u05D1\u05D7\u05E8 \u05E7\u05D5\u05D1\u05E5"), form.fileName && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: C.success
+    }
+  }, "\u2713 ", form.fileName))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 10,
@@ -8012,7 +8092,8 @@ function ApprovalsTab({
   const [form, setForm] = React.useState({
     title: '',
     requestedBy: '',
-    attachmentName: null
+    attachmentName: null,
+    attachmentData: null
   });
   const attachRefs = React.useRef({});
   const formAttachRef = React.useRef();
@@ -8033,19 +8114,21 @@ function ApprovalsTab({
     setForm({
       title: '',
       requestedBy: '',
-      attachmentName: null
+      attachmentName: null,
+      attachmentData: null
     });
     setShowAdd(false);
   };
   const attachPDF = (id, file) => {
     if (!file) return;
-    setProject(p => ({
+    readFileAsDataURL(file, (dataUrl, name) => setProject(p => ({
       ...p,
       approvals: approvals.map(a => a.id === id ? {
         ...a,
-        attachmentName: file.name
+        attachmentName: name,
+        attachmentData: dataUrl
       } : a)
-    }));
+    })));
   };
   const approve = (id, comment = '') => setProject(p => ({
     ...p,
@@ -8127,10 +8210,13 @@ function ApprovalsTab({
       marginBottom: 12
     }
   }, "\u05D1\u05E7\u05E9\u05D4 \u05DE: ", a.requestedBy, " \xB7 ", fmtDate(a.date)), a.attachmentName && /*#__PURE__*/React.createElement("div", {
+    onClick: () => openAttachment(a.attachmentData),
     style: {
       fontSize: 13,
       color: C.info,
-      marginBottom: 8
+      marginBottom: 8,
+      cursor: a.attachmentData ? 'pointer' : 'default',
+      textDecoration: a.attachmentData ? 'underline' : 'none'
     }
   }, "\uD83D\uDCCE ", a.attachmentName), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -8234,12 +8320,11 @@ function ApprovalsTab({
     style: {
       display: 'none'
     },
-    onChange: e => {
-      if (e.target.files[0]) setForm(f => ({
-        ...f,
-        attachmentName: e.target.files[0].name
-      }));
-    }
+    onChange: e => readFileAsDataURL(e.target.files[0], (dataUrl, name) => setForm(f => ({
+      ...f,
+      attachmentName: name,
+      attachmentData: dataUrl
+    })))
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -8419,6 +8504,16 @@ function BIReportsTab({
     color: C.success
   }));
   const collectionRate = Math.round(totalRevenue / (totalRevenue + totalPending || 1) * 100);
+  const hoursByArchitect = {};
+  allProjects.forEach(p => (p.tasks || []).forEach(t => (t.hoursLogged || []).forEach(l => {
+    hoursByArchitect[l.by] = (hoursByArchitect[l.by] || 0) + l.hours;
+  })));
+  const archHoursBar = Object.entries(hoursByArchitect).sort((a, b) => b[1] - a[1]).map(([name, hrs], i) => ({
+    label: name.replace('אדר. ', ''),
+    value: Math.round(hrs * 10) / 10,
+    color: phaseColors[i % 8]
+  }));
+  const totalLoggedHours = Object.values(hoursByArchitect).reduce((s, h) => s + h, 0);
   return /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 24,
@@ -8567,7 +8662,47 @@ function BIReportsTab({
   }, "\u05D0\u05D7\u05D5\u05D6 \u05D4\u05E9\u05DC\u05DE\u05D4"), /*#__PURE__*/React.createElement(SVGBarChart, {
     data: progressBar,
     height: 130
-  }))), /*#__PURE__*/React.createElement("div", {
+  }))), archHoursBar.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.card,
+      borderRadius: 14,
+      padding: 20,
+      border: `1px solid ${C.border}`,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("h4", {
+    style: {
+      color: C.text,
+      fontSize: 16,
+      fontWeight: 700,
+      letterSpacing: '-0.01em'
+    }
+  }, "\u23F1\uFE0F \u05E9\u05E2\u05D5\u05EA \u05E2\u05D1\u05D5\u05D3\u05D4 \u05DC\u05E4\u05D9 \u05D0\u05D3\u05E8\u05D9\u05DB\u05DC"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: C.sub
+    }
+  }, "\u05E1\u05D4\"\u05DB: ", /*#__PURE__*/React.createElement("strong", {
+    style: {
+      color: C.primary
+    }
+  }, totalLoggedHours.toFixed(1), "h"))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: C.sub,
+      fontSize: 13,
+      marginBottom: 16
+    }
+  }, "\u05E9\u05E2\u05D5\u05EA \u05DE\u05D3\u05D5\u05D5\u05D7\u05D5\u05EA \u05D1\u05DB\u05DC \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u2014 \u05D1\u05E1\u05D9\u05E1 \u05DC\u05DE\u05D3\u05D9\u05D3\u05EA \u05D9\u05E2\u05D9\u05DC\u05D5\u05EA \u05D5\u05EA\u05DE\u05D7\u05D5\u05E8"), /*#__PURE__*/React.createElement(SVGBarChart, {
+    data: archHoursBar,
+    height: 130
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.card,
       borderRadius: 14,
@@ -9107,6 +9242,7 @@ function ClientSuccessTab({
 }
 
 // ─── CUSTOM BLOCKS TAB ────────────────────────────────────────────────────────
+const RENOVATION_BLOCKS = ['מצב קיים', 'השראות (מה הלקוח רוצה)', 'עבודה שוטפת', 'הדמיות'];
 function CustomBlocksTab({
   project,
   setProject
@@ -9144,6 +9280,16 @@ function CustomBlocksTab({
     ...p,
     customBlocks: blocks.filter(b => b.id !== id)
   }));
+  const missingRenoBlocks = RENOVATION_BLOCKS.filter(t => !blocks.some(b => b.title === t));
+  const seedRenoBlocks = () => setProject(p => ({
+    ...p,
+    customBlocks: [...(p.customBlocks || []), ...missingRenoBlocks.map(title => ({
+      id: 'cb' + uid() + title.length,
+      title,
+      content: '',
+      createdAt: today()
+    }))]
+  }));
   return /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 24,
@@ -9167,9 +9313,17 @@ function CustomBlocksTab({
       color: C.sub,
       fontSize: 14
     }
-  }, "\u05D4\u05D2\u05D3\u05E8 \u05EA\u05D5\u05DB\u05DF \u05D7\u05D5\u05E4\u05E9\u05D9 \u05DC\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u2014 \u05DE\u05E6\u05D1 \u05E7\u05D9\u05D9\u05DD, \u05D4\u05E9\u05E8\u05D0\u05D5\u05EA, \u05E2\u05D1\u05D5\u05D3\u05D4 \u05E9\u05D5\u05D8\u05E4\u05EA \u05D5\u05E2\u05D5\u05D3")), /*#__PURE__*/React.createElement(Btn, {
+  }, "\u05D4\u05D2\u05D3\u05E8 \u05EA\u05D5\u05DB\u05DF \u05D7\u05D5\u05E4\u05E9\u05D9 \u05DC\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u2014 \u05DE\u05E6\u05D1 \u05E7\u05D9\u05D9\u05DD, \u05D4\u05E9\u05E8\u05D0\u05D5\u05EA, \u05E2\u05D1\u05D5\u05D3\u05D4 \u05E9\u05D5\u05D8\u05E4\u05EA \u05D5\u05E2\u05D5\u05D3")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8
+    }
+  }, project.template === 'renovation' && missingRenoBlocks.length > 0 && /*#__PURE__*/React.createElement(Btn, {
+    variant: "ghost",
+    onClick: seedRenoBlocks
+  }, "\uD83C\uDFDA\uFE0F \u05D8\u05E2\u05DF \u05E9\u05DC\u05D3 \u05E9\u05D9\u05E4\u05D5\u05E6\u05D9\u05DD"), /*#__PURE__*/React.createElement(Btn, {
     onClick: () => setShowAdd(true)
-  }, "+ \u05D0\u05D6\u05D5\u05E8 \u05D7\u05D3\u05E9")), blocks.length === 0 && /*#__PURE__*/React.createElement("div", {
+  }, "+ \u05D0\u05D6\u05D5\u05E8 \u05D7\u05D3\u05E9"))), blocks.length === 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       color: C.sub,
       textAlign: 'center',
@@ -10543,6 +10697,7 @@ function App() {
       return nd;
     });
   };
+  const screenForUser = u => u.role === 'super' ? 'superadmin' : u.role === 'admin' ? 'systemdash' : 'projects';
   React.useEffect(() => {
     const initApp = async () => {
       const savedUser = sessionLoad();
@@ -10555,14 +10710,14 @@ function App() {
       if (!savedData) saveD(appData);
       if (savedUser) {
         setUser(savedUser);
-        setScreen('projects');
+        setScreen(screenForUser(savedUser));
       } else setScreen('login');
     };
     initApp();
   }, []);
   const handleLogin = u => {
     setUser(u);
-    setScreen(u.role === 'super' ? 'superadmin' : u.role === 'admin' ? 'systemdash' : 'projects');
+    setScreen(screenForUser(u));
   };
   const handleLogout = () => {
     sessionClear();

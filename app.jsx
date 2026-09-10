@@ -143,6 +143,13 @@ const today = () => new Date().toISOString().slice(0,10);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('he-IL') : '—';
 const fmtCurrency = (n) => '₪' + Number(n||0).toLocaleString('he-IL');
 const sanitize = (s) => String(s||'').replace(/[<>"'&]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c]));
+const readFileAsDataURL = (file, cb) => {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => cb(ev.target.result, file.name);
+  reader.readAsDataURL(file);
+};
+const openAttachment = (dataUrl) => { if (dataUrl) window.open(dataUrl, '_blank'); };
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
 const MOCK_PROJECTS = [
@@ -271,13 +278,19 @@ function openDB() {
 }
 
 async function saveD(data) {
+  let idbOk = false;
   try {
     const db = await openDB();
     const tx = db.transaction('appData', 'readwrite');
     tx.objectStore('appData').put({ id:'main', ...data });
+    idbOk = true;
+  } catch(e) {}
+  try {
     localStorage.setItem('tektona_backup', JSON.stringify({ ts: Date.now(), data }));
   } catch(e) {
-    localStorage.setItem('tektona_backup', JSON.stringify({ ts: Date.now(), data }));
+    // Attachments (PDFs/images) can push the mirror past the localStorage quota.
+    // IndexedDB has no such limit, so skip the mirror rather than losing the save.
+    if (!idbOk) throw e;
   }
 }
 
@@ -2692,11 +2705,7 @@ function DocumentsTab({ project, setProject }) {
     const file = e.target.files[0]; if (!file) return;
     const ext = file.name.split('.').pop().toLowerCase();
     setForm(f=>({...f, name:f.name||file.name.replace(/\.[^.]+$/,''), fileType:ext}));
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = ev => setForm(f=>({...f,fileData:ev.target.result}));
-      reader.readAsDataURL(file);
-    }
+    readFileAsDataURL(file, dataUrl => setForm(f=>({...f,fileData:dataUrl})));
   };
   const typeIcons = {drawing:'📐',contract:'📋',permit:'🏛️',report:'📊',other:'📄'};
   const typeLabels = {drawing:'תרשים',contract:'חוזה',permit:'היתר',report:'דוח',other:'אחר'};
@@ -2709,13 +2718,16 @@ function DocumentsTab({ project, setProject }) {
       <div style={{display:'flex',flexDirection:'column',gap:10}}>
         {docs.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17}}>אין מסמכים</div>}
         {docs.map(doc=>(
-          <div key={doc.id} style={{background:C.card,borderRadius:12,padding:'14px 18px',
-            border:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:14}}>
+          <div key={doc.id} onClick={()=>openAttachment(doc.fileData)}
+            style={{background:C.card,borderRadius:12,padding:'14px 18px',
+            border:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:14,
+            cursor:doc.fileData?'pointer':'default'}}>
             <div style={{fontSize:38}}>{typeIcons[doc.type]||'📄'}</div>
             <div style={{flex:1}}>
               <div style={{fontWeight:600,color:C.text,fontSize:17}}>{doc.name}</div>
               <div style={{color:C.sub,fontSize:14,marginTop:4}}>
                 {typeLabels[doc.type]||doc.type} · {fmtDate(doc.date)}{doc.uploadedBy&&' · '+doc.uploadedBy}
+                {!doc.fileData && ' · אין קובץ מצורף'}
               </div>
             </div>
             <Badge text={doc.fileType?.toUpperCase()||'PDF'} color={C.info}/>
@@ -2751,16 +2763,20 @@ function DocumentsTab({ project, setProject }) {
 // ─── QUOTES TAB ───────────────────────────────────────────────────────────────
 function QuotesTab({ project, setProject }) {
   const [showAdd, setShowAdd] = React.useState(false);
-  const [form, setForm] = React.useState({title:'',amount:'',validUntil:''});
+  const [form, setForm] = React.useState({title:'',amount:'',validUntil:'',fileName:null,fileData:null});
   const [sigModal, setSigModal] = React.useState(null);
+  const fileRefs = React.useRef({});
+  const formFileRef = React.useRef();
   const quotes = project.quotes || [];
   const add = () => {
     if (!form.title||!form.amount) return;
     setProject(p=>({...p,quotes:[...quotes,{...form,id:'q'+uid(),amount:Number(form.amount),status:'pending',date:today(),signature:null}]}));
-    setForm({title:'',amount:'',validUntil:''}); setShowAdd(false);
+    setForm({title:'',amount:'',validUntil:'',fileName:null,fileData:null}); setShowAdd(false);
   };
   const updateStatus = (id,s) => setProject(p=>({...p,quotes:quotes.map(q=>q.id===id?{...q,status:s}:q)}));
   const addSig = (id,sig) => { setProject(p=>({...p,quotes:quotes.map(q=>q.id===id?{...q,signature:sig,status:'approved'}:q)})); setSigModal(null); };
+  const attachFile = (id, file) => readFileAsDataURL(file, (dataUrl,name) =>
+    setProject(p=>({...p,quotes:quotes.map(q=>q.id===id?{...q,fileName:name,fileData:dataUrl}:q)})));
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
@@ -2781,10 +2797,19 @@ function QuotesTab({ project, setProject }) {
               <StatusBadge status={q.status}/>
             </div>
             {q.signature && <div style={{background:C.success+'15',borderRadius:8,padding:'8px 12px',marginBottom:10,fontSize:16,color:C.success}}>✓ חתום: {q.signature}</div>}
+            {q.fileName && (
+              <div onClick={()=>openAttachment(q.fileData)}
+                style={{fontSize:13,color:C.info,marginBottom:10,cursor:q.fileData?'pointer':'default',
+                  textDecoration:q.fileData?'underline':'none'}}>📎 {q.fileName}</div>
+            )}
             <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
               {q.status==='pending' && <Btn size="sm" onClick={()=>updateStatus(q.id,'approved')}>✓ אשר</Btn>}
               {q.status==='pending' && <Btn size="sm" variant="ghost" onClick={()=>setSigModal(q.id)}>✍️ חתימה</Btn>}
               {q.status==='pending' && <Btn size="sm" variant="ghost" onClick={()=>updateStatus(q.id,'rejected')}>דחה</Btn>}
+              <input type="file" accept=".pdf,image/*" style={{display:'none'}}
+                ref={el=>fileRefs.current[q.id]=el}
+                onChange={e=>attachFile(q.id, e.target.files[0])}/>
+              <Btn size="sm" variant="ghost" onClick={()=>fileRefs.current[q.id]?.click()}>📎 {q.fileName?'החלף קובץ':'צרף PDF'}</Btn>
               <Btn size="sm" variant="ghost" onClick={()=>{
                 const w=window.open('','_blank');
                 w.document.write(`<html dir="rtl"><head><title>הצעת מחיר — ${sanitize(q.title)}</title>
@@ -2810,6 +2835,15 @@ function QuotesTab({ project, setProject }) {
             <Input label="כותרת" value={form.title} onChange={v=>setForm(f=>({...f,title:v}))} required/>
             <Input label="סכום (₪)" type="number" value={form.amount} onChange={v=>setForm(f=>({...f,amount:v}))} required/>
             <Input label="בתוקף עד" type="date" value={form.validUntil} onChange={v=>setForm(f=>({...f,validUntil:v}))}/>
+            <div>
+              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>צרף מסמך PDF (אופציונלי)</label>
+              <input ref={formFileRef} type="file" accept=".pdf,image/*" style={{display:'none'}}
+                onChange={e=>readFileAsDataURL(e.target.files[0], (dataUrl,name)=>setForm(f=>({...f,fileName:name,fileData:dataUrl})))}/>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <Btn size="sm" variant="ghost" onClick={()=>formFileRef.current?.click()}>📎 בחר קובץ</Btn>
+                {form.fileName && <span style={{fontSize:13,color:C.success}}>✓ {form.fileName}</span>}
+              </div>
+            </div>
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
               <Btn onClick={()=>setShowAdd(false)} variant="ghost">ביטול</Btn>
               <Btn onClick={add}>צור הצעה</Btn>
@@ -2834,18 +2868,19 @@ function QuotesTab({ project, setProject }) {
 // ─── APPROVALS TAB ────────────────────────────────────────────────────────────
 function ApprovalsTab({ project, setProject, user }) {
   const [showAdd, setShowAdd] = React.useState(false);
-  const [form, setForm] = React.useState({title:'',requestedBy:'',attachmentName:null});
+  const [form, setForm] = React.useState({title:'',requestedBy:'',attachmentName:null,attachmentData:null});
   const attachRefs = React.useRef({});
   const formAttachRef = React.useRef();
   const approvals = project.approvals || [];
   const add = () => {
     if (!form.title) return;
     setProject(p=>({...p,approvals:[...approvals,{...form,id:'a'+uid(),date:today(),status:'pending',approvedBy:null,comment:''}]}));
-    setForm({title:'',requestedBy:'',attachmentName:null}); setShowAdd(false);
+    setForm({title:'',requestedBy:'',attachmentName:null,attachmentData:null}); setShowAdd(false);
   };
   const attachPDF = (id, file) => {
     if (!file) return;
-    setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,attachmentName:file.name}:a)}));
+    readFileAsDataURL(file, (dataUrl, name) =>
+      setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,attachmentName:name,attachmentData:dataUrl}:a)})));
   };
   const approve = (id,comment='') => setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,status:'approved',approvedBy:user.name,comment}:a)}));
   const reject  = (id,comment='') => setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,status:'rejected',approvedBy:user.name,comment}:a)}));
@@ -2868,7 +2903,11 @@ function ApprovalsTab({ project, setProject, user }) {
               border:`1px solid ${C.warning}`,position:'relative'}}>
               <div style={{fontWeight:700,color:C.text,fontSize:18,marginBottom:4}}>{a.title}</div>
               <div style={{color:C.sub,fontSize:16,marginBottom:12}}>בקשה מ: {a.requestedBy} · {fmtDate(a.date)}</div>
-              {a.attachmentName && <div style={{fontSize:13,color:C.info,marginBottom:8}}>📎 {a.attachmentName}</div>}
+              {a.attachmentName && (
+                <div onClick={()=>openAttachment(a.attachmentData)}
+                  style={{fontSize:13,color:C.info,marginBottom:8,cursor:a.attachmentData?'pointer':'default',
+                    textDecoration:a.attachmentData?'underline':'none'}}>📎 {a.attachmentName}</div>
+              )}
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
                 {(user.role==='client'||user.role==='admin') && (
                   <>
@@ -2912,7 +2951,7 @@ function ApprovalsTab({ project, setProject, user }) {
             <div>
               <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>צרף קובץ (אופציונלי)</label>
               <input ref={formAttachRef} type="file" accept=".pdf,image/*" style={{display:'none'}}
-                onChange={e=>{if(e.target.files[0])setForm(f=>({...f,attachmentName:e.target.files[0].name}));}}/>
+                onChange={e=>readFileAsDataURL(e.target.files[0], (dataUrl,name)=>setForm(f=>({...f,attachmentName:name,attachmentData:dataUrl})))}/>
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
                 <Btn size="sm" variant="ghost" onClick={()=>formAttachRef.current?.click()}>📎 בחר קובץ</Btn>
                 {form.attachmentName && <span style={{fontSize:13,color:C.success}}>✓ {form.attachmentName}</span>}
@@ -3000,6 +3039,15 @@ function BIReportsTab({ project, data }) {
 
   const collectionRate = Math.round(totalRevenue/(totalRevenue+totalPending||1)*100);
 
+  const hoursByArchitect = {};
+  allProjects.forEach(p=>(p.tasks||[]).forEach(t=>(t.hoursLogged||[]).forEach(l=>{
+    hoursByArchitect[l.by] = (hoursByArchitect[l.by]||0) + l.hours;
+  })));
+  const archHoursBar = Object.entries(hoursByArchitect)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([name,hrs],i)=>({ label:name.replace('אדר. ',''), value:Math.round(hrs*10)/10, color:phaseColors[i%8] }));
+  const totalLoggedHours = Object.values(hoursByArchitect).reduce((s,h)=>s+h,0);
+
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
@@ -3044,6 +3092,18 @@ function BIReportsTab({ project, data }) {
           <SVGBarChart data={progressBar} height={130}/>
         </div>
       </div>
+
+      {/* Hours by architect — efficiency / pricing basis */}
+      {archHoursBar.length>0 && (
+        <div style={{background:C.card,borderRadius:14,padding:20,border:`1px solid ${C.border}`,marginBottom:16}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:4}}>
+            <h4 style={{color:C.text,fontSize:16,fontWeight:700,letterSpacing:'-0.01em'}}>⏱️ שעות עבודה לפי אדריכל</h4>
+            <span style={{fontSize:13,color:C.sub}}>סה"כ: <strong style={{color:C.primary}}>{totalLoggedHours.toFixed(1)}h</strong></span>
+          </div>
+          <p style={{color:C.sub,fontSize:13,marginBottom:16}}>שעות מדווחות בכל הפרויקטים — בסיס למדידת יעילות ותמחור</p>
+          <SVGBarChart data={archHoursBar} height={130}/>
+        </div>
+      )}
 
       {/* Detailed progress with stacked bars */}
       <div style={{background:C.card,borderRadius:14,padding:20,border:`1px solid ${C.border}`,marginBottom:16}}>
@@ -3237,6 +3297,8 @@ function ClientSuccessTab({ project, setProject }) {
 }
 
 // ─── CUSTOM BLOCKS TAB ────────────────────────────────────────────────────────
+const RENOVATION_BLOCKS = ['מצב קיים','השראות (מה הלקוח רוצה)','עבודה שוטפת','הדמיות'];
+
 function CustomBlocksTab({ project, setProject }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({title:'',content:''});
@@ -3248,6 +3310,11 @@ function CustomBlocksTab({ project, setProject }) {
   };
   const update = (id,content) => setProject(p=>({...p,customBlocks:blocks.map(b=>b.id===id?{...b,content}:b)}));
   const remove = (id) => setProject(p=>({...p,customBlocks:blocks.filter(b=>b.id!==id)}));
+  const missingRenoBlocks = RENOVATION_BLOCKS.filter(t=>!blocks.some(b=>b.title===t));
+  const seedRenoBlocks = () => setProject(p=>({...p,customBlocks:[
+    ...(p.customBlocks||[]),
+    ...missingRenoBlocks.map(title=>({id:'cb'+uid()+title.length,title,content:'',createdAt:today()}))
+  ]}));
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
@@ -3255,7 +3322,12 @@ function CustomBlocksTab({ project, setProject }) {
           <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>🧩 אזורים חופשיים</h3>
           <p style={{color:C.sub,fontSize:14}}>הגדר תוכן חופשי לפרויקט — מצב קיים, השראות, עבודה שוטפת ועוד</p>
         </div>
-        <Btn onClick={()=>setShowAdd(true)}>+ אזור חדש</Btn>
+        <div style={{display:'flex',gap:8}}>
+          {project.template==='renovation' && missingRenoBlocks.length>0 && (
+            <Btn variant="ghost" onClick={seedRenoBlocks}>🏚️ טען שלד שיפוצים</Btn>
+          )}
+          <Btn onClick={()=>setShowAdd(true)}>+ אזור חדש</Btn>
+        </div>
       </div>
       {blocks.length===0 && (
         <div style={{color:C.sub,textAlign:'center',padding:60,fontSize:17}}>
@@ -3792,6 +3864,8 @@ function App() {
     });
   };
 
+  const screenForUser = (u) => u.role==='super'?'superadmin':u.role==='admin'?'systemdash':'projects';
+
   React.useEffect(()=>{
     const initApp = async () => {
       const savedUser = sessionLoad();
@@ -3799,13 +3873,13 @@ function App() {
       const appData = savedData || { projects: MOCK_PROJECTS, users: MOCK_USERS };
       setData(appData);
       if (!savedData) saveD(appData);
-      if (savedUser) { setUser(savedUser); setScreen('projects'); }
+      if (savedUser) { setUser(savedUser); setScreen(screenForUser(savedUser)); }
       else setScreen('login');
     };
     initApp();
   },[]);
 
-  const handleLogin = (u) => { setUser(u); setScreen(u.role==='super'?'superadmin':u.role==='admin'?'systemdash':'projects'); };
+  const handleLogin = (u) => { setUser(u); setScreen(screenForUser(u)); };
   const handleLogout = () => { sessionClear(); setUser(null); setActiveProject(null); setScreen('login'); };
 
   if (screen==='loading') return (
