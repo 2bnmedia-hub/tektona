@@ -108,10 +108,9 @@ const PLAN_FEATURES = {
   pro:     new Set(_PRO),
   studio:  new Set(_STU)
 };
-const OFFICE_PLAN = { plan:'pro', logo:null, officeName:'Tektona' };
-let OFFICE_LOGO_DATA = null;
-try { OFFICE_LOGO_DATA = localStorage.getItem('tektona_office_logo') || null; } catch(e) {}
-if (OFFICE_LOGO_DATA) OFFICE_PLAN.logo = OFFICE_LOGO_DATA;
+// Populated per-office at login time (enterOffice() in App()) from the offices row —
+// real per-tenant branding/plan instead of a hardcoded constant.
+const OFFICE_PLAN = { plan:'pro', logo:null, officeName:'Tektona', slogan:'' };
 const canUse = (f) => PLAN_FEATURES[OFFICE_PLAN.plan].has(f);
 
 // ─── PHASES ──────────────────────────────────────────────────────────────────
@@ -276,16 +275,27 @@ function buildAppUser(member, email) {
     name: member.display_name, avatar: member.display_name[0], email, aiEnabled: member.ai_enabled };
 }
 
+// Platform owner is a role above any single office — checked separately from office_members.
+async function fetchPlatformAdmin(authUserId) {
+  const { data, error } = await sb.from('platform_admins').select('id').eq('user_id', authUserId).maybeSingle();
+  if (error || !data) return null;
+  return data;
+}
+function buildOwnerUser(admin, email) {
+  return { id: admin.id, role: 'owner', name: 'Platform Owner', avatar: '⚡', email };
+}
+
 async function saveD(officeId, data) {
   if (!officeId) return;
   const { error } = await sb.from('offices').update({ data }).eq('id', officeId);
   if (error) console.error('saveD failed:', error.message);
 }
 
-async function loadOfficeData(officeId) {
-  const { data, error } = await sb.from('offices').select('data').eq('id', officeId).single();
+async function loadOffice(officeId) {
+  const { data, error } = await sb.from('offices')
+    .select('data, name, logo, slogan, plan, active').eq('id', officeId).single();
   if (error || !data) return null;
-  return data.data;
+  return data;
 }
 
 function exportData(data) {
@@ -1066,6 +1076,8 @@ function LoginScreen({ onLogin }) {
     setLoading(true); setLoginError('');
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error) { setLoading(false); setLoginError('אימייל או סיסמה שגויים'); return; }
+    const owner = await fetchPlatformAdmin(data.user.id);
+    if (owner) { setLoading(false); onLogin(buildOwnerUser(owner, email)); return; }
     const member = await fetchOfficeMember(data.user.id);
     if (!member) { setLoading(false); setLoginError('המשתמש לא משויך לאף משרד'); await sb.auth.signOut(); return; }
     setLoading(false);
@@ -1282,20 +1294,28 @@ function PricingScreen({ onBack }) {
 }
 
 // ─── SYSTEM DASHBOARD ─────────────────────────────────────────────────────────
-function SystemDashboard({ data, user, onBack, onGoHome = onBack }) {
+function SystemDashboard({ data, user, officeId, onBack, onGoHome = onBack }) {
   const isMobile = useIsMobile();
   const logoRef = React.useRef();
   const [officeLogo, setOfficeLogo] = React.useState(OFFICE_PLAN.logo);
+  const [slogan, setSlogan] = React.useState(OFFICE_PLAN.slogan || '');
+  const [sloganSaved, setSloganSaved] = React.useState(false);
   const handleLogoUpload = (e) => {
     const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target.result;
+    readFileAsDataURL(file, async (dataUrl) => {
       OFFICE_PLAN.logo = dataUrl;
-      try { localStorage.setItem('tektona_office_logo', dataUrl); } catch(ex) {}
       setOfficeLogo(dataUrl);
-    };
-    reader.readAsDataURL(file);
+      await sb.from('offices').update({ logo: dataUrl }).eq('id', officeId);
+    });
+  };
+  const removeLogo = async () => {
+    OFFICE_PLAN.logo = null; setOfficeLogo(null);
+    await sb.from('offices').update({ logo: null }).eq('id', officeId);
+  };
+  const saveSlogan = async () => {
+    OFFICE_PLAN.slogan = slogan;
+    await sb.from('offices').update({ slogan }).eq('id', officeId);
+    setSloganSaved(true); setTimeout(()=>setSloganSaved(false), 2000);
   };
   const projects = data.projects || [];
   const active = projects.filter(p=>p.status==='active').length;
@@ -1345,11 +1365,19 @@ function SystemDashboard({ data, user, onBack, onGoHome = onBack }) {
           <Btn size="sm" variant="ghost" onClick={()=>logoRef.current?.click()}>
             {officeLogo ? '🔄 החלף לוגו' : '📤 העלה לוגו'}
           </Btn>
-          {officeLogo && (
-            <Btn size="sm" variant="ghost" onClick={()=>{OFFICE_PLAN.logo=null;localStorage.removeItem('tektona_office_logo');setOfficeLogo(null);}}>
-              הסר
-            </Btn>
-          )}
+          {officeLogo && <Btn size="sm" variant="ghost" onClick={removeLogo}>הסר</Btn>}
+        </div>
+        {/* Office slogan */}
+        <div style={{background:C.card,borderRadius:16,padding:20,border:`1px solid ${C.border}`,marginBottom:20,
+          display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+          <div style={{minWidth:160}}>
+            <div style={{fontWeight:700,color:C.text,fontSize:17,marginBottom:4}}>💬 סלוגן המשרד</div>
+            <div style={{color:C.sub,fontSize:14}}>יוצג לצד שם המשרד</div>
+          </div>
+          <input value={slogan} onChange={e=>setSlogan(e.target.value)} placeholder="הסלוגן שלכם..."
+            style={{flex:1,minWidth:200,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,
+              background:C.inputBg,color:C.text,fontSize:15,outline:'none',direction:'rtl',fontFamily:'Heebo,Arial,sans-serif'}}/>
+          <Btn size="sm" onClick={saveSlogan}>{sloganSaved?'✓ נשמר':'שמור'}</Btn>
         </div>
         {/* Projects list */}
         <div style={{ background:C.card, borderRadius:16, border:`1px solid ${C.border}`, overflow:'hidden' }}>
@@ -3645,6 +3673,113 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
   );
 }
 
+// ─── PLATFORM ADMIN DASHBOARD (cross-tenant owner view) ──────────────────────
+function PlatformAdminDashboard({ onLogout }) {
+  const isMobile = useIsMobile();
+  const [offices, setOffices] = React.useState(null);
+  const [showNew, setShowNew] = React.useState(false);
+  const [form, setForm] = React.useState({ name:'', adminName:'', adminEmail:'' });
+  const [formError, setFormError] = React.useState('');
+  const [creating, setCreating] = React.useState(false);
+
+  const load = async () => {
+    const { data: offs } = await sb.from('offices').select('id, name, plan, active, created_at, data');
+    const { data: members } = await sb.from('office_members').select('office_id');
+    const counts = {};
+    (members||[]).forEach(m => { counts[m.office_id] = (counts[m.office_id]||0)+1; });
+    setOffices((offs||[]).map(o => ({ ...o, userCount: counts[o.id]||0, projectCount: (o.data?.projects||[]).length }))
+      .sort((a,b)=>a.name.localeCompare(b.name)));
+  };
+  React.useEffect(()=>{ load(); },[]);
+
+  const updatePlan = async (id, plan) => { await sb.from('offices').update({plan}).eq('id',id); load(); };
+  const toggleActive = async (id, active) => { await sb.from('offices').update({active:!active}).eq('id',id); load(); };
+
+  const createOffice = async () => {
+    if (!form.name || !form.adminName || !form.adminEmail) return;
+    setCreating(true); setFormError('');
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      const res = await fetch('/api/create-office', {
+        method:'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer '+session.access_token },
+        body: JSON.stringify(form)
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'שגיאה ביצירת משרד');
+      setForm({name:'',adminName:'',adminEmail:''}); setShowNew(false); load();
+    } catch(e) { setFormError(e.message); }
+    setCreating(false);
+  };
+
+  return (
+    <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
+      <AppNavBar onGoHome={onLogout} title="Platform Owner" subtitle="כל המשרדים" onBack={onLogout}/>
+      <div style={{flex:1,overflowY:'auto',padding: isMobile?16:28,paddingBottom:56}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+          <h1 style={{color:C.text,fontSize:isMobile?22:29,fontWeight:800}}>⚡ Platform Owner</h1>
+          <Btn onClick={()=>setShowNew(true)}>+ משרד חדש</Btn>
+        </div>
+        {offices===null && <div style={{color:C.sub,fontSize:16}}>טוען...</div>}
+        {offices && (
+          <div style={{background:C.card,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden'}}>
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse'}}>
+                <thead>
+                  <tr style={{background:C.bg}}>
+                    {['משרד','מסלול','סטטוס','פרויקטים','משתמשים','נוצר'].map(h=>(
+                      <th key={h} style={{padding:'10px 16px',textAlign:'right',fontSize:14,color:C.sub,fontWeight:600,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {offices.map(o=>(
+                    <tr key={o.id} style={{borderBottom:`1px solid ${C.border}`}}>
+                      <td style={{padding:'12px 16px',fontSize:16,fontWeight:600,color:C.text}}>{o.name}</td>
+                      <td style={{padding:'12px 16px'}}>
+                        <select value={o.plan} onChange={e=>updatePlan(o.id, e.target.value)}
+                          style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:C.inputBg,color:C.text,fontSize:14,outline:'none'}}>
+                          <option value="starter">Starter</option>
+                          <option value="pro">Pro</option>
+                          <option value="studio">Studio</option>
+                        </select>
+                      </td>
+                      <td style={{padding:'12px 16px'}}>
+                        <button onClick={()=>toggleActive(o.id, o.active)}
+                          style={{padding:'4px 12px',borderRadius:20,border:'none',cursor:'pointer',fontSize:13,fontWeight:600,
+                            background:o.active?C.success+'22':C.danger+'22',color:o.active?C.success:C.danger}}>
+                          {o.active?'✓ פעיל':'⏸ מושהה'}
+                        </button>
+                      </td>
+                      <td style={{padding:'12px 16px',fontSize:16,color:C.text}}>{o.projectCount}</td>
+                      <td style={{padding:'12px 16px',fontSize:16,color:C.text}}>{o.userCount}</td>
+                      <td style={{padding:'12px 16px',fontSize:14,color:C.sub}}>{fmtDate(o.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+      {showNew && (
+        <Modal title="משרד חדש" onClose={()=>setShowNew(false)} width={440}>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <Input label="שם המשרד" value={form.name} onChange={v=>setForm(f=>({...f,name:v}))} required/>
+            <Input label="שם מנהל המשרד" value={form.adminName} onChange={v=>setForm(f=>({...f,adminName:v}))} required/>
+            <Input label="אימייל מנהל המשרד" type="email" value={form.adminEmail} onChange={v=>setForm(f=>({...f,adminEmail:v}))} required/>
+            {formError && <div style={{color:C.danger,fontSize:14}}>{formError}</div>}
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <Btn onClick={()=>setShowNew(false)} variant="ghost">ביטול</Btn>
+              <Btn onClick={createOffice} disabled={creating}>{creating?'יוצר...':'צור משרד'}</Btn>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
 function App() {
   const [screen, setScreen] = React.useState('loading');
@@ -3662,13 +3797,21 @@ function App() {
     });
   };
 
-  const screenForUser = (u) => u.role==='admin'?'systemdash':'projects';
+  const screenForUser = (u) => u.role==='owner'?'platformadmin':u.role==='admin'?'systemdash':'projects';
 
   const enterOffice = async (u) => {
+    if (u.role === 'owner') { setUser(u); setScreen('platformadmin'); return; }
     officeIdRef.current = u.officeId;
     setUser(u);
-    const officeData = await loadOfficeData(u.officeId);
-    setData(officeData || { projects: [], users: [] });
+    const office = await loadOffice(u.officeId);
+    if (office && office.active === false) { setScreen('suspended'); return; }
+    if (office) {
+      OFFICE_PLAN.plan = office.plan || 'pro';
+      OFFICE_PLAN.logo = office.logo || null;
+      OFFICE_PLAN.officeName = office.name || 'Tektona';
+      OFFICE_PLAN.slogan = office.slogan || '';
+    }
+    setData((office && office.data) || { projects: [], users: [] });
     setScreen(screenForUser(u));
   };
 
@@ -3676,6 +3819,8 @@ function App() {
     const initApp = async () => {
       const { data: { session } } = await sb.auth.getSession();
       if (session) {
+        const owner = await fetchPlatformAdmin(session.user.id);
+        if (owner) { await enterOffice(buildOwnerUser(owner, session.user.email)); return; }
         const member = await fetchOfficeMember(session.user.id);
         if (member) { await enterOffice(buildAppUser(member, session.user.email)); return; }
         await sb.auth.signOut();
@@ -3709,17 +3854,31 @@ function App() {
 
   if (screen==='login') return <LoginScreen onLogin={handleLogin}/>;
 
+  if (screen==='platformadmin') return <PlatformAdminDashboard onLogout={handleLogout}/>;
+
+  if (screen==='suspended') return (
+    <div style={{width:'100vw',height:'100vh',background:C.bg,display:'flex',alignItems:'center',
+      justifyContent:'center',direction:'rtl',textAlign:'center'}}>
+      <div>
+        <div style={{fontSize:44,marginBottom:16}}>🔒</div>
+        <div style={{fontSize:22,fontWeight:700,color:C.text,marginBottom:8}}>המשרד הושהה</div>
+        <div style={{color:C.sub,fontSize:16,marginBottom:20}}>הגישה למערכת הושעתה. פנו לבעל הפלטפורמה לפרטים.</div>
+        <Btn onClick={handleLogout}>חזרה למסך כניסה</Btn>
+      </div>
+    </div>
+  );
+
   const goHome = () => setScreen('projects');
   return (
     <>
-      {screen==='systemdash' && <SystemDashboard data={data} user={user} onBack={goHome} onGoHome={handleLogout}/>}
+      {screen==='systemdash' && <SystemDashboard data={data} user={user} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='users' && <UsersScreen data={data} setData={updateData} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='backup' && <BackupPanel data={data} setData={updateData} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='project' && activeProject && (
         <ProjectView projectId={activeProject} data={data} setData={updateData}
           user={user} onBack={goHome} onGoHome={handleLogout}/>
       )}
-      {(screen==='projects' || (!['systemdash','users','backup','project'].includes(screen))) && (
+      {(screen==='projects' || (!['systemdash','users','backup','project','platformadmin','suspended'].includes(screen))) && (
         <ProjectsList data={data} setData={updateData} user={user} onLogout={handleLogout}
           onOpenProject={(id)=>{ setActiveProject(id); setScreen('project'); }}
           onSystemDash={()=>setScreen('systemdash')}
