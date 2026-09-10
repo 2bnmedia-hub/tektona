@@ -142,13 +142,48 @@ const today = () => new Date().toISOString().slice(0,10);
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('he-IL') : '—';
 const fmtCurrency = (n) => '₪' + Number(n||0).toLocaleString('he-IL');
 const sanitize = (s) => String(s||'').replace(/[<>"'&]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c]));
+const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB client-side guard
+
+// Small enough (office logo) that base64-in-DB is fine — not worth Storage complexity.
 const readFileAsDataURL = (file, cb) => {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => cb(ev.target.result, file.name);
   reader.readAsDataURL(file);
 };
-const openAttachment = (dataUrl) => { if (dataUrl) window.open(dataUrl, '_blank'); };
+
+// Real file storage (Supabase Storage) instead of base64-in-JSONB. Path convention
+// {officeId}/{projectId}/{category}/{uid}-{filename} lets RLS scope access by office,
+// same pattern as every DB table already uses.
+async function uploadOfficeFile(officeId, projectId, category, file, cb) {
+  if (!file) return;
+  if (file.size > MAX_FILE_BYTES) { alert('הקובץ גדול מדי (מקסימום 20MB)'); return; }
+  const path = `${officeId}/${projectId}/${category}/${uid()}-${file.name}`;
+  const { error } = await sb.storage.from('office-files').upload(path, file);
+  if (error) { alert('שגיאה בהעלאת הקובץ: '+error.message); return; }
+  cb(path, file.name);
+}
+async function getFileUrl(path) {
+  if (!path) return null;
+  if (path.startsWith('data:')) return path; // backward-compat: old base64 records still open directly
+  const { data, error } = await sb.storage.from('office-files').createSignedUrl(path, 3600);
+  return error ? null : data.signedUrl;
+}
+const openAttachment = async (path) => { const url = await getFileUrl(path); if (url) window.open(url, '_blank'); };
+
+// Resolves a stored path (or legacy base64) to a signed <img> src on mount.
+function StorageImage({ path, style, alt }) {
+  const [src, setSrc] = React.useState(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    setSrc(null);
+    getFileUrl(path).then(url => { if (!cancelled) setSrc(url); });
+    return () => { cancelled = true; };
+  }, [path]);
+  if (!src) return <div style={{...style, display:'flex',alignItems:'center',justifyContent:'center',
+    background:C.border+'55', color:C.sub, fontSize:12}}>...</div>;
+  return <img src={src} alt={alt||''} style={style}/>;
+}
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
 const MOCK_PROJECTS = [
@@ -1622,7 +1657,7 @@ function DashboardTab({ project, setProject, user }) {
         background:`linear-gradient(135deg,${C.primary}33 0%,${C.accent}22 40%,${C.bg} 100%)`,
         border:`1px solid ${C.border}`}}>
         {project.coverImage
-          ? <img src={project.coverImage} style={{width:'100%',height:'100%',objectFit:'cover',filter:'brightness(0.85)'}} alt="cover"/>
+          ? <StorageImage path={project.coverImage} style={{width:'100%',height:'100%',objectFit:'cover',filter:'brightness(0.85)'}} alt="cover"/>
           : (
             <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
               {/* Architectural grid lines */}
@@ -2283,9 +2318,11 @@ function PaymentsTab({ project, setProject }) {
 }
 
 // ─── PUNCH LIST TAB ───────────────────────────────────────────────────────────
-function PunchListTab({ project, setProject }) {
+function PunchListTab({ project, setProject, officeId }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({title:'',desc:'',location:'',responsible:'',priority:'medium',img:null});
+  const [uploadingId, setUploadingId] = React.useState(null);
+  const [uploadingForm, setUploadingForm] = React.useState(false);
   const imgRefs = React.useRef({});
   const formImgRef = React.useRef();
   const list = project.punchList || [];
@@ -2295,11 +2332,12 @@ function PunchListTab({ project, setProject }) {
     setForm({title:'',desc:'',location:'',responsible:'',priority:'medium',img:null}); setShowAdd(false);
   };
   const updateStatus = (id,s) => setProject(p=>({...p,punchList:list.map(i=>i.id===id?{...i,status:s,fixedAt:s==='closed'?today():null}:i)}));
-  const uploadImg = (id, file) => {
+  const uploadImg = async (id, file) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => setProject(p=>({...p,punchList:list.map(i=>i.id===id?{...i,img:ev.target.result}:i)}));
-    reader.readAsDataURL(file);
+    setUploadingId(id);
+    await uploadOfficeFile(officeId, project.id, 'punchlist', file,
+      path => setProject(p=>({...p,punchList:list.map(i=>i.id===id?{...i,img:path}:i)})));
+    setUploadingId(null);
   };
   const priColors = {high:C.danger,medium:C.warning,low:C.success};
   return (
@@ -2333,7 +2371,7 @@ function PunchListTab({ project, setProject }) {
               </div>
             </div>
             {item.img && (
-              <img src={item.img} alt="ממצא" style={{width:'100%',maxHeight:180,objectFit:'cover',borderRadius:8,marginTop:10}}/>
+              <StorageImage path={item.img} alt="ממצא" style={{width:'100%',maxHeight:180,objectFit:'cover',borderRadius:8,marginTop:10}}/>
             )}
             <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap'}}>
               {item.status==='open' && <Btn size="sm" onClick={()=>updateStatus(item.id,'in-progress')}>בטיפול</Btn>}
@@ -2341,7 +2379,9 @@ function PunchListTab({ project, setProject }) {
               <input type="file" accept="image/*" style={{display:'none'}}
                 ref={el=>imgRefs.current[item.id]=el}
                 onChange={e=>uploadImg(item.id, e.target.files[0])}/>
-              <Btn size="sm" variant="ghost" onClick={()=>imgRefs.current[item.id]?.click()}>📷 {item.img?'החלף תמונה':'הוסף תמונה'}</Btn>
+              <Btn size="sm" variant="ghost" onClick={()=>imgRefs.current[item.id]?.click()} disabled={uploadingId===item.id}>
+                📷 {uploadingId===item.id?'מעלה...':item.img?'החלף תמונה':'הוסף תמונה'}
+              </Btn>
             </div>
           </div>
         ))}
@@ -2358,9 +2398,13 @@ function PunchListTab({ project, setProject }) {
             <div>
               <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>תמונת ממצא (אופציונלי)</label>
               <input ref={formImgRef} type="file" accept="image/*" style={{display:'none'}}
-                onChange={e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>setForm(f=>({...f,img:ev.target.result}));r.readAsDataURL(file);}}/>
+                onChange={async e=>{const file=e.target.files[0];if(!file)return;setUploadingForm(true);
+                  await uploadOfficeFile(officeId, project.id, 'punchlist', file, path=>setForm(f=>({...f,img:path})));
+                  setUploadingForm(false);}}/>
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                <Btn size="sm" variant="ghost" onClick={()=>formImgRef.current?.click()}>📷 בחר תמונה</Btn>
+                <Btn size="sm" variant="ghost" onClick={()=>formImgRef.current?.click()} disabled={uploadingForm}>
+                  📷 {uploadingForm?'מעלה...':'בחר תמונה'}
+                </Btn>
                 {form.img && <span style={{fontSize:13,color:C.success}}>✓ תמונה נטענה</span>}
               </div>
             </div>
@@ -2454,10 +2498,11 @@ function RFITab({ project, setProject }) {
 }
 
 // ─── GALLERY TAB ──────────────────────────────────────────────────────────────
-function GalleryTab({ project, setProject }) {
+function GalleryTab({ project, setProject, officeId }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({title:'',phase:1,isAI:false,url:null});
   const [view, setView] = React.useState('grid');
+  const [uploading, setUploading] = React.useState(false);
   const fileRef = React.useRef();
   const coverRef = React.useRef();
   const gallery = project.gallery || [];
@@ -2466,12 +2511,12 @@ function GalleryTab({ project, setProject }) {
     setProject(p=>({...p,gallery:[...gallery,{...form,id:'g'+uid(),date:today()}]}));
     setForm({title:'',phase:1,isAI:false,url:null}); setShowAdd(false);
   };
-  const setCover = (url) => setProject(p=>({...p,coverImage:url}));
-  const handleFileChange = (e, onRead) => {
+  const setCover = (path) => setProject(p=>({...p,coverImage:path}));
+  const handleFileChange = async (e, onUploaded) => {
     const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => onRead(ev.target.result);
-    reader.readAsDataURL(file);
+    setUploading(true);
+    await uploadOfficeFile(officeId, project.id, 'gallery', file, onUploaded);
+    setUploading(false);
   };
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
@@ -2479,8 +2524,10 @@ function GalleryTab({ project, setProject }) {
         <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>גלריה</h3>
         <div style={{display:'flex',gap:8,alignItems:'center'}}>
           <input ref={coverRef} type="file" accept="image/*" style={{display:'none'}}
-            onChange={e=>handleFileChange(e, url=>setCover(url))}/>
-          <Btn size="sm" variant="ghost" onClick={()=>coverRef.current?.click()}>🖼️ תמונת רקע לפרויקט</Btn>
+            onChange={e=>handleFileChange(e, path=>setCover(path))}/>
+          <Btn size="sm" variant="ghost" onClick={()=>coverRef.current?.click()} disabled={uploading}>
+            {uploading?'מעלה...':'🖼️ תמונת רקע לפרויקט'}
+          </Btn>
           <button onClick={()=>setView(v=>v==='grid'?'mood':'grid')}
             style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,
               color:C.sub,cursor:'pointer',fontSize:13}}>
@@ -2498,7 +2545,7 @@ function GalleryTab({ project, setProject }) {
               <div style={{height:140,background:`linear-gradient(135deg,${C.primary}33,${C.accent}22)`,
                 display:'flex',alignItems:'center',justifyContent:'center',fontSize:58,position:'relative',overflow:'hidden'}}>
                 {img.url
-                  ? <img src={img.url} style={{width:'100%',height:'100%',objectFit:'cover',position:'absolute',inset:0}} alt={img.title}/>
+                  ? <StorageImage path={img.url} style={{width:'100%',height:'100%',objectFit:'cover',position:'absolute',inset:0}} alt={img.title}/>
                   : (img.isAI ? '🤖' : '🖼️')}
               </div>
               <div style={{padding:'10px 12px'}}>
@@ -2526,7 +2573,7 @@ function GalleryTab({ project, setProject }) {
               <div style={{height:img.url?'auto':120,background:`linear-gradient(135deg,${C.primary}22,${C.accent}11)`,
                 display:'flex',alignItems:'center',justifyContent:'center',fontSize:48}}>
                 {img.url
-                  ? <img src={img.url} style={{width:'100%',height:'auto',display:'block'}} alt={img.title}/>
+                  ? <StorageImage path={img.url} style={{width:'100%',height:'auto',minHeight:120,display:'block'}} alt={img.title}/>
                   : (img.isAI ? '🤖' : '🖼️')}
               </div>
               <div style={{padding:'8px 12px',fontSize:13,color:C.sub}}>{img.title}</div>
@@ -2543,9 +2590,11 @@ function GalleryTab({ project, setProject }) {
             <div>
               <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>העלאת תמונה</label>
               <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}}
-                onChange={e=>handleFileChange(e, url=>setForm(f=>({...f,url})))}/>
+                onChange={e=>handleFileChange(e, path=>setForm(f=>({...f,url:path})))}/>
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                <Btn size="sm" variant="ghost" onClick={()=>fileRef.current?.click()}>בחר קובץ</Btn>
+                <Btn size="sm" variant="ghost" onClick={()=>fileRef.current?.click()} disabled={uploading}>
+                  {uploading?'מעלה...':'בחר קובץ'}
+                </Btn>
                 {form.url && <span style={{fontSize:13,color:C.success}}>✓ תמונה נטענה</span>}
               </div>
             </div>
@@ -2565,21 +2614,24 @@ function GalleryTab({ project, setProject }) {
 }
 
 // ─── DOCUMENTS TAB ────────────────────────────────────────────────────────────
-function DocumentsTab({ project, setProject }) {
+function DocumentsTab({ project, setProject, officeId }) {
   const [showAdd, setShowAdd] = React.useState(false);
-  const [form, setForm] = React.useState({name:'',type:'drawing',uploadedBy:'',fileType:'pdf',fileData:null});
+  const [form, setForm] = React.useState({name:'',type:'drawing',uploadedBy:'',fileType:'pdf',filePath:null});
+  const [uploading, setUploading] = React.useState(false);
   const fileRef = React.useRef();
   const docs = project.documents || [];
   const add = () => {
     if (!form.name) return;
     setProject(p=>({...p,documents:[...docs,{...form,id:'d'+uid(),date:today(),thumb:null}]}));
-    setForm({name:'',type:'drawing',uploadedBy:'',fileType:'pdf',fileData:null}); setShowAdd(false);
+    setForm({name:'',type:'drawing',uploadedBy:'',fileType:'pdf',filePath:null}); setShowAdd(false);
   };
-  const handleFile = (e) => {
+  const handleFile = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     const ext = file.name.split('.').pop().toLowerCase();
     setForm(f=>({...f, name:f.name||file.name.replace(/\.[^.]+$/,''), fileType:ext}));
-    readFileAsDataURL(file, dataUrl => setForm(f=>({...f,fileData:dataUrl})));
+    setUploading(true);
+    await uploadOfficeFile(officeId, project.id, 'documents', file, path => setForm(f=>({...f,filePath:path})));
+    setUploading(false);
   };
   const typeIcons = {drawing:'📐',contract:'📋',permit:'🏛️',report:'📊',other:'📄'};
   const typeLabels = {drawing:'תרשים',contract:'חוזה',permit:'היתר',report:'דוח',other:'אחר'};
@@ -2592,16 +2644,16 @@ function DocumentsTab({ project, setProject }) {
       <div style={{display:'flex',flexDirection:'column',gap:10}}>
         {docs.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17}}>אין מסמכים</div>}
         {docs.map(doc=>(
-          <div key={doc.id} onClick={()=>openAttachment(doc.fileData)}
+          <div key={doc.id} onClick={()=>openAttachment(doc.filePath||doc.fileData)}
             style={{background:C.card,borderRadius:12,padding:'14px 18px',
             border:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:14,
-            cursor:doc.fileData?'pointer':'default'}}>
+            cursor:(doc.filePath||doc.fileData)?'pointer':'default'}}>
             <div style={{fontSize:38}}>{typeIcons[doc.type]||'📄'}</div>
             <div style={{flex:1}}>
               <div style={{fontWeight:600,color:C.text,fontSize:17}}>{doc.name}</div>
               <div style={{color:C.sub,fontSize:14,marginTop:4}}>
                 {typeLabels[doc.type]||doc.type} · {fmtDate(doc.date)}{doc.uploadedBy&&' · '+doc.uploadedBy}
-                {!doc.fileData && ' · אין קובץ מצורף'}
+                {!(doc.filePath||doc.fileData) && ' · אין קובץ מצורף'}
               </div>
             </div>
             <Badge text={doc.fileType?.toUpperCase()||'PDF'} color={C.info}/>
@@ -2615,7 +2667,10 @@ function DocumentsTab({ project, setProject }) {
               <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>העלאת קובץ (PDF / תמונה)</label>
               <input ref={fileRef} type="file" accept=".pdf,image/*" style={{display:'none'}} onChange={handleFile}/>
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                <Btn size="sm" variant="ghost" onClick={()=>fileRef.current?.click()}>📂 בחר קובץ</Btn>
+                <Btn size="sm" variant="ghost" onClick={()=>fileRef.current?.click()} disabled={uploading}>
+                  {uploading?'מעלה...':'📂 בחר קובץ'}
+                </Btn>
+                {form.filePath && <span style={{fontSize:13,color:C.success}}>✓ הועלה</span>}
                 {form.fileType!=='pdf' && <Badge text={form.fileType.toUpperCase()} color={C.info}/>}
               </div>
             </div>
@@ -2635,22 +2690,28 @@ function DocumentsTab({ project, setProject }) {
 }
 
 // ─── QUOTES TAB ───────────────────────────────────────────────────────────────
-function QuotesTab({ project, setProject }) {
+function QuotesTab({ project, setProject, officeId }) {
   const [showAdd, setShowAdd] = React.useState(false);
-  const [form, setForm] = React.useState({title:'',amount:'',validUntil:'',fileName:null,fileData:null});
+  const [form, setForm] = React.useState({title:'',amount:'',validUntil:'',fileName:null,filePath:null});
   const [sigModal, setSigModal] = React.useState(null);
+  const [uploadingId, setUploadingId] = React.useState(null);
+  const [uploadingForm, setUploadingForm] = React.useState(false);
   const fileRefs = React.useRef({});
   const formFileRef = React.useRef();
   const quotes = project.quotes || [];
   const add = () => {
     if (!form.title||!form.amount) return;
     setProject(p=>({...p,quotes:[...quotes,{...form,id:'q'+uid(),amount:Number(form.amount),status:'pending',date:today(),signature:null}]}));
-    setForm({title:'',amount:'',validUntil:'',fileName:null,fileData:null}); setShowAdd(false);
+    setForm({title:'',amount:'',validUntil:'',fileName:null,filePath:null}); setShowAdd(false);
   };
   const updateStatus = (id,s) => setProject(p=>({...p,quotes:quotes.map(q=>q.id===id?{...q,status:s}:q)}));
   const addSig = (id,sig) => { setProject(p=>({...p,quotes:quotes.map(q=>q.id===id?{...q,signature:sig,status:'approved'}:q)})); setSigModal(null); };
-  const attachFile = (id, file) => readFileAsDataURL(file, (dataUrl,name) =>
-    setProject(p=>({...p,quotes:quotes.map(q=>q.id===id?{...q,fileName:name,fileData:dataUrl}:q)})));
+  const attachFile = async (id, file) => {
+    setUploadingId(id);
+    await uploadOfficeFile(officeId, project.id, 'quotes', file, (path,name) =>
+      setProject(p=>({...p,quotes:quotes.map(q=>q.id===id?{...q,fileName:name,filePath:path}:q)})));
+    setUploadingId(null);
+  };
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
@@ -2672,9 +2733,9 @@ function QuotesTab({ project, setProject }) {
             </div>
             {q.signature && <div style={{background:C.success+'15',borderRadius:8,padding:'8px 12px',marginBottom:10,fontSize:16,color:C.success}}>✓ חתום: {q.signature}</div>}
             {q.fileName && (
-              <div onClick={()=>openAttachment(q.fileData)}
-                style={{fontSize:13,color:C.info,marginBottom:10,cursor:q.fileData?'pointer':'default',
-                  textDecoration:q.fileData?'underline':'none'}}>📎 {q.fileName}</div>
+              <div onClick={()=>openAttachment(q.filePath)}
+                style={{fontSize:13,color:C.info,marginBottom:10,cursor:q.filePath?'pointer':'default',
+                  textDecoration:q.filePath?'underline':'none'}}>📎 {q.fileName}</div>
             )}
             <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
               {q.status==='pending' && <Btn size="sm" onClick={()=>updateStatus(q.id,'approved')}>✓ אשר</Btn>}
@@ -2683,7 +2744,9 @@ function QuotesTab({ project, setProject }) {
               <input type="file" accept=".pdf,image/*" style={{display:'none'}}
                 ref={el=>fileRefs.current[q.id]=el}
                 onChange={e=>attachFile(q.id, e.target.files[0])}/>
-              <Btn size="sm" variant="ghost" onClick={()=>fileRefs.current[q.id]?.click()}>📎 {q.fileName?'החלף קובץ':'צרף PDF'}</Btn>
+              <Btn size="sm" variant="ghost" onClick={()=>fileRefs.current[q.id]?.click()} disabled={uploadingId===q.id}>
+                📎 {uploadingId===q.id?'מעלה...':q.fileName?'החלף קובץ':'צרף PDF'}
+              </Btn>
               <Btn size="sm" variant="ghost" onClick={()=>{
                 const w=window.open('','_blank');
                 w.document.write(`<html dir="rtl"><head><title>הצעת מחיר — ${sanitize(q.title)}</title>
@@ -2712,9 +2775,13 @@ function QuotesTab({ project, setProject }) {
             <div>
               <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>צרף מסמך PDF (אופציונלי)</label>
               <input ref={formFileRef} type="file" accept=".pdf,image/*" style={{display:'none'}}
-                onChange={e=>readFileAsDataURL(e.target.files[0], (dataUrl,name)=>setForm(f=>({...f,fileName:name,fileData:dataUrl})))}/>
+                onChange={async e=>{const file=e.target.files[0];if(!file)return;setUploadingForm(true);
+                  await uploadOfficeFile(officeId, project.id, 'quotes', file, (path,name)=>setForm(f=>({...f,fileName:name,filePath:path})));
+                  setUploadingForm(false);}}/>
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                <Btn size="sm" variant="ghost" onClick={()=>formFileRef.current?.click()}>📎 בחר קובץ</Btn>
+                <Btn size="sm" variant="ghost" onClick={()=>formFileRef.current?.click()} disabled={uploadingForm}>
+                  📎 {uploadingForm?'מעלה...':'בחר קובץ'}
+                </Btn>
                 {form.fileName && <span style={{fontSize:13,color:C.success}}>✓ {form.fileName}</span>}
               </div>
             </div>
@@ -2740,21 +2807,25 @@ function QuotesTab({ project, setProject }) {
 }
 
 // ─── APPROVALS TAB ────────────────────────────────────────────────────────────
-function ApprovalsTab({ project, setProject, user }) {
+function ApprovalsTab({ project, setProject, user, officeId }) {
   const [showAdd, setShowAdd] = React.useState(false);
-  const [form, setForm] = React.useState({title:'',requestedBy:'',attachmentName:null,attachmentData:null});
+  const [form, setForm] = React.useState({title:'',requestedBy:'',attachmentName:null,attachmentPath:null});
+  const [uploadingId, setUploadingId] = React.useState(null);
+  const [uploadingForm, setUploadingForm] = React.useState(false);
   const attachRefs = React.useRef({});
   const formAttachRef = React.useRef();
   const approvals = project.approvals || [];
   const add = () => {
     if (!form.title) return;
     setProject(p=>({...p,approvals:[...approvals,{...form,id:'a'+uid(),date:today(),status:'pending',approvedBy:null,comment:''}]}));
-    setForm({title:'',requestedBy:'',attachmentName:null,attachmentData:null}); setShowAdd(false);
+    setForm({title:'',requestedBy:'',attachmentName:null,attachmentPath:null}); setShowAdd(false);
   };
-  const attachPDF = (id, file) => {
+  const attachPDF = async (id, file) => {
     if (!file) return;
-    readFileAsDataURL(file, (dataUrl, name) =>
-      setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,attachmentName:name,attachmentData:dataUrl}:a)})));
+    setUploadingId(id);
+    await uploadOfficeFile(officeId, project.id, 'approvals', file, (path, name) =>
+      setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,attachmentName:name,attachmentPath:path}:a)})));
+    setUploadingId(null);
   };
   const approve = (id,comment='') => setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,status:'approved',approvedBy:user.name,comment}:a)}));
   const reject  = (id,comment='') => setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,status:'rejected',approvedBy:user.name,comment}:a)}));
@@ -2778,9 +2849,9 @@ function ApprovalsTab({ project, setProject, user }) {
               <div style={{fontWeight:700,color:C.text,fontSize:18,marginBottom:4}}>{a.title}</div>
               <div style={{color:C.sub,fontSize:16,marginBottom:12}}>בקשה מ: {a.requestedBy} · {fmtDate(a.date)}</div>
               {a.attachmentName && (
-                <div onClick={()=>openAttachment(a.attachmentData)}
-                  style={{fontSize:13,color:C.info,marginBottom:8,cursor:a.attachmentData?'pointer':'default',
-                    textDecoration:a.attachmentData?'underline':'none'}}>📎 {a.attachmentName}</div>
+                <div onClick={()=>openAttachment(a.attachmentPath)}
+                  style={{fontSize:13,color:C.info,marginBottom:8,cursor:a.attachmentPath?'pointer':'default',
+                    textDecoration:a.attachmentPath?'underline':'none'}}>📎 {a.attachmentName}</div>
               )}
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
                 {(user.role==='client'||user.role==='admin') && (
@@ -2792,7 +2863,9 @@ function ApprovalsTab({ project, setProject, user }) {
                 <input type="file" accept=".pdf,image/*" style={{display:'none'}}
                   ref={el=>attachRefs.current[a.id]=el}
                   onChange={e=>attachPDF(a.id, e.target.files[0])}/>
-                <Btn size="sm" variant="ghost" onClick={()=>attachRefs.current[a.id]?.click()}>📎 צרף PDF</Btn>
+                <Btn size="sm" variant="ghost" onClick={()=>attachRefs.current[a.id]?.click()} disabled={uploadingId===a.id}>
+                  📎 {uploadingId===a.id?'מעלה...':'צרף PDF'}
+                </Btn>
               </div>
             </div>
           ))}
@@ -2825,9 +2898,13 @@ function ApprovalsTab({ project, setProject, user }) {
             <div>
               <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>צרף קובץ (אופציונלי)</label>
               <input ref={formAttachRef} type="file" accept=".pdf,image/*" style={{display:'none'}}
-                onChange={e=>readFileAsDataURL(e.target.files[0], (dataUrl,name)=>setForm(f=>({...f,attachmentName:name,attachmentData:dataUrl})))}/>
+                onChange={async e=>{const file=e.target.files[0];if(!file)return;setUploadingForm(true);
+                  await uploadOfficeFile(officeId, project.id, 'approvals', file, (path,name)=>setForm(f=>({...f,attachmentName:name,attachmentPath:path})));
+                  setUploadingForm(false);}}/>
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                <Btn size="sm" variant="ghost" onClick={()=>formAttachRef.current?.click()}>📎 בחר קובץ</Btn>
+                <Btn size="sm" variant="ghost" onClick={()=>formAttachRef.current?.click()} disabled={uploadingForm}>
+                  📎 {uploadingForm?'מעלה...':'בחר קובץ'}
+                </Btn>
                 {form.attachmentName && <span style={{fontSize:13,color:C.success}}>✓ {form.attachmentName}</span>}
               </div>
             </div>
@@ -3297,12 +3374,12 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
       case 'tasks':        return <TasksTab project={project} setProject={setProject} user={user}/>;
       case 'meetings':     return <MeetingsTab project={project} setProject={setProject} user={user}/>;
       case 'payments':     return <PaymentsTab project={project} setProject={setProject}/>;
-      case 'punchlist':    return <PunchListTab project={project} setProject={setProject}/>;
+      case 'punchlist':    return <PunchListTab project={project} setProject={setProject} officeId={user.officeId}/>;
       case 'rfi':          return <RFITab project={project} setProject={setProject}/>;
-      case 'gallery':      return <GalleryTab project={project} setProject={setProject}/>;
-      case 'documents':    return <DocumentsTab project={project} setProject={setProject}/>;
-      case 'quotes':       return <QuotesTab project={project} setProject={setProject}/>;
-      case 'approvals':    return <ApprovalsTab project={project} setProject={setProject} user={user}/>;
+      case 'gallery':      return <GalleryTab project={project} setProject={setProject} officeId={user.officeId}/>;
+      case 'documents':    return <DocumentsTab project={project} setProject={setProject} officeId={user.officeId}/>;
+      case 'quotes':       return <QuotesTab project={project} setProject={setProject} officeId={user.officeId}/>;
+      case 'approvals':    return <ApprovalsTab project={project} setProject={setProject} user={user} officeId={user.officeId}/>;
       case 'messages':     return <MessagesTab project={project} setProject={setProject} user={user}/>;
       case 'bi':           return <BIReportsTab project={project} data={data}/>;
       case 'clientsuccess':return <ClientSuccessTab project={project} setProject={setProject}/>;
@@ -3590,7 +3667,7 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
                 {/* Cover */}
                 {p.coverImage && (
                   <div style={{height:160,marginBottom:20,overflow:'hidden',borderRadius:8,margin:'-28px -28px 20px'}}>
-                    <img src={p.coverImage} style={{width:'100%',height:'100%',objectFit:'cover',
+                    <StorageImage path={p.coverImage} style={{width:'100%',height:'100%',objectFit:'cover',
                       filter:'grayscale(20%) brightness(0.85)'}} alt="cover"/>
                     <div style={{position:'absolute',top:0,left:0,right:0,height:160,
                       background:'linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.5))'}}/>

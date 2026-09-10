@@ -10,8 +10,8 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script crossorigin src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>window.__SUPABASE_URL__ = "";
-window.__SUPABASE_ANON_KEY__ = "";</script>
+  <script>window.__SUPABASE_URL__ = "https://fwcjjzodlezylpjpmeje.supabase.co";
+window.__SUPABASE_ANON_KEY__ = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Y2pqem9kbGV6eWxwanBtZWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMjIwNTcsImV4cCI6MjEwNDU5ODA1N30.geTQ-wjKyQk6dcxpbCwa2APoSNkF2Iu2UmVstz9jPa8";</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
@@ -681,15 +681,83 @@ const sanitize = s => String(s || '').replace(/[<>"'&]/g, c => ({
   "'": '&#39;',
   '&': '&amp;'
 })[c]);
+const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB client-side guard
+
+// Small enough (office logo) that base64-in-DB is fine — not worth Storage complexity.
 const readFileAsDataURL = (file, cb) => {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => cb(ev.target.result, file.name);
   reader.readAsDataURL(file);
 };
-const openAttachment = dataUrl => {
-  if (dataUrl) window.open(dataUrl, '_blank');
+
+// Real file storage (Supabase Storage) instead of base64-in-JSONB. Path convention
+// {officeId}/{projectId}/{category}/{uid}-{filename} lets RLS scope access by office,
+// same pattern as every DB table already uses.
+async function uploadOfficeFile(officeId, projectId, category, file, cb) {
+  if (!file) return;
+  if (file.size > MAX_FILE_BYTES) {
+    alert('הקובץ גדול מדי (מקסימום 20MB)');
+    return;
+  }
+  const path = `${officeId}/${projectId}/${category}/${uid()}-${file.name}`;
+  const {
+    error
+  } = await sb.storage.from('office-files').upload(path, file);
+  if (error) {
+    alert('שגיאה בהעלאת הקובץ: ' + error.message);
+    return;
+  }
+  cb(path, file.name);
+}
+async function getFileUrl(path) {
+  if (!path) return null;
+  if (path.startsWith('data:')) return path; // backward-compat: old base64 records still open directly
+  const {
+    data,
+    error
+  } = await sb.storage.from('office-files').createSignedUrl(path, 3600);
+  return error ? null : data.signedUrl;
+}
+const openAttachment = async path => {
+  const url = await getFileUrl(path);
+  if (url) window.open(url, '_blank');
 };
+
+// Resolves a stored path (or legacy base64) to a signed <img> src on mount.
+function StorageImage({
+  path,
+  style,
+  alt
+}) {
+  const [src, setSrc] = React.useState(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    setSrc(null);
+    getFileUrl(path).then(url => {
+      if (!cancelled) setSrc(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [path]);
+  if (!src) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      ...style,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: C.border + '55',
+      color: C.sub,
+      fontSize: 12
+    }
+  }, "...");
+  return /*#__PURE__*/React.createElement("img", {
+    src: src,
+    alt: alt || '',
+    style: style
+  });
+}
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
 const MOCK_PROJECTS = [{
@@ -4513,8 +4581,8 @@ function DashboardTab({
       background: `linear-gradient(135deg,${C.primary}33 0%,${C.accent}22 40%,${C.bg} 100%)`,
       border: `1px solid ${C.border}`
     }
-  }, project.coverImage ? /*#__PURE__*/React.createElement("img", {
-    src: project.coverImage,
+  }, project.coverImage ? /*#__PURE__*/React.createElement(StorageImage, {
+    path: project.coverImage,
     style: {
       width: '100%',
       height: '100%',
@@ -6392,7 +6460,8 @@ function PaymentsTab({
 // ─── PUNCH LIST TAB ───────────────────────────────────────────────────────────
 function PunchListTab({
   project,
-  setProject
+  setProject,
+  officeId
 }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({
@@ -6403,6 +6472,8 @@ function PunchListTab({
     priority: 'medium',
     img: null
   });
+  const [uploadingId, setUploadingId] = React.useState(null);
+  const [uploadingForm, setUploadingForm] = React.useState(false);
   const imgRefs = React.useRef({});
   const formImgRef = React.useRef();
   const list = project.punchList || [];
@@ -6436,17 +6507,17 @@ function PunchListTab({
       fixedAt: s === 'closed' ? today() : null
     } : i)
   }));
-  const uploadImg = (id, file) => {
+  const uploadImg = async (id, file) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => setProject(p => ({
+    setUploadingId(id);
+    await uploadOfficeFile(officeId, project.id, 'punchlist', file, path => setProject(p => ({
       ...p,
       punchList: list.map(i => i.id === id ? {
         ...i,
-        img: ev.target.result
+        img: path
       } : i)
-    }));
-    reader.readAsDataURL(file);
+    })));
+    setUploadingId(null);
   };
   const priColors = {
     high: C.danger,
@@ -6551,8 +6622,8 @@ function PunchListTab({
   }), /*#__PURE__*/React.createElement(Badge, {
     text: item.priority === 'high' ? 'גבוה' : item.priority === 'medium' ? 'בינוני' : 'נמוך',
     color: priColors[item.priority]
-  }))), item.img && /*#__PURE__*/React.createElement("img", {
-    src: item.img,
+  }))), item.img && /*#__PURE__*/React.createElement(StorageImage, {
+    path: item.img,
     alt: "\u05DE\u05DE\u05E6\u05D0",
     style: {
       width: '100%',
@@ -6586,8 +6657,9 @@ function PunchListTab({
   }), /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
-    onClick: () => imgRefs.current[item.id]?.click()
-  }, "\uD83D\uDCF7 ", item.img ? 'החלף תמונה' : 'הוסף תמונה'))))), showAdd && /*#__PURE__*/React.createElement(Modal, {
+    onClick: () => imgRefs.current[item.id]?.click(),
+    disabled: uploadingId === item.id
+  }, "\uD83D\uDCF7 ", uploadingId === item.id ? 'מעלה...' : item.img ? 'החלף תמונה' : 'הוסף תמונה'))))), showAdd && /*#__PURE__*/React.createElement(Modal, {
     title: "\u05DE\u05DE\u05E6\u05D0 \u05D7\u05D3\u05E9",
     onClose: () => setShowAdd(false),
     width: 480
@@ -6659,15 +6731,15 @@ function PunchListTab({
     style: {
       display: 'none'
     },
-    onChange: e => {
+    onChange: async e => {
       const file = e.target.files[0];
       if (!file) return;
-      const r = new FileReader();
-      r.onload = ev => setForm(f => ({
+      setUploadingForm(true);
+      await uploadOfficeFile(officeId, project.id, 'punchlist', file, path => setForm(f => ({
         ...f,
-        img: ev.target.result
-      }));
-      r.readAsDataURL(file);
+        img: path
+      })));
+      setUploadingForm(false);
     }
   }), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -6678,8 +6750,9 @@ function PunchListTab({
   }, /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
-    onClick: () => formImgRef.current?.click()
-  }, "\uD83D\uDCF7 \u05D1\u05D7\u05E8 \u05EA\u05DE\u05D5\u05E0\u05D4"), form.img && /*#__PURE__*/React.createElement("span", {
+    onClick: () => formImgRef.current?.click(),
+    disabled: uploadingForm
+  }, "\uD83D\uDCF7 ", uploadingForm ? 'מעלה...' : 'בחר תמונה'), form.img && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: C.success
@@ -6966,7 +7039,8 @@ function RFITab({
 // ─── GALLERY TAB ──────────────────────────────────────────────────────────────
 function GalleryTab({
   project,
-  setProject
+  setProject,
+  officeId
 }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({
@@ -6976,6 +7050,7 @@ function GalleryTab({
     url: null
   });
   const [view, setView] = React.useState('grid');
+  const [uploading, setUploading] = React.useState(false);
   const fileRef = React.useRef();
   const coverRef = React.useRef();
   const gallery = project.gallery || [];
@@ -6997,16 +7072,16 @@ function GalleryTab({
     });
     setShowAdd(false);
   };
-  const setCover = url => setProject(p => ({
+  const setCover = path => setProject(p => ({
     ...p,
-    coverImage: url
+    coverImage: path
   }));
-  const handleFileChange = (e, onRead) => {
+  const handleFileChange = async (e, onUploaded) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => onRead(ev.target.result);
-    reader.readAsDataURL(file);
+    setUploading(true);
+    await uploadOfficeFile(officeId, project.id, 'gallery', file, onUploaded);
+    setUploading(false);
   };
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7041,12 +7116,13 @@ function GalleryTab({
     style: {
       display: 'none'
     },
-    onChange: e => handleFileChange(e, url => setCover(url))
+    onChange: e => handleFileChange(e, path => setCover(path))
   }), /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
-    onClick: () => coverRef.current?.click()
-  }, "\uD83D\uDDBC\uFE0F \u05EA\u05DE\u05D5\u05E0\u05EA \u05E8\u05E7\u05E2 \u05DC\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => coverRef.current?.click(),
+    disabled: uploading
+  }, uploading ? 'מעלה...' : '🖼️ תמונת רקע לפרויקט'), /*#__PURE__*/React.createElement("button", {
     onClick: () => setView(v => v === 'grid' ? 'mood' : 'grid'),
     style: {
       padding: '6px 12px',
@@ -7092,8 +7168,8 @@ function GalleryTab({
       position: 'relative',
       overflow: 'hidden'
     }
-  }, img.url ? /*#__PURE__*/React.createElement("img", {
-    src: img.url,
+  }, img.url ? /*#__PURE__*/React.createElement(StorageImage, {
+    path: img.url,
     style: {
       width: '100%',
       height: '100%',
@@ -7163,11 +7239,12 @@ function GalleryTab({
       justifyContent: 'center',
       fontSize: 48
     }
-  }, img.url ? /*#__PURE__*/React.createElement("img", {
-    src: img.url,
+  }, img.url ? /*#__PURE__*/React.createElement(StorageImage, {
+    path: img.url,
     style: {
       width: '100%',
       height: 'auto',
+      minHeight: 120,
       display: 'block'
     },
     alt: img.title
@@ -7221,9 +7298,9 @@ function GalleryTab({
     style: {
       display: 'none'
     },
-    onChange: e => handleFileChange(e, url => setForm(f => ({
+    onChange: e => handleFileChange(e, path => setForm(f => ({
       ...f,
-      url
+      url: path
     })))
   }), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7234,8 +7311,9 @@ function GalleryTab({
   }, /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
-    onClick: () => fileRef.current?.click()
-  }, "\u05D1\u05D7\u05E8 \u05E7\u05D5\u05D1\u05E5"), form.url && /*#__PURE__*/React.createElement("span", {
+    onClick: () => fileRef.current?.click(),
+    disabled: uploading
+  }, uploading ? 'מעלה...' : 'בחר קובץ'), form.url && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: C.success
@@ -7274,7 +7352,8 @@ function GalleryTab({
 // ─── DOCUMENTS TAB ────────────────────────────────────────────────────────────
 function DocumentsTab({
   project,
-  setProject
+  setProject,
+  officeId
 }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({
@@ -7282,8 +7361,9 @@ function DocumentsTab({
     type: 'drawing',
     uploadedBy: '',
     fileType: 'pdf',
-    fileData: null
+    filePath: null
   });
+  const [uploading, setUploading] = React.useState(false);
   const fileRef = React.useRef();
   const docs = project.documents || [];
   const add = () => {
@@ -7302,11 +7382,11 @@ function DocumentsTab({
       type: 'drawing',
       uploadedBy: '',
       fileType: 'pdf',
-      fileData: null
+      filePath: null
     });
     setShowAdd(false);
   };
-  const handleFile = e => {
+  const handleFile = async e => {
     const file = e.target.files[0];
     if (!file) return;
     const ext = file.name.split('.').pop().toLowerCase();
@@ -7315,10 +7395,12 @@ function DocumentsTab({
       name: f.name || file.name.replace(/\.[^.]+$/, ''),
       fileType: ext
     }));
-    readFileAsDataURL(file, dataUrl => setForm(f => ({
+    setUploading(true);
+    await uploadOfficeFile(officeId, project.id, 'documents', file, path => setForm(f => ({
       ...f,
-      fileData: dataUrl
+      filePath: path
     })));
+    setUploading(false);
   };
   const typeIcons = {
     drawing: '📐',
@@ -7369,7 +7451,7 @@ function DocumentsTab({
     }
   }, "\u05D0\u05D9\u05DF \u05DE\u05E1\u05DE\u05DB\u05D9\u05DD"), docs.map(doc => /*#__PURE__*/React.createElement("div", {
     key: doc.id,
-    onClick: () => openAttachment(doc.fileData),
+    onClick: () => openAttachment(doc.filePath || doc.fileData),
     style: {
       background: C.card,
       borderRadius: 12,
@@ -7378,7 +7460,7 @@ function DocumentsTab({
       display: 'flex',
       alignItems: 'center',
       gap: 14,
-      cursor: doc.fileData ? 'pointer' : 'default'
+      cursor: doc.filePath || doc.fileData ? 'pointer' : 'default'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7400,7 +7482,7 @@ function DocumentsTab({
       fontSize: 14,
       marginTop: 4
     }
-  }, typeLabels[doc.type] || doc.type, " \xB7 ", fmtDate(doc.date), doc.uploadedBy && ' · ' + doc.uploadedBy, !doc.fileData && ' · אין קובץ מצורף')), /*#__PURE__*/React.createElement(Badge, {
+  }, typeLabels[doc.type] || doc.type, " \xB7 ", fmtDate(doc.date), doc.uploadedBy && ' · ' + doc.uploadedBy, !(doc.filePath || doc.fileData) && ' · אין קובץ מצורף')), /*#__PURE__*/React.createElement(Badge, {
     text: doc.fileType?.toUpperCase() || 'PDF',
     color: C.info
   })))), showAdd && /*#__PURE__*/React.createElement(Modal, {
@@ -7438,8 +7520,14 @@ function DocumentsTab({
   }, /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
-    onClick: () => fileRef.current?.click()
-  }, "\uD83D\uDCC2 \u05D1\u05D7\u05E8 \u05E7\u05D5\u05D1\u05E5"), form.fileType !== 'pdf' && /*#__PURE__*/React.createElement(Badge, {
+    onClick: () => fileRef.current?.click(),
+    disabled: uploading
+  }, uploading ? 'מעלה...' : '📂 בחר קובץ'), form.filePath && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: C.success
+    }
+  }, "\u2713 \u05D4\u05D5\u05E2\u05DC\u05D4"), form.fileType !== 'pdf' && /*#__PURE__*/React.createElement(Badge, {
     text: form.fileType.toUpperCase(),
     color: C.info
   }))), /*#__PURE__*/React.createElement(Input, {
@@ -7498,7 +7586,8 @@ function DocumentsTab({
 // ─── QUOTES TAB ───────────────────────────────────────────────────────────────
 function QuotesTab({
   project,
-  setProject
+  setProject,
+  officeId
 }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({
@@ -7506,9 +7595,11 @@ function QuotesTab({
     amount: '',
     validUntil: '',
     fileName: null,
-    fileData: null
+    filePath: null
   });
   const [sigModal, setSigModal] = React.useState(null);
+  const [uploadingId, setUploadingId] = React.useState(null);
+  const [uploadingForm, setUploadingForm] = React.useState(false);
   const fileRefs = React.useRef({});
   const formFileRef = React.useRef();
   const quotes = project.quotes || [];
@@ -7530,7 +7621,7 @@ function QuotesTab({
       amount: '',
       validUntil: '',
       fileName: null,
-      fileData: null
+      filePath: null
     });
     setShowAdd(false);
   };
@@ -7552,14 +7643,18 @@ function QuotesTab({
     }));
     setSigModal(null);
   };
-  const attachFile = (id, file) => readFileAsDataURL(file, (dataUrl, name) => setProject(p => ({
-    ...p,
-    quotes: quotes.map(q => q.id === id ? {
-      ...q,
-      fileName: name,
-      fileData: dataUrl
-    } : q)
-  })));
+  const attachFile = async (id, file) => {
+    setUploadingId(id);
+    await uploadOfficeFile(officeId, project.id, 'quotes', file, (path, name) => setProject(p => ({
+      ...p,
+      quotes: quotes.map(q => q.id === id ? {
+        ...q,
+        fileName: name,
+        filePath: path
+      } : q)
+    })));
+    setUploadingId(null);
+  };
   return /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 24,
@@ -7632,13 +7727,13 @@ function QuotesTab({
       color: C.success
     }
   }, "\u2713 \u05D7\u05EA\u05D5\u05DD: ", q.signature), q.fileName && /*#__PURE__*/React.createElement("div", {
-    onClick: () => openAttachment(q.fileData),
+    onClick: () => openAttachment(q.filePath),
     style: {
       fontSize: 13,
       color: C.info,
       marginBottom: 10,
-      cursor: q.fileData ? 'pointer' : 'default',
-      textDecoration: q.fileData ? 'underline' : 'none'
+      cursor: q.filePath ? 'pointer' : 'default',
+      textDecoration: q.filePath ? 'underline' : 'none'
     }
   }, "\uD83D\uDCCE ", q.fileName), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7668,8 +7763,9 @@ function QuotesTab({
   }), /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
-    onClick: () => fileRefs.current[q.id]?.click()
-  }, "\uD83D\uDCCE ", q.fileName ? 'החלף קובץ' : 'צרף PDF'), /*#__PURE__*/React.createElement(Btn, {
+    onClick: () => fileRefs.current[q.id]?.click(),
+    disabled: uploadingId === q.id
+  }, "\uD83D\uDCCE ", uploadingId === q.id ? 'מעלה...' : q.fileName ? 'החלף קובץ' : 'צרף PDF'), /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
     onClick: () => {
@@ -7737,11 +7833,17 @@ function QuotesTab({
     style: {
       display: 'none'
     },
-    onChange: e => readFileAsDataURL(e.target.files[0], (dataUrl, name) => setForm(f => ({
-      ...f,
-      fileName: name,
-      fileData: dataUrl
-    })))
+    onChange: async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      setUploadingForm(true);
+      await uploadOfficeFile(officeId, project.id, 'quotes', file, (path, name) => setForm(f => ({
+        ...f,
+        fileName: name,
+        filePath: path
+      })));
+      setUploadingForm(false);
+    }
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -7751,8 +7853,9 @@ function QuotesTab({
   }, /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
-    onClick: () => formFileRef.current?.click()
-  }, "\uD83D\uDCCE \u05D1\u05D7\u05E8 \u05E7\u05D5\u05D1\u05E5"), form.fileName && /*#__PURE__*/React.createElement("span", {
+    onClick: () => formFileRef.current?.click(),
+    disabled: uploadingForm
+  }, "\uD83D\uDCCE ", uploadingForm ? 'מעלה...' : 'בחר קובץ'), form.fileName && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: C.success
@@ -7811,15 +7914,18 @@ function QuotesTab({
 function ApprovalsTab({
   project,
   setProject,
-  user
+  user,
+  officeId
 }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({
     title: '',
     requestedBy: '',
     attachmentName: null,
-    attachmentData: null
+    attachmentPath: null
   });
+  const [uploadingId, setUploadingId] = React.useState(null);
+  const [uploadingForm, setUploadingForm] = React.useState(false);
   const attachRefs = React.useRef({});
   const formAttachRef = React.useRef();
   const approvals = project.approvals || [];
@@ -7840,20 +7946,22 @@ function ApprovalsTab({
       title: '',
       requestedBy: '',
       attachmentName: null,
-      attachmentData: null
+      attachmentPath: null
     });
     setShowAdd(false);
   };
-  const attachPDF = (id, file) => {
+  const attachPDF = async (id, file) => {
     if (!file) return;
-    readFileAsDataURL(file, (dataUrl, name) => setProject(p => ({
+    setUploadingId(id);
+    await uploadOfficeFile(officeId, project.id, 'approvals', file, (path, name) => setProject(p => ({
       ...p,
       approvals: approvals.map(a => a.id === id ? {
         ...a,
         attachmentName: name,
-        attachmentData: dataUrl
+        attachmentPath: path
       } : a)
     })));
+    setUploadingId(null);
   };
   const approve = (id, comment = '') => setProject(p => ({
     ...p,
@@ -7935,13 +8043,13 @@ function ApprovalsTab({
       marginBottom: 12
     }
   }, "\u05D1\u05E7\u05E9\u05D4 \u05DE: ", a.requestedBy, " \xB7 ", fmtDate(a.date)), a.attachmentName && /*#__PURE__*/React.createElement("div", {
-    onClick: () => openAttachment(a.attachmentData),
+    onClick: () => openAttachment(a.attachmentPath),
     style: {
       fontSize: 13,
       color: C.info,
       marginBottom: 8,
-      cursor: a.attachmentData ? 'pointer' : 'default',
-      textDecoration: a.attachmentData ? 'underline' : 'none'
+      cursor: a.attachmentPath ? 'pointer' : 'default',
+      textDecoration: a.attachmentPath ? 'underline' : 'none'
     }
   }, "\uD83D\uDCCE ", a.attachmentName), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7967,8 +8075,9 @@ function ApprovalsTab({
   }), /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
-    onClick: () => attachRefs.current[a.id]?.click()
-  }, "\uD83D\uDCCE \u05E6\u05E8\u05E3 PDF"))))), done.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    onClick: () => attachRefs.current[a.id]?.click(),
+    disabled: uploadingId === a.id
+  }, "\uD83D\uDCCE ", uploadingId === a.id ? 'מעלה...' : 'צרף PDF'))))), done.length > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       color: C.sub,
@@ -8045,11 +8154,17 @@ function ApprovalsTab({
     style: {
       display: 'none'
     },
-    onChange: e => readFileAsDataURL(e.target.files[0], (dataUrl, name) => setForm(f => ({
-      ...f,
-      attachmentName: name,
-      attachmentData: dataUrl
-    })))
+    onChange: async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      setUploadingForm(true);
+      await uploadOfficeFile(officeId, project.id, 'approvals', file, (path, name) => setForm(f => ({
+        ...f,
+        attachmentName: name,
+        attachmentPath: path
+      })));
+      setUploadingForm(false);
+    }
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -8059,8 +8174,9 @@ function ApprovalsTab({
   }, /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
-    onClick: () => formAttachRef.current?.click()
-  }, "\uD83D\uDCCE \u05D1\u05D7\u05E8 \u05E7\u05D5\u05D1\u05E5"), form.attachmentName && /*#__PURE__*/React.createElement("span", {
+    onClick: () => formAttachRef.current?.click(),
+    disabled: uploadingForm
+  }, "\uD83D\uDCCE ", uploadingForm ? 'מעלה...' : 'בחר קובץ'), form.attachmentName && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 13,
       color: C.success
@@ -9333,7 +9449,8 @@ function ProjectView({
       case 'punchlist':
         return /*#__PURE__*/React.createElement(PunchListTab, {
           project: project,
-          setProject: setProject
+          setProject: setProject,
+          officeId: user.officeId
         });
       case 'rfi':
         return /*#__PURE__*/React.createElement(RFITab, {
@@ -9343,23 +9460,27 @@ function ProjectView({
       case 'gallery':
         return /*#__PURE__*/React.createElement(GalleryTab, {
           project: project,
-          setProject: setProject
+          setProject: setProject,
+          officeId: user.officeId
         });
       case 'documents':
         return /*#__PURE__*/React.createElement(DocumentsTab, {
           project: project,
-          setProject: setProject
+          setProject: setProject,
+          officeId: user.officeId
         });
       case 'quotes':
         return /*#__PURE__*/React.createElement(QuotesTab, {
           project: project,
-          setProject: setProject
+          setProject: setProject,
+          officeId: user.officeId
         });
       case 'approvals':
         return /*#__PURE__*/React.createElement(ApprovalsTab, {
           project: project,
           setProject: setProject,
-          user: user
+          user: user,
+          officeId: user.officeId
         });
       case 'messages':
         return /*#__PURE__*/React.createElement(MessagesTab, {
@@ -10036,8 +10157,8 @@ function ProjectsList({
         borderRadius: 8,
         margin: '-28px -28px 20px'
       }
-    }, /*#__PURE__*/React.createElement("img", {
-      src: p.coverImage,
+    }, /*#__PURE__*/React.createElement(StorageImage, {
+      path: p.coverImage,
       style: {
         width: '100%',
         height: '100%',
