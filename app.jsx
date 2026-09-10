@@ -6,77 +6,97 @@ var C = null;
 // ─── THEMES ─────────────────────────────────────────────────────────────────
 const THEMES = {
   lightStone: {
-    id:'lightStone', name:'Light Stone', primary:'#8B7355', accent:'#C4A882',
-    bg:'#F5F0E8', card:'#FFFFFF', border:'#E0D5C5', text:'#2C2416', sub:'#6B5B45',
-    success:'#5A8A5A', warning:'#C4963B', danger:'#B05050', info:'#5B7FA6',
-    ai:'#7B5EA7', sidebar:'#3D3024', sidebarAccent:'#C4A882', sidebarText:'#F5F0E8',
-    inputBg:'#FFFFFF', archBg:false
+    id:'lightStone', name:'Light Stone', primary:'#AF8C5C', accent:'#D1C7BD',
+    bg:'#E7E2DD', card:'#F2EDE8', border:'#D1C7BD', text:'#1A1613', sub:'#474440',
+    success:'#5A7A50', warning:'#AF8C5C', danger:'#8A4040', info:'#4A6A80',
+    ai:'#7A5A90', sidebar:'#1A1613', sidebarAccent:'#AF8C5C', sidebarText:'#E7E2DD',
+    inputBg:'#F2EDE8', archBg:false
   },
   warmSand: {
-    id:'warmSand', name:'Warm Sand', primary:'#B8860B', accent:'#DAA520',
-    bg:'#FDF6E3', card:'#FFFEF5', border:'#E8D8A0', text:'#3D2B0A', sub:'#8B6914',
-    success:'#5C8C4A', warning:'#CC8800', danger:'#B84040', info:'#4A7A9B',
-    ai:'#8B5EA0', sidebar:'#5C4A1E', sidebarAccent:'#DAA520', sidebarText:'#FDF6E3',
-    inputBg:'#FFFEF5', archBg:false
+    id:'warmSand', name:'Warm Sand', primary:'#C86D38', accent:'#FEC868',
+    bg:'#FEF5E6', card:'#FFFBF0', border:'#F0D8A0', text:'#473C33', sub:'#7A6455',
+    success:'#6A8040', warning:'#C89030', danger:'#B04038', info:'#4A7080',
+    ai:'#8A6A48', sidebar:'#473C33', sidebarAccent:'#FDA769', sidebarText:'#FEF5E6',
+    inputBg:'#FFFBF0', archBg:false
   },
   softOlive: {
-    id:'softOlive', name:'Soft Olive', primary:'#6B7A3E', accent:'#9AAB58',
-    bg:'#F4F6EE', card:'#FFFFFF', border:'#D4DDB8', text:'#2A3018', sub:'#5A6B30',
-    success:'#4A8A5A', warning:'#B89B2A', danger:'#A85050', info:'#4A7080',
-    ai:'#6A5A9B', sidebar:'#3A4A1E', sidebarAccent:'#9AAB58', sidebarText:'#F4F6EE',
-    inputBg:'#FFFFFF', archBg:false
+    id:'softOlive', name:'Soft Olive', primary:'#839958', accent:'#D3968C',
+    bg:'#0A3323', card:'#0D3D2A', border:'#1A5035', text:'#F7F4D5', sub:'#6B8040',
+    success:'#6AAB58', warning:'#C4883A', danger:'#A04040', info:'#105666',
+    ai:'#9A78C0', sidebar:'#060E09', sidebarAccent:'#839958', sidebarText:'#F7F4D5',
+    inputBg:'#102818', archBg:true
   },
   architectDark: {
-    id:'architectDark', name:'Architect Dark', primary:'#C0A882', accent:'#E8C97E',
-    bg:'#0A0A0C', card:'#141418', border:'#2A2A30', text:'#E8E4DC', sub:'#A09880',
-    success:'#4CAF80', warning:'#D4A030', danger:'#C05050', info:'#5B8FA8',
-    ai:'#9B78D0', sidebar:'#080810', sidebarAccent:'#E8C97E', sidebarText:'#E8E4DC',
-    inputBg:'#1C1C22', archBg:true
+    id:'architectDark', name:'Architect Dark', primary:'#D4AF37', accent:'#415A77',
+    bg:'#0D1B2A', card:'#1B263B', border:'#2D4060', text:'#F7F3E9', sub:'#8A9CB5',
+    success:'#4A8A60', warning:'#D4AF37', danger:'#C05050', info:'#415A77',
+    ai:'#7A50C0', sidebar:'#080F1A', sidebarAccent:'#D4AF37', sidebarText:'#F7F3E9',
+    inputBg:'#162030', archBg:true
   },
   zahaHadid: {
-    id:'zahaHadid', name:'Zaha Hadid', primary:'#FF6B35', accent:'#FF9A5C',
-    bg:'#0D0D14', card:'#13131C', border:'#252535', text:'#F0EDE8', sub:'#A8A0B0',
-    success:'#50C878', warning:'#FFB830', danger:'#FF4444', info:'#4AAFFF',
-    ai:'#C850FF', sidebar:'#08080F', sidebarAccent:'#FF6B35', sidebarText:'#F0EDE8',
-    inputBg:'#1A1A25', archBg:true
+    id:'zahaHadid', name:'Dubai Concrete', primary:'#861211', accent:'#2B7574',
+    bg:'#0E2931', card:'#12484C', border:'#1E5A60', text:'#E2E2E0', sub:'#8BADA9',
+    success:'#4A9A70', warning:'#C4883A', danger:'#A03030', info:'#2B7574',
+    ai:'#9050C0', sidebar:'#071419', sidebarAccent:'#861211', sidebarText:'#E2E2E0',
+    inputBg:'#0C3038', archBg:true
   },
   bigBjarke: {
-    id:'bigBjarke', name:'BIG Bjarke', primary:'#00C5A8', accent:'#00E5C0',
-    bg:'#050A12', card:'#0C1220', border:'#1A2540', text:'#E8F4F0', sub:'#80B8B0',
-    success:'#00D880', warning:'#FFB000', danger:'#FF4060', info:'#00AAFF',
-    ai:'#8040FF', sidebar:'#030710', sidebarAccent:'#00C5A8', sidebarText:'#E8F4F0',
-    inputBg:'#101828', archBg:true
+    id:'bigBjarke', name:'Copenhagen Blue', primary:'#E16A3D', accent:'#FFA45D',
+    bg:'#043E52', card:'#0A5268', border:'#0E5E78', text:'#FFF5EE', sub:'#7AB0BE',
+    success:'#016A6D', warning:'#FFA45D', danger:'#D04030', info:'#20A0B0',
+    ai:'#C040A0', sidebar:'#021E2A', sidebarAccent:'#E16A3D', sidebarText:'#FFF5EE',
+    inputBg:'#083045', archBg:true
   },
   tadaoAndo: {
-    id:'tadaoAndo', name:'Tadao Ando', primary:'#808080', accent:'#A0A0A0',
-    bg:'#F0EFED', card:'#F8F8F6', border:'#D8D6D0', text:'#1A1A1A', sub:'#666666',
-    success:'#607060', warning:'#888840', danger:'#804040', info:'#405880',
-    ai:'#604880', sidebar:'#2A2A2A', sidebarAccent:'#A0A0A0', sidebarText:'#F0EFED',
-    inputBg:'#FFFFFF', archBg:false
+    id:'tadaoAndo', name:'Osaka Brutalism', primary:'#D6C6AC', accent:'#AA9371',
+    bg:'#000000', card:'#1A1613', border:'#494D54', text:'#FEF4E3', sub:'#AA9371',
+    success:'#5A7A50', warning:'#AA9371', danger:'#8A4040', info:'#4A6080',
+    ai:'#8050A0', sidebar:'#0A0A0A', sidebarAccent:'#D6C6AC', sidebarText:'#FEF4E3',
+    inputBg:'#121212', archBg:true
   },
   fosterGlass: {
-    id:'fosterGlass', name:'Foster + Glass', primary:'#4AAFEF', accent:'#80CFFF',
-    bg:'#F2F8FC', card:'#FFFFFF', border:'#C8E4F5', text:'#0A2030', sub:'#4080A0',
-    success:'#40A860', warning:'#D0A020', danger:'#C04050', info:'#3090D0',
-    ai:'#7050C0', sidebar:'#0A1E30', sidebarAccent:'#4AAFEF', sidebarText:'#F2F8FC',
-    inputBg:'#FFFFFF', archBg:false
+    id:'fosterGlass', name:'London Glass', primary:'#E0C58F', accent:'#09CBC2',
+    bg:'#112250', card:'#1E3060', border:'#3C5070', text:'#F5F0E9', sub:'#B0A888',
+    success:'#20B890', warning:'#E0C58F', danger:'#C04050', info:'#09CBC2',
+    ai:'#9060C0', sidebar:'#080E20', sidebarAccent:'#E0C58F', sidebarText:'#F5F0E9',
+    inputBg:'#1A2848', archBg:true
   },
   snohettaNordic: {
-    id:'snohettaNordic', name:'Snøhetta Nordic', primary:'#5B8FB0', accent:'#80B8D8',
-    bg:'#EEF3F7', card:'#FFFFFF', border:'#C0D8E8', text:'#162030', sub:'#486080',
-    success:'#4A8A6A', warning:'#C0A020', danger:'#B04050', info:'#3080B0',
-    ai:'#704A90', sidebar:'#162030', sidebarAccent:'#5B8FB0', sidebarText:'#EEF3F7',
-    inputBg:'#FFFFFF', archBg:false
+    id:'snohettaNordic', name:'Oslo Nordic', primary:'#CDAA80', accent:'#997953',
+    bg:'#0F1E3F', card:'#213A56', border:'#2D4A66', text:'#F5F0E8', sub:'#A09878',
+    success:'#4A8A6A', warning:'#CDAA80', danger:'#B04050', info:'#5090C0',
+    ai:'#7060C0', sidebar:'#080E20', sidebarAccent:'#CDAA80', sidebarText:'#F5F0E8',
+    inputBg:'#182A44', archBg:true
   },
   calqNoir: {
-    id:'calqNoir', name:'Calq Noir', primary:'#FFFFFF', accent:'#CCCCCC',
-    bg:'#080808', card:'#111111', border:'#1E1E1E', text:'#F5F5F5', sub:'#555555',
-    success:'#3DBA7A', warning:'#C8902A', danger:'#D94F4F', info:'#4A90C0',
-    ai:'#9B6EFF', sidebar:'#000000', sidebarAccent:'#FFFFFF', sidebarText:'#F5F5F5',
+    id:'calqNoir', name:'Calq Noir', primary:'#E3E5E4', accent:'#4B4949',
+    bg:'#040404', card:'#151515', border:'#2B2B2A', text:'#E3E5E4', sub:'#989C9A',
+    success:'#3DAA7A', warning:'#C0902A', danger:'#D04040', info:'#4A90C0',
+    ai:'#9060E0', sidebar:'#000000', sidebarAccent:'#E3E5E4', sidebarText:'#E3E5E4',
     inputBg:'#161616', archBg:false
+  },
+  snowWhite: {
+    id:'snowWhite', name:'Snow White', primary:'#1A1A1A', accent:'#888888',
+    bg:'#FFFFFF', card:'#F6F6F6', border:'#E2E2E2', text:'#111111', sub:'#777777',
+    success:'#2E7D32', warning:'#C06800', danger:'#C62828', info:'#1565C0',
+    ai:'#6A1B9A', sidebar:'#F0F0F0', sidebarAccent:'#1A1A1A', sidebarText:'#111111',
+    inputBg:'#FFFFFF', archBg:false
+  },
+  customTheme: {
+    id:'customTheme', name:'ערכה אישית', primary:'#AF8C5C', accent:'#D1C7BD',
+    bg:'#E7E2DD', card:'#F2EDE8', border:'#D1C7BD', text:'#1A1613', sub:'#474440',
+    success:'#5A7A50', warning:'#AF8C5C', danger:'#8A4040', info:'#4A6A80',
+    ai:'#7A5A90', sidebar:'#1A1613', sidebarAccent:'#AF8C5C', sidebarText:'#E7E2DD',
+    inputBg:'#F2EDE8', archBg:false
   }
 };
-(function(){ C = THEMES.calqNoir; })();
+(function(){
+  try {
+    const saved = localStorage.getItem('tektona_custom_theme');
+    if (saved) Object.assign(THEMES.customTheme, JSON.parse(saved));
+  } catch(e) {}
+  C = THEMES.calqNoir;
+})();
 
 // ─── PLAN FEATURES ───────────────────────────────────────────────────────────
 const _BASE = ['portal','timeline','documents','gallery','approvals','messages',
@@ -89,6 +109,9 @@ const PLAN_FEATURES = {
   studio:  new Set(_STU)
 };
 const OFFICE_PLAN = { plan:'pro', logo:null, officeName:'Tektona' };
+let OFFICE_LOGO_DATA = null;
+try { OFFICE_LOGO_DATA = localStorage.getItem('tektona_office_logo') || null; } catch(e) {}
+if (OFFICE_LOGO_DATA) OFFICE_PLAN.logo = OFFICE_LOGO_DATA;
 const canUse = (f) => PLAN_FEATURES[OFFICE_PLAN.plan].has(f);
 
 // ─── PHASES ──────────────────────────────────────────────────────────────────
@@ -102,6 +125,17 @@ const PHASES = [
   { id:7, name:'גמר ופינישים',     short:'גמר'     },
   { id:8, name:'מסירה וליווי',     short:'מסירה'   }
 ];
+
+// ─── RESPONSIVE HOOK ─────────────────────────────────────────────────────────
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+  React.useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
+  return isMobile;
+}
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2,10);
@@ -337,27 +371,135 @@ function ArchBackground() {
 
 // ─── SVG CIRCLE STAT ─────────────────────────────────────────────────────────
 function SVGCircle({ value, max, color, label, sublabel, size=80 }) {
-  const R = 36, circ = 2*Math.PI*R;
+  const R = 34, circ = 2*Math.PI*R;
   const pct = Math.min(1, (value||0)/(max||1));
   const offset = circ*(1-pct);
+  const gradId = 'cg_' + label?.replace(/\s/g,'') + size;
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
-      <svg width={size} height={size} viewBox="0 0 80 80">
-        <circle cx="40" cy="40" r={R} fill="none" stroke={C.border} strokeWidth="6"/>
-        <circle cx="40" cy="40" r={R} fill="none" stroke={color} strokeWidth="6"
-          strokeDasharray={circ} strokeDashoffset={offset}
-          strokeLinecap="round" transform="rotate(-90 40 40)"
-          style={{ transition:'stroke-dashoffset 1s ease', animation:'circleGrow 1s ease-out' }}/>
-        <text x="40" y="44" textAnchor="middle" fill={C.text}
-          style={{ fontSize:18, fontWeight:700, fontFamily:'Heebo, Arial, sans-serif' }}>
-          {value}
-        </text>
-      </svg>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+      <div style={{ position:'relative', width:size, height:size }}>
+        <svg width={size} height={size} viewBox="0 0 80 80">
+          <defs>
+            <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={color} stopOpacity="1"/>
+              <stop offset="100%" stopColor={color} stopOpacity="0.55"/>
+            </linearGradient>
+            <filter id={'glow_'+gradId}>
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          {/* Track */}
+          <circle cx="40" cy="40" r={R} fill="none" stroke={C.border} strokeWidth="5"/>
+          {/* Value arc */}
+          <circle cx="40" cy="40" r={R} fill="none" stroke={`url(#${gradId})`} strokeWidth="5"
+            strokeDasharray={circ} strokeDashoffset={offset}
+            strokeLinecap="round" transform="rotate(-90 40 40)"
+            filter={`url(#glow_${gradId})`}
+            style={{ transition:'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)', animation:'circleGrow 1.2s ease-out' }}/>
+          {/* Center value */}
+          <text x="40" y="37" textAnchor="middle" fill={C.text}
+            style={{ fontSize:19, fontWeight:800, fontFamily:'Space Grotesk, Heebo, Arial, sans-serif' }}>
+            {value}
+          </text>
+          {sublabel && (
+            <text x="40" y="51" textAnchor="middle" fill={C.sub}
+              style={{ fontSize:10, fontFamily:'Space Grotesk, Arial, sans-serif' }}>
+              {sublabel}
+            </text>
+          )}
+        </svg>
+        {/* Glow ring when high */}
+        {pct >= 0.8 && (
+          <div style={{ position:'absolute', inset:-2, borderRadius:'50%',
+            boxShadow:`0 0 12px 2px ${color}40`, pointerEvents:'none' }}/>
+        )}
+      </div>
       <div style={{ textAlign:'center' }}>
-        <div style={{ fontSize:12, fontWeight:600, color:C.text }}>{label}</div>
-        {sublabel && <div style={{ fontSize:11, color:C.sub }}>{sublabel}</div>}
+        <div style={{ fontSize:13, fontWeight:600, color:C.sub, letterSpacing:'0.04em', textTransform:'uppercase' }}>{label}</div>
       </div>
     </div>
+  );
+}
+
+// ─── SVG BAR CHART ────────────────────────────────────────────────────────────
+function SVGBarChart({ data, height=120, showValues=true }) {
+  if (!data || data.length === 0) return null;
+  const maxVal = Math.max(...data.map(d => d.value), 1);
+  const n = data.length;
+  const chartH = height - 24;
+  const barW = 80 / n;
+  return (
+    <svg width="100%" height={height} viewBox={`0 0 100 ${height}`} preserveAspectRatio="none"
+      style={{ overflow:'visible' }}>
+      <defs>
+        {data.map((d, i) => (
+          <linearGradient key={'bg'+i} id={`bar_g_${i}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={d.color || C.primary} stopOpacity="0.9"/>
+            <stop offset="100%" stopColor={d.color || C.primary} stopOpacity="0.4"/>
+          </linearGradient>
+        ))}
+      </defs>
+      {data.map((d, i) => {
+        const barH = Math.max(2, (d.value / maxVal) * chartH);
+        const x = i * barW + barW * 0.2;
+        const w = barW * 0.6;
+        const y = chartH - barH + 2;
+        return (
+          <g key={i}>
+            {/* Background */}
+            <rect x={x} y={2} width={w} height={chartH} fill={C.border} rx="2" opacity="0.4"/>
+            {/* Value bar */}
+            <rect x={x} y={y} width={w} height={barH} fill={`url(#bar_g_${i})`} rx="2"
+              style={{ transition:'height 1s ease, y 1s ease' }}/>
+            {/* Value label */}
+            {showValues && d.value > 0 && (
+              <text x={x + w/2} y={y - 3} textAnchor="middle" fill={d.color || C.primary}
+                style={{ fontSize:6, fontWeight:700, fontFamily:'Space Grotesk, Arial' }}>
+                {d.value}
+              </text>
+            )}
+            {/* X label */}
+            <text x={x + w/2} y={height - 2} textAnchor="middle" fill={C.sub}
+              style={{ fontSize:5.5, fontFamily:'Heebo, Arial', direction:'rtl' }}>
+              {d.label}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ─── SVG LINE CHART ───────────────────────────────────────────────────────────
+function SVGLineChart({ points, color, height=80, label }) {
+  if (!points || points.length < 2) return null;
+  const maxV = Math.max(...points.map(p=>p.v), 1);
+  const n = points.length;
+  const W = 100, H = height - 16;
+  const toX = (i) => (i / (n-1)) * W;
+  const toY = (v) => H - (v / maxV) * H + 4;
+  const pathD = points.map((p,i) => `${i===0?'M':'L'}${toX(i)},${toY(p.v)}`).join(' ');
+  const areaD = pathD + ` L${toX(n-1)},${H+4} L0,${H+4} Z`;
+  const gradId = 'lg_'+label?.replace(/\s/g,'');
+  return (
+    <svg width="100%" height={height} viewBox={`0 0 100 ${height}`} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3"/>
+          <stop offset="100%" stopColor={color} stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill={`url(#${gradId})`}/>
+      <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      {points.map((p,i) => (
+        <circle key={i} cx={toX(i)} cy={toY(p.v)} r="1.8" fill={color}/>
+      ))}
+      {points.map((p,i) => (
+        <text key={'l'+i} x={toX(i)} y={height-1} textAnchor="middle" fill={C.sub}
+          style={{ fontSize:5, fontFamily:'Space Grotesk, Arial' }}>{p.label}</text>
+      ))}
+    </svg>
   );
 }
 
@@ -374,29 +516,29 @@ function AccessibilityWidget() {
     <div style={{ position:'fixed', bottom:80, left:16, zIndex:9999 }}>
       <button onClick={() => setOpen(!open)}
         style={{ width:44, height:44, borderRadius:'50%', border:'none',
-          background:C.primary, color:'#fff', fontSize:20, cursor:'pointer',
+          background:C.primary, color:'#fff', fontSize:24, cursor:'pointer',
           boxShadow:'0 2px 12px rgba(0,0,0,0.3)', display:'flex', alignItems:'center', justifyContent:'center' }}>
         ♿
       </button>
       {open && (
         <div style={{ position:'absolute', bottom:52, left:0, background:C.card, border:`1px solid ${C.border}`,
           borderRadius:12, padding:16, width:200, boxShadow:'0 4px 20px rgba(0,0,0,0.2)' }}>
-          <div style={{ fontSize:13, fontWeight:700, color:C.text, marginBottom:12 }}>נגישות</div>
+          <div style={{ fontSize:16, fontWeight:700, color:C.text, marginBottom:12 }}>נגישות</div>
           <div style={{ display:'flex', gap:8, marginBottom:10 }}>
             <button onClick={() => setFs(f=>Math.max(80,f-10))}
               style={{ flex:1, padding:'6px 0', borderRadius:8, border:`1px solid ${C.border}`,
-                background:C.bg, color:C.text, cursor:'pointer', fontSize:16 }}>A-</button>
+                background:C.bg, color:C.text, cursor:'pointer', fontSize:19 }}>A-</button>
             <button onClick={() => setFs(100)}
               style={{ flex:1, padding:'6px 0', borderRadius:8, border:`1px solid ${C.border}`,
-                background:C.bg, color:C.text, cursor:'pointer', fontSize:13 }}>רגיל</button>
+                background:C.bg, color:C.text, cursor:'pointer', fontSize:16 }}>רגיל</button>
             <button onClick={() => setFs(f=>Math.min(140,f+10))}
               style={{ flex:1, padding:'6px 0', borderRadius:8, border:`1px solid ${C.border}`,
-                background:C.bg, color:C.text, cursor:'pointer', fontSize:18 }}>A+</button>
+                background:C.bg, color:C.text, cursor:'pointer', fontSize:22 }}>A+</button>
           </div>
           <button onClick={() => setContrast(c=>!c)}
             style={{ width:'100%', padding:'7px 0', borderRadius:8,
               border:`1px solid ${C.border}`, background: contrast ? C.primary : C.bg,
-              color: contrast ? '#fff' : C.text, cursor:'pointer', fontSize:13 }}>
+              color: contrast ? '#fff' : C.text, cursor:'pointer', fontSize:16 }}>
             {contrast ? '✓ ' : ''}ניגודיות גבוהה
           </button>
         </div>
@@ -405,34 +547,234 @@ function AccessibilityWidget() {
   );
 }
 
+// ─── CUSTOM THEME EDITOR ─────────────────────────────────────────────────────
+const CUSTOM_THEME_KEY = 'tektona_custom_theme';
+
+function CustomThemeEditor({ prevThemeId, onApply, onCancel, onSave }) {
+  const [colors, setColors] = React.useState(() => {
+    const { id, name, archBg, ...cols } = THEMES.customTheme;
+    return { ...cols, archBg: archBg || false };
+  });
+
+  const groups = [
+    { title:'צבעים ראשיים', fields:[
+      { key:'primary', label:'ראשי' }, { key:'accent', label:'הדגשה' }
+    ]},
+    { title:'רקע ומשטחים', fields:[
+      { key:'bg', label:'רקע' }, { key:'card', label:'כרטיס' },
+      { key:'border', label:'גבול' }, { key:'inputBg', label:'שדות קלט' }
+    ]},
+    { title:'טקסט', fields:[
+      { key:'text', label:'טקסט ראשי' }, { key:'sub', label:'טקסט משני' }
+    ]},
+    { title:'מצבים', fields:[
+      { key:'success', label:'הצלחה' }, { key:'warning', label:'אזהרה' },
+      { key:'danger', label:'שגיאה' }, { key:'info', label:'מידע' },
+      { key:'ai', label:'AI' }
+    ]},
+    { title:'סרגל צד', fields:[
+      { key:'sidebar', label:'רקע' }, { key:'sidebarAccent', label:'הדגשה' },
+      { key:'sidebarText', label:'טקסט' }
+    ]}
+  ];
+
+  const applyLive = (next) => {
+    Object.assign(THEMES.customTheme, next);
+    onApply('customTheme');
+  };
+
+  const updateColor = (key, val) => {
+    const next = { ...colors, [key]: val };
+    setColors(next);
+    applyLive(next);
+  };
+
+  const loadPreset = (id) => {
+    const th = THEMES[id];
+    if (!th) return;
+    const next = {
+      primary:th.primary, accent:th.accent, bg:th.bg, card:th.card,
+      border:th.border, text:th.text, sub:th.sub, inputBg:th.inputBg,
+      success:th.success, warning:th.warning, danger:th.danger, info:th.info,
+      ai:th.ai, sidebar:th.sidebar, sidebarAccent:th.sidebarAccent,
+      sidebarText:th.sidebarText, archBg:th.archBg
+    };
+    setColors(next);
+    applyLive(next);
+  };
+
+  const handleSave = () => {
+    localStorage.setItem(CUSTOM_THEME_KEY, JSON.stringify(colors));
+    onSave();
+  };
+
+  const handleCancel = () => {
+    onApply(prevThemeId);
+    onCancel();
+  };
+
+  const previewColors = [colors.primary, colors.accent, colors.bg, colors.sidebar];
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', display:'flex',
+      alignItems:'center', justifyContent:'center', zIndex:9100 }} onClick={handleCancel}>
+      <div onClick={e=>e.stopPropagation()} style={{ background:C.card, borderRadius:20, padding:28,
+        width:660, maxWidth:'95vw', maxHeight:'90vh', overflowY:'auto',
+        boxShadow:'0 20px 60px rgba(0,0,0,0.5)', direction:'rtl' }}>
+
+        {/* Header */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+          <div>
+            <h3 style={{ color:C.text, fontSize:22, fontWeight:700, margin:0 }}>✏️ ערכת צבעים אישית</h3>
+            <div style={{ color:C.sub, fontSize:13, marginTop:4 }}>בחר כל צבע בנפרד — התצוגה מתעדכנת בזמן אמת</div>
+          </div>
+          <button onClick={handleCancel} style={{ background:'none', border:'none', color:C.sub, fontSize:26, cursor:'pointer' }}>×</button>
+        </div>
+
+        {/* Live preview strip */}
+        <div style={{ display:'flex', borderRadius:10, overflow:'hidden', height:28, marginBottom:20, gap:1 }}>
+          {previewColors.map((col,i) => (
+            <div key={i} style={{ flex:1, background:col }}/>
+          ))}
+        </div>
+
+        {/* Load from preset */}
+        <div style={{ marginBottom:20 }}>
+          <div style={{ fontSize:13, fontWeight:600, color:C.sub, marginBottom:8 }}>התחל מערכת קיימת:</div>
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+            {Object.entries(THEMES).filter(([id])=>id!=='customTheme').map(([id,th])=>(
+              <button key={id} onClick={()=>loadPreset(id)}
+                style={{ padding:'5px 10px', borderRadius:8, border:`1px solid ${C.border}`,
+                  background:'transparent', color:C.sub, cursor:'pointer', fontSize:12,
+                  display:'flex', alignItems:'center', gap:5, transition:'border-color .15s' }}>
+                <div style={{ display:'flex', gap:2 }}>
+                  {[th.primary, th.bg, th.sidebar].map((col,i)=>(
+                    <div key={i} style={{ width:8, height:8, borderRadius:'50%', background:col, border:`1px solid ${C.border}` }}/>
+                  ))}
+                </div>
+                {th.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Color groups */}
+        {groups.map(group => (
+          <div key={group.title} style={{ marginBottom:20 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:C.sub, marginBottom:10,
+              paddingBottom:6, borderBottom:`1px solid ${C.border}` }}>
+              {group.title}
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(190px,1fr))', gap:8 }}>
+              {group.fields.map(({key, label}) => (
+                <div key={key} style={{ display:'flex', alignItems:'center', gap:10,
+                  padding:'8px 12px', background:C.bg, borderRadius:10 }}>
+                  <div style={{ position:'relative', flexShrink:0 }}>
+                    <div style={{ width:34, height:34, borderRadius:8, background:colors[key]||'#000',
+                      border:`2px solid ${C.border}`, cursor:'pointer', overflow:'hidden' }}>
+                      <input type="color" value={colors[key]||'#000000'}
+                        onChange={e=>updateColor(key, e.target.value)}
+                        style={{ position:'absolute', inset:'-4px', width:'calc(100% + 8px)',
+                          height:'calc(100% + 8px)', opacity:0, cursor:'pointer' }}/>
+                    </div>
+                  </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:C.text }}>{label}</div>
+                    <input type="text" value={colors[key]||''}
+                      onChange={e=>{
+                        const v = e.target.value;
+                        setColors(c=>({...c,[key]:v}));
+                        if(/^#[0-9A-Fa-f]{6}$/.test(v)) applyLive({...colors,[key]:v});
+                      }}
+                      style={{ fontSize:11, color:C.sub, background:'transparent', border:'none',
+                        outline:'none', width:'100%', fontFamily:'monospace', direction:'ltr' }}/>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* archBg toggle */}
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:24,
+          padding:'10px 14px', background:C.bg, borderRadius:10 }}>
+          <button onClick={()=>updateColor('archBg', !colors.archBg)}
+            style={{ width:44, height:24, borderRadius:12, border:'none', flexShrink:0,
+              background:colors.archBg ? C.primary : C.border, cursor:'pointer', position:'relative',
+              transition:'background .2s' }}>
+            <div style={{ position:'absolute', top:2, left:colors.archBg?22:2,
+              width:20, height:20, borderRadius:10, background:'#fff', transition:'left .2s' }}/>
+          </button>
+          <span style={{ fontSize:14, fontWeight:600, color:C.text }}>רקע אנימציה (קווים אדריכליים)</span>
+        </div>
+
+        {/* Actions */}
+        <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+          <Btn variant="ghost" onClick={handleCancel}>ביטול</Btn>
+          <Btn onClick={handleSave}>שמור ערכה</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── THEME SELECTOR ──────────────────────────────────────────────────────────
 function ThemeSelector({ currentId, onSelect, onClose }) {
-  const themeNames = { lightStone:'Light Stone 🪨', warmSand:'Warm Sand 🌕', softOlive:'Soft Olive 🌿',
-    architectDark:'Architect Dark 🖤', zahaHadid:'Zaha Hadid 🔥', bigBjarke:'BIG Bjarke 🌊',
-    tadaoAndo:'Tadao Ando ⬜', fosterGlass:'Foster + Glass 💎', snohettaNordic:'Snøhetta Nordic ❄️' };
+  const [showCustomEditor, setShowCustomEditor] = React.useState(false);
+
+  if (showCustomEditor) {
+    return (
+      <CustomThemeEditor
+        prevThemeId={currentId}
+        onApply={onSelect}
+        onCancel={() => setShowCustomEditor(false)}
+        onSave={() => { setShowCustomEditor(false); onSelect('customTheme'); onClose(); }}
+      />
+    );
+  }
+
+  const themeNames = { lightStone:'Light Stone', warmSand:'Warm Sand', softOlive:'Soft Olive',
+    architectDark:'Architect Dark', zahaHadid:'Dubai Concrete', bigBjarke:'Copenhagen Blue',
+    tadaoAndo:'Osaka Brutalism', fosterGlass:'London Glass', snohettaNordic:'Oslo Nordic',
+    calqNoir:'Calq Noir', snowWhite:'Snow White' };
+
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex',
       alignItems:'center', justifyContent:'center', zIndex:9000 }} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{ background:C.card, borderRadius:20, padding:28,
-        width:520, maxWidth:'95vw', boxShadow:'0 20px 60px rgba(0,0,0,0.4)' }}>
+        width:560, maxWidth:'95vw', boxShadow:'0 20px 60px rgba(0,0,0,0.4)', direction:'rtl' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-          <h3 style={{ color:C.text, fontSize:18, fontWeight:700 }}>בחר ערכת נושא</h3>
-          <button onClick={onClose} style={{ background:'none', border:'none', color:C.sub, fontSize:22, cursor:'pointer' }}>×</button>
+          <h3 style={{ color:C.text, fontSize:22, fontWeight:700 }}>בחר ערכת נושא</h3>
+          <button onClick={onClose} style={{ background:'none', border:'none', color:C.sub, fontSize:26, cursor:'pointer' }}>×</button>
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
-          {Object.entries(THEMES).map(([id, th]) => (
+          {Object.entries(THEMES).filter(([id])=>id!=='customTheme').map(([id, th]) => (
             <button key={id} onClick={() => { onSelect(id); onClose(); }}
               style={{ border: id===currentId ? `2px solid ${C.primary}` : `2px solid ${C.border}`,
-                borderRadius:12, padding:12, background: th.card, cursor:'pointer',
+                borderRadius:0, padding:12, background: th.card, cursor:'pointer',
                 textAlign:'center', transition:'all .2s' }}>
               <div style={{ display:'flex', gap:4, justifyContent:'center', marginBottom:8 }}>
                 {[th.primary, th.accent, th.bg, th.sidebar].map((col,i) => (
-                  <div key={i} style={{ width:14, height:14, borderRadius:3, background:col, border:`1px solid ${th.border}` }}/>
+                  <div key={i} style={{ width:14, height:14, borderRadius:0, background:col, border:`1px solid ${th.border}` }}/>
                 ))}
               </div>
-              <div style={{ fontSize:11, fontWeight:600, color:th.text }}>{themeNames[id]}</div>
+              <div style={{ fontSize:13, fontWeight:600, color:th.text }}>{themeNames[id]}</div>
             </button>
           ))}
+          {/* Custom theme card */}
+          <button onClick={() => { onSelect('customTheme'); setShowCustomEditor(true); }}
+            style={{ border: currentId==='customTheme' ? `2px solid ${C.primary}` : `2px dashed ${C.border}`,
+              borderRadius:0, padding:12, background:C.bg, cursor:'pointer',
+              textAlign:'center', transition:'all .2s', position:'relative' }}>
+            <div style={{ display:'flex', gap:4, justifyContent:'center', marginBottom:8 }}>
+              {[THEMES.customTheme.primary, THEMES.customTheme.accent,
+                THEMES.customTheme.bg, THEMES.customTheme.sidebar].map((col,i) => (
+                <div key={i} style={{ width:14, height:14, borderRadius:0, background:col, border:`1px solid ${C.border}` }}/>
+              ))}
+            </div>
+            <div style={{ fontSize:13, fontWeight:600, color:C.text }}>✏️ ערכה אישית</div>
+            <div style={{ fontSize:11, color:C.sub, marginTop:3 }}>ערוך צבעים</div>
+          </button>
         </div>
       </div>
     </div>
@@ -450,8 +792,8 @@ function Modal({ title, onClose, children, width=600 }) {
           maxHeight:'90vh', overflowY:'auto', boxShadow:'0 20px 60px rgba(0,0,0,0.35)',
           animation:'fadeIn .2s ease' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-          <h3 style={{ color:C.text, fontSize:17, fontWeight:700 }}>{title}</h3>
-          <button onClick={onClose} style={{ background:'none', border:'none', color:C.sub, fontSize:22, cursor:'pointer' }}>×</button>
+          <h3 style={{ color:C.text, fontSize:20, fontWeight:700 }}>{title}</h3>
+          <button onClick={onClose} style={{ background:'none', border:'none', color:C.sub, fontSize:26, cursor:'pointer' }}>×</button>
         </div>
         {children}
       </div>
@@ -463,10 +805,10 @@ function Modal({ title, onClose, children, width=600 }) {
 function Input({ label, value, onChange, type='text', placeholder='', required=false, style:s={} }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:4, ...s }}>
-      {label && <label style={{ fontSize:12, fontWeight:600, color:C.sub }}>{label}{required && ' *'}</label>}
+      {label && <label style={{ fontSize:14, fontWeight:600, color:C.sub }}>{label}{required && ' *'}</label>}
       <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
         style={{ padding:'9px 12px', borderRadius:8, border:`1px solid ${C.border}`,
-          background:C.inputBg, color:C.text, fontSize:13, outline:'none',
+          background:C.inputBg, color:C.text, fontSize:16, outline:'none',
           fontFamily:'Heebo, Arial, sans-serif', direction:'rtl' }}/>
     </div>
   );
@@ -475,10 +817,10 @@ function Input({ label, value, onChange, type='text', placeholder='', required=f
 function Select({ label, value, onChange, options, style:s={} }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:4, ...s }}>
-      {label && <label style={{ fontSize:12, fontWeight:600, color:C.sub }}>{label}</label>}
+      {label && <label style={{ fontSize:14, fontWeight:600, color:C.sub }}>{label}</label>}
       <select value={value} onChange={e=>onChange(e.target.value)}
         style={{ padding:'9px 12px', borderRadius:8, border:`1px solid ${C.border}`,
-          background:C.inputBg, color:C.text, fontSize:13, outline:'none',
+          background:C.inputBg, color:C.text, fontSize:16, outline:'none',
           fontFamily:'Heebo, Arial, sans-serif', direction:'rtl' }}>
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -486,9 +828,15 @@ function Select({ label, value, onChange, options, style:s={} }) {
   );
 }
 
+function isLightColor(hex) {
+  if (!hex || !hex.startsWith('#')) return false;
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return (r*299 + g*587 + b*114)/1000 > 160;
+}
+
 function Btn({ children, onClick, variant='primary', size='md', disabled=false, style:s={} }) {
   const bg = variant==='primary'?C.primary:variant==='danger'?C.danger:variant==='success'?C.success:'transparent';
-  const col = variant==='ghost'?C.primary:'#fff';
+  const col = variant==='ghost'?C.primary: isLightColor(bg)?C.bg:'#fff';
   const border = variant==='ghost'?`1px solid ${C.primary}`:'none';
   const pd = size==='sm'?'6px 14px':size==='lg'?'12px 28px':'9px 20px';
   return (
@@ -504,7 +852,7 @@ function Btn({ children, onClick, variant='primary', size='md', disabled=false, 
 function Badge({ text, color }) {
   return (
     <span style={{ display:'inline-block', padding:'2px 10px', borderRadius:20,
-      background: color+'22', color, fontSize:11, fontWeight:600 }}>
+      background: color+'22', color, fontSize:13, fontWeight:600 }}>
       {text}
     </span>
   );
@@ -533,30 +881,165 @@ function StatusBadge({ status }) {
 }
 
 // ─── LEGAL MODAL ─────────────────────────────────────────────────────────────
+// ─── SHARED NAVBAR ────────────────────────────────────────────────────────────
+function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent }) {
+  const isMobile = useIsMobile();
+  return (
+    <div style={{background:C.sidebar, height:56, display:'flex', alignItems:'center',
+      justifyContent:'space-between', padding: isMobile ? '0 16px' : '0 32px',
+      borderBottom:`1px solid ${C.border}`, flexShrink:0, zIndex:20, position:'relative'}}>
+      <div style={{display:'flex', alignItems:'center', gap: isMobile ? 10 : 20}}>
+        <button onClick={onGoHome}
+          style={{background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', gap:10}}
+          title="דף הבית">
+          <img src={isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+            style={{width: isMobile ? 80 : 'clamp(90px,12vw,180px)', height:'auto', display:'block', transition:'opacity .15s'}}
+            onMouseEnter={e=>e.currentTarget.style.opacity='0.7'}
+            onMouseLeave={e=>e.currentTarget.style.opacity='1'}/>
+          {!isMobile && OFFICE_PLAN.logo && (
+            <img src={OFFICE_PLAN.logo} alt="Office Logo"
+              style={{height:32, width:'auto', display:'block', opacity:0.85, borderRight:`1px solid ${C.border}`, paddingRight:10}}/>
+          )}
+        </button>
+        {(title || onBack) && <div style={{width:1, height:18, background:C.border}}/>}
+        {onBack && !isMobile && (
+          <button onClick={onBack}
+            style={{background:'none', border:'none', color:C.sub, cursor:'pointer', fontSize:14,
+              letterSpacing:'0.04em', fontFamily:"'Space Grotesk',sans-serif"}}>
+            ← חזור
+          </button>
+        )}
+        {title && !isMobile && (
+          <div>
+            <div style={{color:C.sidebarText, fontWeight:700, fontSize:16,
+              fontFamily:"'Space Grotesk',sans-serif", letterSpacing:'-0.01em'}}>{title}</div>
+            {subtitle && <div style={{color:C.sub, fontSize:13}}>{subtitle}</div>}
+          </div>
+        )}
+      </div>
+      {rightContent && <div style={{display:'flex', alignItems:'center', gap:12}}>{rightContent}</div>}
+    </div>
+  );
+}
+
+// ─── APP FOOTER ───────────────────────────────────────────────────────────────
+function AppFooter() {
+  const [showLegal, setShowLegal] = React.useState(null);
+  const isMobile = useIsMobile();
+  return (
+    <>
+      <div style={{position:'fixed', bottom:0, left:0, right:0, zIndex:9990,
+        background:C.sidebar, borderTop:`1px solid ${C.border}`,
+        padding: isMobile ? '8px 12px' : '8px 32px',
+        display:'flex', alignItems:'center', justifyContent:'center', gap: isMobile ? 12 : 24,
+        flexWrap:'wrap'}}>
+        {[['terms','תקנון'],['privacy','פרטיות'],['accessibility','נגישות']].map(([tab,label])=>(
+          <button key={tab} onClick={()=>setShowLegal(tab)}
+            style={{background:'none', border:'none', color:C.sub, cursor:'pointer',
+              fontSize: isMobile ? 10 : 12, letterSpacing:'0.04em', padding:0, opacity:0.7}}
+            onMouseEnter={e=>e.currentTarget.style.opacity='1'}
+            onMouseLeave={e=>e.currentTarget.style.opacity='0.7'}>
+            {label}
+          </button>
+        ))}
+        <span style={{color:C.sub, fontSize: isMobile ? 10 : 12, opacity:0.4}}>·</span>
+        <span style={{color:C.sub, fontSize: isMobile ? 10 : 12, opacity:0.4}}>
+          © {new Date().getFullYear()} Tektona
+        </span>
+      </div>
+      {showLegal && <LegalModal tab={showLegal} onClose={()=>setShowLegal(null)} />}
+    </>
+  );
+}
+
+// ─── LEGAL MODAL ──────────────────────────────────────────────────────────────
 function LegalModal({ tab='terms', onClose }) {
   const [activeTab, setActiveTab] = React.useState(tab);
+
   const terms = [
-    { h:'1. הגדרות', t:'המערכת — Tektona, פלטפורמת SaaS לניהול משרדי אדריכלים. משרד — הארגון המנוי לשירות. משתמש — כל אדם המורשה לגשת למערכת.' },
-    { h:'2. קבלת התנאים', t:'שימוש במערכת מהווה הסכמה מלאה לתנאי שימוש אלו. אם אינך מסכים, הפסק את השימוש לאלתר.' },
-    { h:'3. רישיון שימוש', t:'Tektona מעניקה רישיון מוגבל, לא בלעדי, ולא ניתן להעברה לשימוש במערכת לצורכי ניהול משרד בלבד.' },
-    { h:'4. הגנת מידע', t:'כל מידע לקוח נשמר בהצפנה. לא נמכור ולא נשתף מידע עם צדדים שלישיים ללא הסכמה מפורשת.' },
-    { h:'5. תשלומים', t:'חיוב חודשי מראש. ביטול אפשרי בכל עת, יכנס לתוקף בתום התקופה ששולמה.' },
-    { h:'6. אחריות', t:'Tektona אינה אחראית לנזקים עקיפים, אובדן רווחים, או הפרעות עסקיות הנובעות משימוש במערכת.' },
-    { h:'7. זמינות', t:'אנו שואפים ל-99.5% זמינות. תחזוקה מתוכננת תוקדם לשעות לילה ותתוקשר מראש.' },
-    { h:'8. קניין רוחני', t:'כל התוכן, העיצוב והקוד של Tektona הם רכוש בלעדי. תוכן שהמשרד יוצר שייך למשרד.' },
-    { h:'9. סיום שירות', t:'Tektona שומרת הזכות להפסיק שירות עם הפרת תנאים. ניתן לייצא נתונים בכל עת.' },
-    { h:'10. שינויים בתנאים', t:'נעדכן בשינויים מהותיים 30 יום מראש באמצעות מייל ו/או הודעה במערכת.' }
+    { h:'מבוא ותחולה',
+      t:'תקנון זה מסדיר את תנאי השימוש בפלטפורמת Tektona — מערכת SaaS לניהול משרדי אדריכלים ומתכננים (להלן: "הפלטפורמה" או "השירות"), המופעלת על ידי חברת Tektona (2BN Media) (להלן: "החברה"). השימוש בפלטפורמה מהווה הסכמה מלאה ובלתי מסויגת לכל תנאי תקנון זה. אם אינך מסכים לתנאים אלו, עליך להימנע מהשימוש בשירות.' },
+    { h:'1. הגדרות',
+      t:'"פלטפורמה" — מערכת Tektona, לרבות כל תכונותיה, ממשקיה, ותכניה, המיועדת לניהול פרויקטים, לקוחות, מסמכים, וזרמי עבודה במשרדי אדריכלות ועיצוב.\n"משרד" — גוף עסקי (חברה, שותפות, עוסק מורשה) שנרשם לשירות ומשלם עבורו.\n"מנהל" — נציג המשרד המורשה לנהל חשבון, להוסיף משתמשים, ולהגדיר הרשאות.\n"משתמש" — כל אדם (אדריכל, מעצב, לקוח קצה, או גורם אחר) שניתנה לו גישה לפלטפורמה מטעם המשרד.\n"תוכן" — כל מסמך, תכנית, תמונה, הערה, נתון, או קובץ שנטען לפלטפורמה על ידי המשרד או משתמשיו.' },
+    { h:'2. היקף השירות',
+      t:'הפלטפורמה מספקת כלים דיגיטליים לניהול מקיף של משרד אדריכלות: ניהול פרויקטים ולוחות זמן, פורטל לקוח ייעודי, ניהול מסמכים ותכניות, מעקב תקציב ותשלומים, ניהול אישורים וחתימות דיגיטליות, Punch List, יומן פגישות, צ\'אט פנים-ארגוני, וכלי AI לסיוע בעבודה. המשרד מכיר בכך שהפלטפורמה מיועדת לסיוע בניהול עסקי בלבד ואינה תחליף לייעוץ משפטי, הנדסי, או מקצועי.' },
+    { h:'3. הרשמה וחשבון',
+      t:'ההרשמה לשירות מחייבת מסירת פרטים מדויקים ומלאים. המנהל אחראי לשמור על סודיות פרטי הגישה ולהודיע לחברה מיידית בכל מקרה של חשד לשימוש לא מורשה. אין להעביר את פרטי ההתחברות לצדדים שלישיים. החברה שומרת הזכות להשעות חשבון שפרטיו אינם מדויקים או שיש חשד לשימוש לרעה.' },
+    { h:'4. רישיון שימוש',
+      t:'החברה מעניקה למשרד רישיון שימוש אישי, מוגבל, לא בלעדי, ולא ניתן להעברה בפלטפורמה, לתקופת המנוי ובהתאם לתוכנית שנרכשה. אין להעתיק, לשכפל, לפצל, למכור, להשכיר, לתת רישיון משנה, או ליצור יצירות נגזרות מהפלטפורמה או מכל חלק ממנה. הרישיון פוקע עם סיום המנוי מכל סיבה שהיא.' },
+    { h:'5. תשלומים, חיוב וחידוש',
+      t:'דמי המנוי משולמים מראש — חודשי או שנתי בהתאם לתוכנית שנבחרה. החיוב מתבצע אוטומטית בתאריך החידוש באמצעות אמצעי התשלום שנמסר. מחירי המנוי כוללים מע"מ כחוק. החברה רשאית לשנות את תעריפיה בהודעה של 30 יום מראש. שינוי בתוכנית תוך חודש גורם לזיכוי יחסי. לא יינתנו החזרים בגין תקופה ששולמה, למעט במקרים המפורטים בסעיף 6.' },
+    { h:'6. ביטול ומדיניות החזרים',
+      t:'ביטול מנוי אפשרי בכל עת דרך הממשק. הביטול ייכנס לתוקף בתום תקופת החיוב הנוכחית. לאחר הביטול תישמר גישת קריאה בלבד לנתונים למשך 30 יום לצורך ייצוא. לאחר 90 יום ממועד הביטול יימחקו הנתונים לצמיתות בהתאם למדיניות הפרטיות. בקשה להחזר כספי תבחן בנסיבות חריגות ומוצדקות בלבד, בשיקול דעת החברה.' },
+    { h:'7. חובות המשרד והמשתמשים',
+      t:'המשרד מתחייב: (א) להשתמש בפלטפורמה בהתאם לחוק הישראלי וכל דין רלוונטי; (ב) לא להעלות תוכן שהנו בלתי חוקי, פוגעני, מטעה, או מפר זכויות קניין רוחני; (ג) לא לנסות לגשת לחשבונות של משרדים אחרים; (ד) לא לבצע reverse engineering, פריצה, או ניסיון לנטרל מנגנוני אבטחה; (ה) לוודא שמשתמשי הקצה (לקוחות) שהוזמנו לפורטל מודעים לתנאי השימוש.' },
+    { h:'8. קניין רוחני',
+      t:'כל הזכויות בפלטפורמה, לרבות הקוד, העיצוב, הלוגו, שיטות העבודה, ממשקי ה-API, ומסדי הנתונים — שייכות לחברה באופן בלעדי ומוגנות בחוקי זכויות יוצרים, סימני מסחר, וסודות מסחריים. התוכן שהמשרד יוצר ומעלה לפלטפורמה (תכניות, מסמכים, תמונות) שייך למשרד. בנטען על ידי המשרד, ניתנת לחברה רשות מוגבלת לעבד ולאחסן את התוכן לצורך מתן השירות בלבד.' },
+    { h:'9. סודיות',
+      t:'כל צד מתחייב לשמור בסוד מידע עסקי רגיש של הצד האחר שנחשף במסגרת השימוש בפלטפורמה. החברה לא תחשוף מידע עסקי של המשרד לצדדים שלישיים ללא הסכמה מפורשת, למעט הנדרש על-פי דין, צו שיפוטי, או רגולציה.' },
+    { h:'10. זמינות ורמת שירות (SLA)',
+      t:'החברה שואפת לזמינות של 99.5% בממוצע חודשי. תחזוקה מתוכננת תתוקשר לפחות 48 שעות מראש ותתבצע בשעות הלילה ככל האפשר. במקרה של השבתה בלתי מתוכננת העולה על 4 שעות בחודש, יהיה המשרד זכאי לזיכוי יחסי בחשבונית הבאה. הזיכוי לא יעלה על 15% מדמי המנוי החודשיים.' },
+    { h:'11. הגבלת אחריות',
+      t:'החברה אינה אחראית לנזקים עקיפים, תוצאתיים, עונשיים, אקראיים, או אובדן רווחים הנובעים משימוש בפלטפורמה או מאי-יכולת להשתמש בה. האחריות המצטברת של החברה לא תעלה על סך דמי המנוי ששולמו ב-3 החודשים שקדמו לאירוע. הפלטפורמה ניתנת "כפי שהיא" (AS IS), ואין החברה מתחייבת שתהא נקייה לחלוטין מתקלות.' },
+    { h:'12. שיפוי',
+      t:'המשרד מתחייב לשפות את החברה, מנהליה, עובדיה, ושותפיה מכל תביעה, נזק, עלות, ודמי טיפול משפטי הנובעים מהפרת תנאי תקנון זה, מהפרת זכויות צד שלישי, או מהתוכן שהמשרד העלה לפלטפורמה.' },
+    { h:'13. שינויים בתנאים',
+      t:'החברה רשאית לעדכן תקנון זה מעת לעת. שינויים מהותיים יתוקשרו בדוא"ל ובהודעה בממשק לפחות 30 יום לפני כניסתם לתוקף. המשך השימוש בפלטפורמה לאחר מועד השינוי מהווה הסכמה לתנאים המעודכנים.' },
+    { h:'14. סיום ההסכם',
+      t:'ההסכם פוקע עם ביטול המנוי, עם פקיעתו, או עם הפסקת השירות. החברה רשאית להפסיק שירות לאחר התראה ועקב הפרה יסודית שלא תוקנה תוך 14 יום. עם סיום ההסכם, הרישיון מבוטל, אך זכויות המשרד בתכנים שהעלה נשמרות לצורך ייצוא בתקופת החסד.' },
+    { h:'15. דין ושיפוט',
+      t:'תקנון זה כפוף לחוקי מדינת ישראל. כל סכסוך ייושב תחילה בדרך של משא ומתן. לא הושגה הסכמה — הסמכות השיפוטית הייחודית נתונה לבתי המשפט המוסמכים בתל אביב-יפו.' },
+    { h:'16. יצירת קשר',
+      t:'לשאלות בנושא תנאי השימוש: legal@tektona.io | Tektona (2BN Media) | עדכון אחרון: ינואר 2025' }
   ];
+
   const privacy = [
-    { h:'1. מידע שנאסף', t:'פרטי המשרד, פרטי לקוחות, קבצים ומסמכים, פעולות במערכת לצורכי audit.' },
-    { h:'2. שימוש במידע', t:'לניהול השירות, שיפור הפלטפורמה, ותמיכה טכנית בלבד.' },
-    { h:'3. אחסון', t:'נתונים מאוחסנים בשרתים בישראל ו/או האיחוד האירופי. הצפנה AES-256 בכל מצב.' },
-    { h:'4. זכויות המשתמש', t:'זכות לעיין, לתקן, למחוק נתונים, ולקבל עותק מלא של המידע בכל עת.' },
-    { h:'5. Cookies', t:'שימוש מינימלי ב-Cookies לצורכי session ואנליטיקס מצומצמת. ניתן לבטל.' },
-    { h:'6. צדדים שלישיים', t:'שיתוף מוגבל עם ספקי תשלומים ואחסון מאושרים, תחת הסכמי סודיות.' },
-    { h:'7. יצירת קשר', t:'privacy@tektona.io לכל שאלה בנושא פרטיות.' }
+    { h:'מבוא',
+      t:'מדיניות פרטיות זו מסבירה כיצד חברת Tektona (2BN Media) (להלן: "החברה", "אנחנו") אוספת, משתמשת, מאחסנת ומגנה על המידע האישי שנמסר לה במסגרת השימוש בפלטפורמת Tektona. המדיניות מחויבת לחוק הגנת הפרטיות, תשמ"א-1981, לתקנות הגנת הפרטיות (אבטחת מידע), תשע"ז-2017, ולהוראות רגולטוריות רלוונטיות אחרות.' },
+    { h:'1. מידע שנאסף',
+      t:'אנו אוספים את הקטגוריות הבאות של מידע:\n\nמידע זיהוי: שם, כתובת דוא"ל, מספר טלפון, שם המשרד, כתובת.\nמידע פיננסי: פרטי חיוב (מעובדים בצורה מאובטחת דרך ספק תשלומים מאושר — אנו לא שומרים פרטי כרטיס אשראי).\nנתוני שימוש: תכיפות כניסות, תכונות בהן נעשה שימוש, זמני פעילות, כתובות IP.\nתוכן שהועלה: פרויקטים, מסמכים, תכניות אדריכלות, תמונות, הערות, פרטי לקוחות קצה.\nנתוני תקשורת: הודעות שנשלחו דרך הפלטפורמה, פניות תמיכה.\nנתוני AI: שאילתות שנשלחו לעוזר ה-AI במסגרת השירות.' },
+    { h:'2. כיצד המידע נאסף',
+      t:'המידע נאסף ממקורות הבאים:\n• ישירות מהמשרד ומשתמשיו בעת הרשמה, מילוי פרופיל, והשימוש השוטף.\n• אוטומטית דרך Cookies ומנגנוני מעקב טכניים (ראה סעיף 6).\n• מצדדים שלישיים — כגון ספקי שירותי אימות, ספקי תשלום, וכלי אנליטיקה — בהיקף המצומצם הנדרש.' },
+    { h:'3. מטרות השימוש במידע',
+      t:'המידע משמש אך ורק לצרכים הבאים:\n(א) מתן השירות — ניהול חשבון, אחסון תוכן, הרצת תהליכים.\n(ב) תמיכה טכנית — מענה לפניות ותקלות.\n(ג) שיפור המוצר — ניתוח דפוסי שימוש (בצורה אגרגטיבית ואנונימית).\n(ד) ציות לחוק — עמידה בהוראות גופי פיקוח, צווים שיפוטיים.\n(ה) אבטחת מידע — זיהוי איומים, מניעת הונאה.\n(ו) תקשורת שיווקית — רק בהסכמה מפורשת, עם אפשרות ביטול בכל עת.\nאנו לא נמכור, נחכיר, או נסחר במידע אישי.' },
+    { h:'4. שיתוף מידע עם צדדים שלישיים',
+      t:'אנו משתפים מידע באופן מוגבל בלבד:\n• ספקי תשתית ענן: לצורך אחסון ועיבוד (כפופים להסכמי עיבוד נתונים).\n• ספק תשלומים: לעיבוד חיוב מאובטח בלבד.\n• ספקי AI: שאילתות ל-AI מועברות בצורה מאובטחת; לא נשמרים נתונים לאימון מודלים ללא הסכמה.\n• רשויות: רק בכפוף לצו שיפוטי, בדין ישראלי.\nכל ספק חיצוני מחויב בהסכם סודיות ועיבוד נתונים.' },
+    { h:'5. אחסון ואבטחת מידע',
+      t:'הנתונים מאוחסנים בשרתים בישראל ו/או באיחוד האירופי (AWS / Google Cloud), תחת תקנות ה-GDPR ו/או הדין הישראלי המקביל.\nאמצעי אבטחה: הצפנה AES-256 בזמן אחסון, TLS 1.3 בזמן העברה, אימות דו-שלבי (2FA), הצפנת הגיבויים, בדיקות חדירה תקופתיות, ו-audit log לכל פעולה רגישה.\nבמקרה של אירוע אבטחה שעלול לפגוע בפרטיות, נדווח לרשות הגנת הפרטיות ולמשרדים הנפגעים תוך 72 שעות מרגע הגילוי.' },
+    { h:'6. Cookies וטכנולוגיות מעקב',
+      t:'אנו משתמשים ב-Cookies מסוגים הבאים:\n• Cookies הכרחיים (Session): לשמירת מצב הכניסה — אין אפשרות לבטל מבלי לפגוע בתפקוד.\n• Cookies ביצועיים: לניתוח שימוש אנונימי ושיפור הביצועים — ניתן לבטל בהגדרות הדפדפן.\nאנו לא משתמשים ב-Cookies שיווקיים של צדדים שלישיים. ניתן לנהל את הגדרות ה-Cookies דרך הגדרות הדפדפן שלך.' },
+    { h:'7. זכויות הנושא במידע',
+      t:'בהתאם לחוק הגנת הפרטיות הישראלי, יש לך הזכויות הבאות:\n• עיון: לקבל עותק של המידע שנשמר עליך.\n• תיקון: לבקש תיקון מידע שגוי.\n• מחיקה ("הזכות להישכח"): לבקש מחיקת מידע אישי, כפוף לחובות שמירה חוקיות.\n• הגבלת עיבוד: לבקש הגבלת שימוש במידע בנסיבות מסוימות.\n• ניידות נתונים: לקבל את נתוניך בפורמט מובנה (JSON/CSV) לצורך העברה.\nפנייה לממש זכויות אלו: privacy@tektona.io — נטפל תוך 30 יום.' },
+    { h:'8. העברת מידע מחוץ לישראל',
+      t:'בעת העברת מידע לשרתים מחוץ לישראל, הדבר יתבצע לאיחוד האירופי בלבד (הנחשב לבעל רמת הגנה מספקת לפי הדין הישראלי), תחת הסכמי Standard Contractual Clauses (SCC) בהתאם ל-GDPR.' },
+    { h:'9. שמירת מידע',
+      t:'מידע מנוי פעיל: נשמר לאורך כל תקופת המנוי ועד 90 יום לאחר סיומו.\nגיבויים: נשמרים עד 30 יום נוספים לצורך שחזור חירום.\nאחרי תום התקופה: נמחק לצמיתות מכל המערכות, כולל גיבויים, תוך 120 יום ממועד הסיום.\nנתוני audit log: נשמרים 3 שנים לצורכי ציות.' },
+    { h:'10. שינויים במדיניות',
+      t:'נעדכן מדיניות זו בהתאם לשינויים חוקיים, טכנולוגיים, או עסקיים. עדכונים מהותיים יתוקשרו בדוא"ל 30 יום מראש. תאריך "עדכון אחרון" מופיע בתחתית מסמך זה.' },
+    { h:'11. יצירת קשר — ממונה הגנת פרטיות',
+      t:'לשאלות, פניות לממש זכויות, או תלונות בנושא פרטיות:\nprivacy@tektona.io\nTektona (2BN Media) | עדכון אחרון: ינואר 2025\nנשתדל להשיב תוך 5 ימי עסקים לכל פנייה.' }
   ];
-  const items = activeTab === 'terms' ? terms : privacy;
+
+  const accessibility = [
+    { h:'מבוא — מחויבות Tektona לנגישות',
+      t:'Tektona מאמינה כי כל אדם זכאי לגישה שווה לכלים דיגיטליים מקצועיים, ללא תלות ביכולותיו הפיזיות, החושיות, הקוגניטיביות, או הטכנולוגיות. אנו פועלים בהתאם לחוק שוויון זכויות לאנשים עם מוגבלות, תשנ"ח-1998, לתיקון מס. 5 לחוק (נגישות לשירות), ולתקן הישראלי IS 5568 — המקביל להנחיות WCAG 2.1 ברמה AA של ה-W3C.' },
+    { h:'1. רמת הנגישות הנוכחית',
+      t:'הפלטפורמה עומדת ברמת תאימות AA של WCAG 2.1 בהיקף הרחב של הממשק. בוצעו בדיקות נגישות ידניות ואוטומטיות עם הכלים הבאים:\n• Axe DevTools (בדיקה אוטומטית)\n• NVDA ו-JAWS (Windows)\n• VoiceOver (macOS / iOS)\n• ניווט מקלדת בלבד\n• בדיקת ניגודיות צבעים — כל יחסי הניגודיות עומדים ב-4.5:1 לטקסט רגיל ו-3:1 לטקסט גדול.' },
+    { h:'2. מאפייני נגישות זמינים',
+      t:'הפלטפורמה כוללת את המאפיינים הבאים:\n✓ ניווט מלא במקלדת — Tab, Shift+Tab, Enter, Arrow keys\n✓ מיקוד גלוי (focus indicator) בכל האלמנטים האינטראקטיביים\n✓ תמיכה מלאה בקוראי מסך עם aria-label, role, ו-aria-live\n✓ טקסט חלופי (alt text) לכל התמונות הפונקציונליות\n✓ כותרות היררכיות (H1–H4) מסודרות בכל דף\n✓ מבנה סמנטי תקין (HTML5 Landmarks)\n✓ תמיכה מלאה בכיוון RTL ובעברית\n✓ גודל גופן ניתן להגדלה עד 200% ללא אובדן תוכן או פונקציונליות\n✓ אין תוכן המהבהב יותר מ-3 פעמים בשנייה\n✓ הודעות שגיאה ברורות ומסומנות טקסטואלית (לא רק בצבע)\n✓ טפסים עם labels מפורשים לכל שדה\n✓ הניגודיות בממשק החשוך והבהיר עומדת בדרישות התקן' },
+    { h:'3. חסמי נגישות ידועים בתהליך תיקון',
+      t:'להלן אתגרים ידועים שאנו עובדים על תיקונם:\n\n• לוח Gantt (ציר זמן אינטראקטיבי): ניווט מקלדת חלקי — פיתוח גרסה נגישה מתוכנן לרבעון הבא.\n• מציג PDF מוטמע: אינו קריא במלואו לקוראי מסך — מוצעת חלופה: כפתור "הורדה" זמין.\n• גרפי נתונים (דוחות): נתונים זמינים גם בטבלה חלופית לצד כל גרף.\n• Drag & Drop ברשימות: זמינה חלופה של כפתורי "העלה/הורד".\n\nאנו מתחייבים לתקן חסמים אלו ולפרסם גרסה מעודכנת עד יוני 2025.' },
+    { h:'4. טכנולוגיות נתמכות',
+      t:'הפלטפורמה נבדקה ונתמכת בשילובים הבאים:\n\nדפדפנים: Chrome 120+, Firefox 121+, Safari 17+, Edge 120+\nקוראי מסך:\n• NVDA 2023.3+ עם Chrome (Windows)\n• JAWS 2024+ עם Chrome / Edge (Windows)\n• VoiceOver עם Safari (macOS 14, iOS 17)\n• TalkBack עם Chrome (Android 14)\n\nהפלטפורמה אינה מחייבת Java, Flash, או תוספים מיוחדים.' },
+    { h:'5. גורם אחראי נגישות',
+      t:'ממונה הנגישות של Tektona אחראי על יישום מדיניות הנגישות, טיפול בפניות ציבור, וביצוע בדיקות תקופתיות.\n\nשם: מחלקת נגישות — Tektona\nדוא"ל: accessibility@tektona.io\nשעות מענה: ימים א\'–ה\', 09:00–17:00\n\nבהתאם לתיקון 5 לחוק שוויון זכויות לאנשים עם מוגבלות, הממונה זמין לקבל פניות ציבור ולטפל בהן.' },
+    { h:'6. כיצד לדווח על בעיית נגישות',
+      t:'נתקלתם במחסום נגישות שמונע שימוש תקין? נשמח לדעת ולסייע:\n\n✉ accessibility@tektona.io\n📞 בקשה לשיחה — שלחו מייל ונחזור אליכם\n\nאנא כללו בפנייה: תיאור הבעיה, הדף/תכונה שבה נתקלתם בקושי, הדפדפן/קורא המסך שבשימוש, וצילום מסך אם ניתן.\n\nנטפל בפנייה תוך 5 ימי עסקים, ונעדכן אתכם בפתרון שנמצא.' },
+    { h:'7. בדיקות נגישות ועדכוני מדיניות',
+      t:'אנו מבצעים ביקורת נגישות מלאה אחת לשנה, וסריקה אוטומטית חודשית. בכל גרסה חדשה של הפלטפורמה מתבצעת בדיקת נגישות לפני עלייה לאוויר.\n\nהצהרה זו עודכנה לאחרונה: ינואר 2025\nגרסה הבאה המתוכננת: יולי 2025\n\nאנו מחויבים לשיפור מתמיד ומקבלים בברכה כל פנייה, הצעה, או משוב לשיפור הנגישות.' }
+  ];
+  const TABS = { terms:'תקנון', privacy:'פרטיות', accessibility:'נגישות' };
+  const items = activeTab === 'terms' ? terms : activeTab === 'privacy' ? privacy : accessibility;
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex',
       alignItems:'center', justifyContent:'center', zIndex:9500 }} onClick={onClose}>
@@ -564,24 +1047,24 @@ function LegalModal({ tab='terms', onClose }) {
         width:660, maxWidth:'95vw', maxHeight:'88vh', display:'flex', flexDirection:'column',
         boxShadow:'0 20px 60px rgba(0,0,0,0.4)', animation:'fadeIn .2s ease' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-          <h3 style={{ color:C.text, fontSize:18, fontWeight:700 }}>מסמכים משפטיים</h3>
-          <button onClick={onClose} style={{ background:'none', border:'none', color:C.sub, fontSize:24, cursor:'pointer' }}>×</button>
+          <h3 style={{ color:C.text, fontSize:22, fontWeight:700 }}>מסמכים משפטיים</h3>
+          <button onClick={onClose} style={{ background:'none', border:'none', color:C.sub, fontSize:29, cursor:'pointer' }}>×</button>
         </div>
         <div style={{ display:'flex', gap:8, marginBottom:20 }}>
-          {['terms','privacy'].map(t => (
-            <button key={t} onClick={() => setActiveTab(t)}
+          {Object.entries(TABS).map(([key,label]) => (
+            <button key={key} onClick={() => setActiveTab(key)}
               style={{ padding:'7px 20px', borderRadius:20, border:`1px solid ${C.border}`,
-                background: activeTab===t ? C.primary : 'transparent',
-                color: activeTab===t ? '#fff' : C.text, cursor:'pointer', fontSize:13 }}>
-              {t==='terms' ? 'תנאי שימוש' : 'מדיניות פרטיות'}
+                background: activeTab===key ? C.primary : 'transparent',
+                color: activeTab===key ? '#fff' : C.text, cursor:'pointer', fontSize:15 }}>
+              {label}
             </button>
           ))}
         </div>
         <div style={{ overflowY:'auto', flex:1 }}>
           {items.map((item, i) => (
             <div key={i} style={{ marginBottom:16, padding:'14px 16px', background:C.bg, borderRadius:10 }}>
-              <div style={{ fontWeight:700, color:C.text, fontSize:14, marginBottom:6 }}>{item.h}</div>
-              <div style={{ color:C.sub, fontSize:13, lineHeight:1.7 }}>{item.t}</div>
+              <div style={{ fontWeight:700, color:C.text, fontSize:17, marginBottom:6 }}>{item.h}</div>
+              <div style={{ color:C.sub, fontSize:15, lineHeight:1.75, whiteSpace:'pre-line' }}>{item.t}</div>
             </div>
           ))}
         </div>
@@ -593,26 +1076,34 @@ function LegalModal({ tab='terms', onClose }) {
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
 function LoginScreen({ onLogin }) {
   const [role, setRole] = React.useState('admin');
-  const [pin, setPin] = React.useState('');
+  const [superEmail, setSuperEmail] = React.useState('');
+  const [superPass, setSuperPass] = React.useState('');
   const [pinError, setPinError] = React.useState('');
   const [showLegal, setShowLegal] = React.useState(null);
   const [showPricing, setShowPricing] = React.useState(false);
   const [themeId, setThemeId] = React.useState('calqNoir');
   const [showTheme, setShowTheme] = React.useState(false);
+  const isMobile = useIsMobile();
 
   const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
 
+  const SUPER_CREDS = [
+    { email:'2bnbussiness@gmail.com', pass:'wassim11' },
+    { email:'tameratalla.cpa@gmail.com', pass:'tamer1!@#' }
+  ];
+
   const DEMO_USERS = {
     admin:  { id:'u1', name:'מנהל משרד', role:'admin',  avatar:'מ', email:'admin@tektona.io' },
-    arch:   { id:'u2', name:'אדר. דנה כהן', role:'arch', avatar:'ד', email:'dana@tektona.io' },
+    arch:   { id:'u2', name:'אדר. דנה כהן', role:'arch', avatar:'ד', email:'dana@tektona.io', aiEnabled:false },
     client: { id:'u5', name:'דוד לוי', role:'client', avatar:'ד', email:'david@levy.co.il', projectId:'p1' }
   };
 
   const handleLogin = () => {
     if (role === 'super') {
       if (!checkRateLimit()) { setPinError('יותר מדי ניסיונות. נסה שוב בעוד דקה.'); return; }
-      if (pin !== '2024') { setPinError('PIN שגוי'); return; }
-      const superUser = { id:'su0', name:'Super Admin', role:'super', avatar:'⚡', email:'super@tektona.io' };
+      const matched = SUPER_CREDS.find(c => c.email === superEmail && c.pass === superPass);
+      if (!matched) { setPinError('אימייל או סיסמה שגויים'); return; }
+      const superUser = { id:'su0', name:'Super Admin', role:'super', avatar:'⚡', email:matched.email };
       sessionSave(superUser); onLogin(superUser); return;
     }
     const user = DEMO_USERS[role];
@@ -623,7 +1114,7 @@ function LoginScreen({ onLogin }) {
     { id:'admin',  label:'מנהל משרד',   desc:'גישה מלאה' },
     { id:'arch',   label:'אדריכל',        desc:'פרויקטים שהוקצו' },
     { id:'client', label:'לקוח',          desc:'פרויקט אישי' },
-    { id:'super',  label:'Super Admin',   desc:'PIN נדרש' }
+    { id:'super',  label:'Super Admin',   desc:'Email + סיסמה' }
   ];
 
   return (
@@ -633,95 +1124,122 @@ function LoginScreen({ onLogin }) {
       {/* Calq-style top nav */}
       <div style={{ position:'absolute', top:0, left:0, right:0, zIndex:10,
         display:'flex', justifyContent:'space-between', alignItems:'center',
-        padding:'24px 40px', borderBottom:`1px solid ${C.border}` }}>
-        <div style={{ fontSize:20, fontWeight:700, color:C.text, letterSpacing:'0.08em',
-          fontFamily:"'Space Grotesk',sans-serif" }}>
-          TEKTONA
-        </div>
-        <div style={{ display:'flex', gap:28, alignItems:'center' }}>
-          <button onClick={() => setShowPricing(true)}
-            style={{ background:'none', border:'none', color:C.sub, cursor:'pointer',
-              fontSize:13, letterSpacing:'0.05em', fontFamily:"'Space Grotesk',sans-serif" }}>
-            תמחור
-          </button>
-          <button onClick={() => setShowLegal('terms')}
-            style={{ background:'none', border:'none', color:C.sub, cursor:'pointer',
-              fontSize:13, letterSpacing:'0.05em' }}>
-            תנאי שימוש
-          </button>
-          {canUse('themes') && (
-            <button onClick={() => setShowTheme(true)}
-              style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:0,
-                padding:'6px 16px', color:C.sub, cursor:'pointer', fontSize:12,
-                letterSpacing:'0.06em' }}>
-              THEME
+        padding: isMobile ? '16px 20px' : '24px 40px', borderBottom:`1px solid ${C.border}` }}>
+        <img src={isLightColor(C.bg) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+          style={{ width: isMobile ? 90 : 'clamp(110px,16vw,240px)', height:'auto', display:'block' }}/>
+        {!isMobile && (
+          <div style={{ display:'flex', gap:28, alignItems:'center' }}>
+            <button onClick={() => setShowPricing(true)}
+              style={{ background:'none', border:'none', color:C.sub, cursor:'pointer',
+                fontSize:16, letterSpacing:'0.05em', fontFamily:"'Space Grotesk',sans-serif" }}>
+              תמחור
             </button>
-          )}
-        </div>
+            {canUse('themes') && (
+              <button onClick={() => setShowTheme(true)}
+                style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:0,
+                  padding:'6px 16px', color:C.sub, cursor:'pointer', fontSize:14,
+                  letterSpacing:'0.06em' }}>
+                THEME
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Scanline overlay */}
+      <div className="scanline-overlay"/>
+
+      {/* Data stream dots - decorative */}
+      {[...Array(6)].map((_,i)=>(
+        <div key={i} style={{
+          position:'absolute', top:0, left:`${8+i*15}%`, width:1, height:'100%',
+          background:`linear-gradient(to bottom, transparent, rgba(255,255,255,0.03), transparent)`,
+          animation:`dataStream ${3+i*.7}s ${i*.4}s linear infinite`, pointerEvents:'none', zIndex:0
+        }}/>
+      ))}
 
       {/* Center content */}
       <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center',
-        justifyContent:'center', animation:'pageEnter .6s ease', padding:'0 20px' }}>
+        justifyContent:'center', animation:'pageEnter .6s ease', padding:'0 20px', position:'relative', zIndex:1 }}>
 
-        {/* Giant heading */}
+        {/* Logo heading */}
         <div style={{ textAlign:'center', marginBottom:60 }}>
-          <div style={{ fontSize:'clamp(52px,8vw,96px)', fontWeight:700, color:C.text,
-            letterSpacing:'-0.02em', lineHeight:1, fontFamily:"'Space Grotesk',sans-serif",
-            marginBottom:16 }}>
-            TEKTONA
-          </div>
+          <img src={isLightColor(C.bg) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+            style={{ width:'clamp(220px,32vw,480px)', height:'auto', display:'block',
+              margin:'0 auto 16px' }}/>
           <div style={{ width:40, height:1, background:C.sub, margin:'0 auto 20px' }}/>
-          <div style={{ color:C.sub, fontSize:14, letterSpacing:'0.1em', textTransform:'uppercase' }}>
+          <div className="cursor" style={{ color:C.sub, fontSize:17, letterSpacing:'0.1em', textTransform:'uppercase' }}>
             ניהול משרד אדריכלים
           </div>
         </div>
 
         {/* Role buttons - calq style */}
-        <div style={{ display:'flex', gap:12, flexWrap:'wrap', justifyContent:'center', marginBottom:32 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4,1fr)',
+          gap:8, marginBottom:32, width:'100%', maxWidth: isMobile ? '100%' : 600 }}>
           {roles.map(r => (
             <button key={r.id} onClick={() => { setRole(r.id); setPin(''); setPinError(''); }}
-              style={{ padding:'14px 28px', border:`1px solid ${role===r.id ? C.text : C.border}`,
+              style={{ padding: isMobile ? '12px 10px' : '14px 20px',
+                border:`1px solid ${role===r.id ? C.text : C.border}`,
                 background: role===r.id ? C.text : 'transparent',
                 color: role===r.id ? C.bg : C.sub,
-                cursor:'pointer', fontSize:13, fontWeight:600, letterSpacing:'0.06em',
+                cursor:'pointer', fontSize: isMobile ? 12 : 13, fontWeight:600, letterSpacing:'0.04em',
                 fontFamily:"'Space Grotesk',sans-serif", borderRadius:0,
-                transition:'all .2s ease', minWidth:140 }}>
+                transition:'all .2s ease' }}>
               <div style={{ marginBottom:2 }}>{r.label}</div>
-              <div style={{ fontSize:11, opacity:0.6, fontWeight:400 }}>{r.desc}</div>
+              <div style={{ fontSize:12, opacity:0.6, fontWeight:400 }}>{r.desc}</div>
             </button>
           ))}
         </div>
 
-        {/* PIN for super */}
+        {/* Email + password for super */}
         {role === 'super' && (
-          <div style={{ marginBottom:20, width:'100%', maxWidth:320 }}>
-            <input type="password" value={pin} onChange={e=>{setPin(e.target.value);setPinError('');}}
-              placeholder="הכנס PIN"
-              style={{ width:'100%', padding:'14px 20px', background:C.inputBg,
+          <div style={{ marginBottom:20, width:'100%', maxWidth:340, display:'flex', flexDirection:'column', gap:10 }}>
+            <input type="email" value={superEmail} onChange={e=>{setSuperEmail(e.target.value);setPinError('');}}
+              placeholder="אימייל"
+              style={{ width:'100%', padding:'13px 18px', background:C.inputBg,
                 border:`1px solid ${C.border}`, borderRadius:0, color:C.text,
                 fontSize:16, outline:'none', fontFamily:"'Space Grotesk',sans-serif",
-                textAlign:'center', letterSpacing:'0.2em' }}
+                textAlign:'right', direction:'ltr' }}
               onKeyDown={e=>{if(e.key==='Enter')handleLogin();}}/>
-            {pinError && <div style={{ color:C.danger, fontSize:12, marginTop:6, textAlign:'center' }}>{pinError}</div>}
+            <input type="password" value={superPass} onChange={e=>{setSuperPass(e.target.value);setPinError('');}}
+              placeholder="סיסמה"
+              style={{ width:'100%', padding:'13px 18px', background:C.inputBg,
+                border:`1px solid ${C.border}`, borderRadius:0, color:C.text,
+                fontSize:16, outline:'none', fontFamily:"'Space Grotesk',sans-serif",
+                textAlign:'right' }}
+              onKeyDown={e=>{if(e.key==='Enter')handleLogin();}}/>
+            {pinError && <div style={{ color:C.danger, fontSize:14, textAlign:'center' }}>{pinError}</div>}
           </div>
         )}
 
         {/* Enter button */}
-        <button onClick={handleLogin}
+        <button onClick={handleLogin} className="btn-pulse"
           style={{ padding:'16px 56px', background:C.text, color:C.bg, border:'none',
-            cursor:'pointer', fontSize:14, fontWeight:700, letterSpacing:'0.1em',
+            cursor:'pointer', fontSize:17, fontWeight:700, letterSpacing:'0.1em',
             fontFamily:"'Space Grotesk',sans-serif", borderRadius:0 }}>
           ENTER →
         </button>
 
-        <div style={{ marginTop:24, color:C.sub, fontSize:11, letterSpacing:'0.08em' }}>
+        <div style={{ marginTop:24, color:C.sub, fontSize:13, letterSpacing:'0.08em' }}>
           DEMO ENVIRONMENT
         </div>
       </div>
 
-      {/* Bottom border line */}
-      <div style={{ position:'absolute', bottom:0, left:0, right:0, height:1, background:C.border }}/>
+      {/* Footer */}
+      <div style={{ position:'absolute', bottom:0, left:0, right:0, borderTop:`1px solid ${C.border}`,
+        padding:'10px 24px', display:'flex', alignItems:'center', justifyContent:'center', gap:20 }}>
+        {[['terms','תקנון אתר'],['privacy','מדיניות פרטיות'],['accessibility','הצהרת נגישות']].map(([tab,label])=>(
+          <button key={tab} onClick={()=>setShowLegal(tab)}
+            style={{ background:'none', border:'none', color:C.sub, cursor:'pointer',
+              fontSize:11, letterSpacing:'0.04em', opacity:0.7, padding:0 }}
+            onMouseEnter={e=>e.currentTarget.style.opacity='1'}
+            onMouseLeave={e=>e.currentTarget.style.opacity='0.7'}>
+            {label}
+          </button>
+        ))}
+        <span style={{ color:C.sub, fontSize:11, opacity:0.4 }}>•</span>
+        <span style={{ color:C.sub, fontSize:11, opacity:0.4 }}>© {new Date().getFullYear()} Tektona</span>
+      </div>
 
       {showLegal && <LegalModal tab={showLegal} onClose={() => setShowLegal(null)} />}
       {showPricing && <PricingScreen onBack={() => setShowPricing(false)} />}
@@ -732,7 +1250,7 @@ function LoginScreen({ onLogin }) {
 
 // ─── PRICING SCREEN ───────────────────────────────────────────────────────────
 function PricingScreen({ onBack }) {
-  const [annual, setAnnual] = React.useState(false);
+  const [annual, setAnnual] = React.useState(true);
   const plans = [
     { id:'starter', name:'Starter', price:890, projects:5, extra:99,
       features:['פורטל לקוח','ציר זמן','מסמכים','גלריה','אישורים','הודעות','פגישות','הצעות מחיר','חתימה דיגיטלית','תשלומים','Punch List','תקציר','RFI','שיתוף','תבניות'] },
@@ -746,21 +1264,21 @@ function PricingScreen({ onBack }) {
       zIndex:9000, direction:'rtl', padding:'40px 20px' }}>
       <button onClick={onBack} style={{ position:'fixed', top:20, right:20,
         background:C.card, border:`1px solid ${C.border}`, borderRadius:20,
-        padding:'8px 20px', cursor:'pointer', color:C.text, fontSize:13 }}>
+        padding:'8px 20px', cursor:'pointer', color:C.text, fontSize:16 }}>
         ← חזור
       </button>
       <div style={{ textAlign:'center', marginBottom:40, maxWidth:700, margin:'0 auto 40px' }}>
-        <h1 style={{ fontSize:32, fontWeight:800, color:C.text, marginBottom:12 }}>תמחור שקוף</h1>
-        <p style={{ color:C.sub, fontSize:16 }}>בחר את המסלול המתאים למשרדך</p>
+        <h1 style={{ fontSize:38, fontWeight:800, color:C.text, marginBottom:12 }}>תמחור שקוף</h1>
+        <p style={{ color:C.sub, fontSize:19 }}>בחר את המסלול המתאים למשרדך</p>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:12, marginTop:20 }}>
-          <span style={{ color:C.sub, fontSize:14 }}>חודשי</span>
+          <span style={{ color:C.sub, fontSize:17 }}>חודשי</span>
           <button onClick={() => setAnnual(a=>!a)}
             style={{ width:48, height:26, borderRadius:13, border:'none',
               background: annual ? C.primary : C.border, cursor:'pointer', position:'relative' }}>
             <div style={{ position:'absolute', top:3, transition:'left .2s',
-              left: annual ? 24 : 4, width:20, height:20, borderRadius:10, background:'#fff' }}/>
+              left: annual ? 4 : 24, width:20, height:20, borderRadius:10, background:'#fff' }}/>
           </button>
-          <span style={{ color:C.sub, fontSize:14 }}>שנתי <Badge text="15% הנחה" color={C.success}/></span>
+          <span style={{ color:C.sub, fontSize:17 }}>שנתי <Badge text="15% הנחה" color={C.success}/></span>
         </div>
       </div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',
@@ -773,22 +1291,22 @@ function PricingScreen({ onBack }) {
               position:'relative' }}>
               {pl.popular && (
                 <div style={{ position:'absolute', top:-12, right:20,
-                  background:C.primary, color:'#fff', fontSize:11, fontWeight:700,
+                  background:C.primary, color:'#fff', fontSize:13, fontWeight:700,
                   padding:'4px 14px', borderRadius:20 }}>הכי פופולרי</div>
               )}
-              <div style={{ fontSize:22, fontWeight:800, color:C.text, marginBottom:6 }}>{pl.name}</div>
+              <div style={{ fontSize:26, fontWeight:800, color:C.text, marginBottom:6 }}>{pl.name}</div>
               <div style={{ marginBottom:4 }}>
-                <span style={{ fontSize:36, fontWeight:800, color:C.primary }}>₪{price.toLocaleString()}</span>
-                <span style={{ color:C.sub, fontSize:14 }}>/חודש</span>
+                <span style={{ fontSize:43, fontWeight:800, color:C.primary }}>₪{price.toLocaleString()}</span>
+                <span style={{ color:C.sub, fontSize:17 }}>/חודש</span>
               </div>
-              <div style={{ color:C.sub, fontSize:13, marginBottom:4 }}>עד {pl.projects} פרויקטים</div>
-              <div style={{ color:C.sub, fontSize:13, marginBottom:20 }}>+ ₪{pl.extra} לפרויקט נוסף</div>
+              <div style={{ color:C.sub, fontSize:16, marginBottom:4 }}>עד {pl.projects} פרויקטים</div>
+              <div style={{ color:C.sub, fontSize:16, marginBottom:20 }}>+ ₪{pl.extra} לפרויקט נוסף</div>
               <Btn style={{ width:'100%', marginBottom:20 }} variant={pl.popular?'primary':'ghost'}>
                 {pl.popular ? 'התחל עכשיו' : 'בחר מסלול'}
               </Btn>
               <ul style={{ listStyle:'none', display:'flex', flexDirection:'column', gap:8 }}>
                 {pl.features.map((f,i) => (
-                  <li key={i} style={{ fontSize:13, color:C.text, display:'flex', gap:8, alignItems:'center' }}>
+                  <li key={i} style={{ fontSize:16, color:C.text, display:'flex', gap:8, alignItems:'center' }}>
                     <span style={{ color:C.success, fontWeight:700 }}>✓</span> {f}
                   </li>
                 ))}
@@ -797,7 +1315,7 @@ function PricingScreen({ onBack }) {
           );
         })}
       </div>
-      <div style={{ textAlign:'center', marginTop:40, color:C.sub, fontSize:13 }}>
+      <div style={{ textAlign:'center', marginTop:40, color:C.sub, fontSize:16 }}>
         כל המסלולים כוללים תמיכה טכנית, גיבוי אוטומטי ו-SSL. אין חוזה מחייב.
       </div>
     </div>
@@ -805,7 +1323,8 @@ function PricingScreen({ onBack }) {
 }
 
 // ─── SUPER ADMIN DASHBOARD ───────────────────────────────────────────────────
-function SuperAdminDashboard({ onBack }) {
+function SuperAdminDashboard({ onBack, onGoHome = onBack, onSecurity }) {
+  const isMobile = useIsMobile();
   const offices = [
     { name:'Studio Levi', plan:'studio', mrr:2990, projects:18, users:8, health:95, since:'2023-01' },
     { name:'Cohen Arch', plan:'pro',    mrr:1690, projects:11, users:5, health:88, since:'2023-06' },
@@ -822,38 +1341,36 @@ function SuperAdminDashboard({ onBack }) {
     { label:'ממוצע בריאות', value:Math.round(offices.reduce((s,o)=>s+o.health,0)/offices.length)+'%', color:C.info }
   ];
   return (
-    <div style={{ width:'100vw', height:'100vh', background:C.bg, overflowY:'auto',
-      direction:'rtl', padding:28 }}>
+    <div style={{ width:'100vw', height:'100vh', background:C.bg, direction:'rtl',
+      display:'flex', flexDirection:'column' }}>
       {C.archBg && <ArchBackground />}
-      <div style={{ position:'relative', zIndex:1 }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
-          <div>
-            <h1 style={{ color:C.text, fontSize:24, fontWeight:800 }}>⚡ Super Admin</h1>
-            <div style={{ color:C.sub, fontSize:13 }}>תצוגת בעל הפלטפורמה</div>
-          </div>
-          <Btn onClick={onBack} variant="ghost">← יציאה</Btn>
+      <AppNavBar onGoHome={onGoHome} title="Super Admin" subtitle="תצוגת בעל הפלטפורמה" onBack={onBack}
+        rightContent={onSecurity && <Btn size="sm" variant="ghost" onClick={onSecurity}>🔐 ביקורת אבטחה</Btn>}/>
+      <div style={{ flex:1, overflowY:'auto', padding: isMobile ? 16 : 28, paddingBottom:56, position:'relative', zIndex:1 }}>
+        <div style={{ marginBottom:24 }}>
+          <h1 style={{ color:C.text, fontSize: isMobile ? 22 : 29, fontWeight:800 }}>⚡ Super Admin</h1>
         </div>
         {/* KPI circles */}
         <div style={{ display:'flex', gap:24, flexWrap:'wrap', marginBottom:28, justifyContent:'center' }}>
           {stats.map((s,i) => (
             <div key={i} style={{ background:C.card, borderRadius:16, padding:'20px 28px',
               border:`1px solid ${C.border}`, textAlign:'center' }}>
-              <div style={{ fontSize:28, fontWeight:800, color:s.color }}>{s.value}</div>
-              <div style={{ color:C.sub, fontSize:13, marginTop:4 }}>{s.label}</div>
+              <div style={{ fontSize:34, fontWeight:800, color:s.color }}>{s.value}</div>
+              <div style={{ color:C.sub, fontSize:16, marginTop:4 }}>{s.label}</div>
             </div>
           ))}
         </div>
         {/* Offices table */}
         <div style={{ background:C.card, borderRadius:16, border:`1px solid ${C.border}`, overflow:'hidden' }}>
           <div style={{ padding:'16px 20px', borderBottom:`1px solid ${C.border}` }}>
-            <h3 style={{ color:C.text, fontSize:16, fontWeight:700 }}>משרדות רשומות</h3>
+            <h3 style={{ color:C.text, fontSize:19, fontWeight:700 }}>משרדות רשומות</h3>
           </div>
           <div style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
                 <tr style={{ background:C.bg }}>
                   {['משרד','מסלול','MRR','פרויקטים','משתמשים','בריאות','מאז'].map(h => (
-                    <th key={h} style={{ padding:'10px 16px', textAlign:'right', fontSize:12,
+                    <th key={h} style={{ padding:'10px 16px', textAlign:'right', fontSize:14,
                       color:C.sub, fontWeight:600, borderBottom:`1px solid ${C.border}` }}>{h}</th>
                   ))}
                 </tr>
@@ -861,21 +1378,21 @@ function SuperAdminDashboard({ onBack }) {
               <tbody>
                 {offices.map((o,i) => (
                   <tr key={i} style={{ borderBottom:`1px solid ${C.border}` }}>
-                    <td style={{ padding:'12px 16px', fontSize:13, fontWeight:600, color:C.text }}>{o.name}</td>
+                    <td style={{ padding:'12px 16px', fontSize:16, fontWeight:600, color:C.text }}>{o.name}</td>
                     <td style={{ padding:'12px 16px' }}><Badge text={o.plan} color={o.plan==='studio'?C.ai:o.plan==='pro'?C.primary:C.sub}/></td>
-                    <td style={{ padding:'12px 16px', fontSize:13, color:C.text }}>₪{o.mrr.toLocaleString()}</td>
-                    <td style={{ padding:'12px 16px', fontSize:13, color:C.text }}>{o.projects}</td>
-                    <td style={{ padding:'12px 16px', fontSize:13, color:C.text }}>{o.users}</td>
+                    <td style={{ padding:'12px 16px', fontSize:16, color:C.text }}>₪{o.mrr.toLocaleString()}</td>
+                    <td style={{ padding:'12px 16px', fontSize:16, color:C.text }}>{o.projects}</td>
+                    <td style={{ padding:'12px 16px', fontSize:16, color:C.text }}>{o.users}</td>
                     <td style={{ padding:'12px 16px' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                         <div style={{ width:50, height:6, background:C.border, borderRadius:3, overflow:'hidden' }}>
                           <div style={{ width:o.health+'%', height:'100%', borderRadius:3,
                             background: o.health>85?C.success:o.health>65?C.warning:C.danger }}/>
                         </div>
-                        <span style={{ fontSize:12, color:C.sub }}>{o.health}%</span>
+                        <span style={{ fontSize:14, color:C.sub }}>{o.health}%</span>
                       </div>
                     </td>
-                    <td style={{ padding:'12px 16px', fontSize:12, color:C.sub }}>{o.since}</td>
+                    <td style={{ padding:'12px 16px', fontSize:14, color:C.sub }}>{o.since}</td>
                   </tr>
                 ))}
               </tbody>
@@ -885,7 +1402,7 @@ function SuperAdminDashboard({ onBack }) {
         {/* Roadmap */}
         <div style={{ marginTop:20, background:C.card, borderRadius:16, padding:20,
           border:`1px solid ${C.border}` }}>
-          <h3 style={{ color:C.text, fontSize:16, fontWeight:700, marginBottom:16 }}>🗺️ Roadmap — Q3/Q4 2024</h3>
+          <h3 style={{ color:C.text, fontSize:19, fontWeight:700, marginBottom:16 }}>🗺️ Roadmap — Q3/Q4 2024</h3>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:10 }}>
             {[
               { label:'Supabase Migration', status:'planned', quarter:'Q4 2024' },
@@ -896,10 +1413,10 @@ function SuperAdminDashboard({ onBack }) {
               { label:'Multi-language (EN/AR)', status:'backlog', quarter:'2025' }
             ].map((r,i) => (
               <div key={i} style={{ padding:'12px 14px', background:C.bg, borderRadius:10 }}>
-                <div style={{ fontSize:13, fontWeight:600, color:C.text, marginBottom:4 }}>{r.label}</div>
+                <div style={{ fontSize:16, fontWeight:600, color:C.text, marginBottom:4 }}>{r.label}</div>
                 <div style={{ display:'flex', justifyContent:'space-between' }}>
                   <StatusBadge status={r.status==='planned'?'pending':r.status==='in-progress'?'in-progress':'todo'} />
-                  <span style={{ fontSize:11, color:C.sub }}>{r.quarter}</span>
+                  <span style={{ fontSize:13, color:C.sub }}>{r.quarter}</span>
                 </div>
               </div>
             ))}
@@ -911,61 +1428,92 @@ function SuperAdminDashboard({ onBack }) {
 }
 
 // ─── SYSTEM DASHBOARD ─────────────────────────────────────────────────────────
-function SystemDashboard({ data, user, onBack }) {
+function SystemDashboard({ data, user, onBack, onGoHome = onBack }) {
+  const isMobile = useIsMobile();
+  const logoRef = React.useRef();
+  const [officeLogo, setOfficeLogo] = React.useState(OFFICE_PLAN.logo);
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target.result;
+      OFFICE_PLAN.logo = dataUrl;
+      try { localStorage.setItem('tektona_office_logo', dataUrl); } catch(ex) {}
+      setOfficeLogo(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
   const projects = data.projects || [];
   const active = projects.filter(p=>p.status==='active').length;
   const completed = projects.filter(p=>p.status==='completed').length;
   const totalRevenue = projects.reduce((s,p) => s + (p.payments||[]).filter(py=>py.status==='paid').reduce((a,py)=>a+py.amount,0), 0);
   const pendingPayments = projects.reduce((s,p) => s + (p.payments||[]).filter(py=>py.status==='pending').reduce((a,py)=>a+py.amount,0), 0);
   return (
-    <div style={{ width:'100vw', height:'100vh', background:C.bg, overflowY:'auto',
-      direction:'rtl', padding:28 }}>
+    <div style={{ width:'100vw', height:'100vh', background:C.bg, direction:'rtl',
+      display:'flex', flexDirection:'column' }}>
       {C.archBg && <ArchBackground />}
-      <div style={{ position:'relative', zIndex:1 }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
-          <div>
-            <h1 style={{ color:C.text, fontSize:24, fontWeight:800 }}>⚙️ לוח ניהול מערכת</h1>
-            <div style={{ color:C.sub, fontSize:13 }}>סקירה כללית — {OFFICE_PLAN.officeName}</div>
-          </div>
-          <Btn onClick={onBack} variant="ghost">← חזור</Btn>
+      <AppNavBar onGoHome={onGoHome} title="ניהול מערכת" subtitle={OFFICE_PLAN.officeName} onBack={onBack}/>
+      <div style={{ flex:1, overflowY:'auto', padding: isMobile ? 16 : 28, paddingBottom:56, position:'relative', zIndex:1 }}>
+        <div style={{ marginBottom:24 }}>
+          <h1 style={{ color:C.text, fontSize: isMobile ? 22 : 29, fontWeight:800 }}>⚙️ לוח ניהול מערכת</h1>
+          <div style={{ color:C.sub, fontSize:16 }}>סקירה כללית — {OFFICE_PLAN.officeName}</div>
         </div>
         {/* Stats circles */}
         <div style={{ display:'flex', gap:32, justifyContent:'center', flexWrap:'wrap', marginBottom:32,
-          background:C.card, padding:28, borderRadius:20, border:`1px solid ${C.border}` }}>
+          background:C.card, padding:28, borderRadius:20, border:`1px solid ${C.border}`,
+          background:`linear-gradient(135deg,${C.card},${C.bg})` }}>
           <SVGCircle value={projects.length} max={OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}
-            color={C.primary} label="סה״כ פרויקטים" sublabel={`מתוך ${OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5} במסלול`} size={90}/>
-          <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" size={90}/>
-          <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" size={90}/>
-          <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" size={90}/>
+            color={C.primary} label="סה״כ פרויקטים" sublabel={`/${OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}`} size={100}/>
+          <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" sublabel="active" size={100}/>
+          <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" sublabel="done" size={100}/>
+          <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={100}/>
         </div>
         {/* Financial */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:20 }}>
           <div style={{ background:C.card, borderRadius:16, padding:20, border:`1px solid ${C.border}` }}>
-            <div style={{ color:C.sub, fontSize:13, marginBottom:6 }}>הכנסות שהתקבלו</div>
-            <div style={{ fontSize:28, fontWeight:800, color:C.success }}>{fmtCurrency(totalRevenue)}</div>
+            <div style={{ color:C.sub, fontSize:16, marginBottom:6 }}>הכנסות שהתקבלו</div>
+            <div style={{ fontSize:34, fontWeight:800, color:C.success }}>{fmtCurrency(totalRevenue)}</div>
           </div>
           <div style={{ background:C.card, borderRadius:16, padding:20, border:`1px solid ${C.border}` }}>
-            <div style={{ color:C.sub, fontSize:13, marginBottom:6 }}>תשלומים ממתינים</div>
-            <div style={{ fontSize:28, fontWeight:800, color:C.warning }}>{fmtCurrency(pendingPayments)}</div>
+            <div style={{ color:C.sub, fontSize:16, marginBottom:6 }}>תשלומים ממתינים</div>
+            <div style={{ fontSize:34, fontWeight:800, color:C.warning }}>{fmtCurrency(pendingPayments)}</div>
           </div>
+        </div>
+        {/* Office branding */}
+        <div style={{background:C.card,borderRadius:16,padding:20,border:`1px solid ${C.border}`,marginBottom:20,
+          display:'flex',alignItems:'center',gap:20,flexWrap:'wrap'}}>
+          <div>
+            <div style={{fontWeight:700,color:C.text,fontSize:17,marginBottom:4}}>🏢 לוגו משרד (White Label)</div>
+            <div style={{color:C.sub,fontSize:14}}>יוצג בסרגל הניווט לצד לוגו Tektona</div>
+          </div>
+          {officeLogo && <img src={officeLogo} alt="office logo" style={{height:40,width:'auto',borderRadius:6}}/>}
+          <input ref={logoRef} type="file" accept="image/*" onChange={handleLogoUpload} style={{display:'none'}}/>
+          <Btn size="sm" variant="ghost" onClick={()=>logoRef.current?.click()}>
+            {officeLogo ? '🔄 החלף לוגו' : '📤 העלה לוגו'}
+          </Btn>
+          {officeLogo && (
+            <Btn size="sm" variant="ghost" onClick={()=>{OFFICE_PLAN.logo=null;localStorage.removeItem('tektona_office_logo');setOfficeLogo(null);}}>
+              הסר
+            </Btn>
+          )}
         </div>
         {/* Projects list */}
         <div style={{ background:C.card, borderRadius:16, border:`1px solid ${C.border}`, overflow:'hidden' }}>
           <div style={{ padding:'16px 20px', borderBottom:`1px solid ${C.border}` }}>
-            <h3 style={{ color:C.text, fontSize:15, fontWeight:700 }}>כל הפרויקטים</h3>
+            <h3 style={{ color:C.text, fontSize:18, fontWeight:700 }}>כל הפרויקטים</h3>
           </div>
           {projects.map(p => (
             <div key={p.id} style={{ padding:'14px 20px', borderBottom:`1px solid ${C.border}`,
               display:'flex', justifyContent:'space-between', alignItems:'center' }}>
               <div>
-                <div style={{ fontWeight:600, color:C.text, fontSize:14 }}>{p.name}</div>
-                <div style={{ color:C.sub, fontSize:12 }}>{p.clientName} · {p.architectName}</div>
+                <div style={{ fontWeight:600, color:C.text, fontSize:17 }}>{p.name}</div>
+                <div style={{ color:C.sub, fontSize:14 }}>{p.clientName} · {p.architectName}</div>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                 <div style={{ width:80, height:6, background:C.border, borderRadius:3, overflow:'hidden' }}>
                   <div style={{ width:p.progress+'%', height:'100%', background:C.primary, borderRadius:3 }}/>
                 </div>
-                <span style={{ fontSize:12, color:C.sub, width:36 }}>{p.progress}%</span>
+                <span style={{ fontSize:14, color:C.sub, width:36 }}>{p.progress}%</span>
                 <StatusBadge status={p.status}/>
               </div>
             </div>
@@ -977,7 +1525,8 @@ function SystemDashboard({ data, user, onBack }) {
 }
 
 // ─── SECURITY AUDIT ───────────────────────────────────────────────────────────
-function SecurityAudit({ onBack }) {
+function SecurityAudit({ onBack, onGoHome = onBack }) {
+  const isMobile = useIsMobile();
   const checks = [
     { name:'הצפנת נתונים (AES-256)', status:'pass', detail:'כל הנתונים מוצפנים בזמן מנוחה ובתעבורה' },
     { name:'HTTPS / TLS 1.3', status:'pass', detail:'תעבורה מאובטחת לחלוטין' },
@@ -993,12 +1542,11 @@ function SecurityAudit({ onBack }) {
   const passed = checks.filter(c=>c.status==='pass').length;
   const score = Math.round((passed/checks.length)*100);
   return (
-    <div style={{ width:'100vw', height:'100vh', background:C.bg, overflowY:'auto',
-      direction:'rtl', padding:28 }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
-        <h1 style={{ color:C.text, fontSize:24, fontWeight:800 }}>🔐 ביקורת אבטחה</h1>
-        <Btn onClick={onBack} variant="ghost">← חזור</Btn>
-      </div>
+    <div style={{ width:'100vw', height:'100vh', background:C.bg, direction:'rtl',
+      display:'flex', flexDirection:'column' }}>
+      <AppNavBar onGoHome={onGoHome} title="ביקורת אבטחה" onBack={onBack}/>
+      <div style={{ flex:1, overflowY:'auto', padding: isMobile ? 16 : 28, paddingBottom:56 }}>
+        <h1 style={{ color:C.text, fontSize: isMobile ? 22 : 29, fontWeight:800, marginBottom:20 }}>🔐 ביקורת אבטחה</h1>
       <div style={{ display:'flex', gap:20, marginBottom:24, justifyContent:'center' }}>
         <SVGCircle value={score} max={100} color={score>80?C.success:score>60?C.warning:C.danger}
           label="ציון אבטחה" sublabel={`${passed}/${checks.length} עברו`} size={100}/>
@@ -1008,61 +1556,67 @@ function SecurityAudit({ onBack }) {
           <div key={i} style={{ padding:'14px 20px', borderBottom:i<checks.length-1?`1px solid ${C.border}`:'none',
             display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div>
-              <div style={{ fontWeight:600, color:C.text, fontSize:14 }}>{c.name}</div>
-              <div style={{ color:C.sub, fontSize:12 }}>{c.detail}</div>
+              <div style={{ fontWeight:600, color:C.text, fontSize:17 }}>{c.name}</div>
+              <div style={{ color:C.sub, fontSize:14 }}>{c.detail}</div>
             </div>
             <Badge text={c.status==='pass'?'✓ עבר':c.status==='warning'?'⚠ אזהרה':'📋 מתוכנן'}
               color={c.status==='pass'?C.success:c.status==='warning'?C.warning:C.info}/>
           </div>
         ))}
       </div>
+      </div>
     </div>
   );
 }
 
 // ─── USERS SCREEN ─────────────────────────────────────────────────────────────
-function UsersScreen({ data, setData, onBack }) {
+function UsersScreen({ data, setData, onBack, onGoHome = onBack }) {
+  const isMobile = useIsMobile();
   const [showInvite, setShowInvite] = React.useState(false);
   const [form, setForm] = React.useState({ name:'', email:'', role:'arch' });
   const users = data.users || MOCK_USERS;
   const invite = () => {
     if (!form.name || !form.email) return;
-    const nu = { id:'u'+uid(), name:form.name, email:form.email, role:form.role, active:true, avatar:form.name[0], projects:[] };
+    const nu = { id:'u'+uid(), name:form.name, email:form.email, role:form.role, active:true, avatar:form.name[0], projects:[], aiEnabled:false };
     setData(d=>({...d, users:[...(d.users||MOCK_USERS), nu]}));
     setForm({name:'',email:'',role:'arch'}); setShowInvite(false);
   };
+  const toggleAI = (uid) => setData(d=>({...d, users:(d.users||MOCK_USERS).map(u=>u.id===uid?{...u,aiEnabled:!u.aiEnabled}:u)}));
   const roleLabel = { admin:'מנהל', arch:'אדריכל', client:'לקוח' };
   return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
-      <div style={{padding:'20px 28px',background:C.card,borderBottom:`1px solid ${C.border}`,
-        display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div>
-          <h2 style={{color:C.text,fontSize:20,fontWeight:800}}>👥 ניהול משתמשים</h2>
-          <div style={{color:C.sub,fontSize:13}}>{users.length} משתמשים</div>
-        </div>
-        <div style={{display:'flex',gap:10}}>
-          <Btn onClick={()=>setShowInvite(true)}>+ הזמן משתמש</Btn>
-          <Btn onClick={onBack} variant="ghost">← חזור</Btn>
-        </div>
-      </div>
-      <div style={{flex:1,overflowY:'auto',padding:28}}>
+      <AppNavBar onGoHome={onGoHome} title="ניהול משתמשים" subtitle={`${users.length} משתמשים`} onBack={onBack}
+        rightContent={<Btn onClick={()=>setShowInvite(true)} size="sm">+ הזמן</Btn>}/>
+      <div style={{flex:1,overflowY:'auto',padding: isMobile ? 16 : 28, paddingBottom:56}}>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:16}}>
           {users.map(u=>(
             <div key={u.id} style={{background:C.card,borderRadius:16,padding:20,border:`1px solid ${C.border}`}}>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
                 <div style={{width:44,height:44,borderRadius:'50%',background:C.primary,color:'#fff',
-                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,fontWeight:700}}>
+                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,fontWeight:700}}>
                   {u.avatar}
                 </div>
                 <div>
                   <div style={{fontWeight:700,color:C.text}}>{u.name}</div>
-                  <div style={{fontSize:12,color:C.sub}}>{u.email}</div>
+                  <div style={{fontSize:14,color:C.sub}}>{u.email}</div>
                 </div>
               </div>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:u.role==='arch'?10:0}}>
                 <Badge text={roleLabel[u.role]||u.role} color={u.role==='admin'?C.danger:u.role==='arch'?C.primary:C.info}/>
                 <Badge text={u.active?'פעיל':'לא פעיל'} color={u.active?C.success:C.sub}/>
               </div>
+              {u.role==='arch' && (
+                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',
+                  padding:'8px 10px',background:C.bg,borderRadius:8,marginTop:4}}>
+                  <span style={{fontSize:13,color:C.sub}}>🤖 AI Agent</span>
+                  <button onClick={()=>toggleAI(u.id)}
+                    style={{width:38,height:20,borderRadius:10,border:'none',cursor:'pointer',position:'relative',
+                      background:u.aiEnabled?C.ai:C.border,transition:'background .2s'}}>
+                    <div style={{position:'absolute',top:2,left:u.aiEnabled?20:2,width:16,height:16,
+                      borderRadius:8,background:'#fff',transition:'left .2s'}}/>
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -1086,9 +1640,13 @@ function UsersScreen({ data, setData, onBack }) {
 }
 
 // ─── BACKUP PANEL ─────────────────────────────────────────────────────────────
-function BackupPanel({ data, setData, onBack }) {
+function BackupPanel({ data, setData, onBack, onGoHome = onBack }) {
+  const isMobile = useIsMobile();
   const [msg, setMsg] = React.useState('');
   const inputRef = React.useRef();
+  const lastBackupTs = (() => { try { const b=JSON.parse(localStorage.getItem('tektona_backup')||'{}'); return b.ts||null; } catch(e){return null;} })();
+  const daysSince = lastBackupTs ? Math.floor((Date.now()-lastBackupTs)/86400000) : null;
+  const needsReminder = daysSince===null || daysSince>=7;
   const doExport = () => { exportData(data); setMsg('גיבוי יוצא בהצלחה!'); };
   const doImport = (e) => {
     const file = e.target.files[0]; if (!file) return;
@@ -1100,29 +1658,44 @@ function BackupPanel({ data, setData, onBack }) {
     reader.readAsText(file);
   };
   return (
-    <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',padding:28}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
-        <h2 style={{color:C.text,fontSize:20,fontWeight:800}}>💾 גיבוי ושחזור</h2>
-        <Btn onClick={onBack} variant="ghost">← חזור</Btn>
-      </div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20,maxWidth:700}}>
+    <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
+      <AppNavBar onGoHome={onGoHome} title="גיבוי ושחזור" onBack={onBack}/>
+      <div style={{flex:1,overflowY:'auto',padding: isMobile ? 16 : 28, paddingBottom:56}}>
+        <h2 style={{color:C.text,fontSize: isMobile ? 20 : 24,fontWeight:800,marginBottom:12}}>💾 גיבוי ושחזור</h2>
+        {needsReminder && (
+          <div style={{background:C.warning+'22',border:`1px solid ${C.warning}`,borderRadius:10,padding:'10px 16px',marginBottom:16,
+            display:'flex',alignItems:'center',gap:10}}>
+            <span style={{fontSize:20}}>⚠️</span>
+            <span style={{color:C.warning,fontWeight:600,fontSize:15}}>
+              {daysSince===null ? 'לא בוצע גיבוי אף פעם — מומלץ לגבות עכשיו!' : `הגיבוי האחרון לפני ${daysSince} ימים — מומלץ לגבות מדי שבוע`}
+            </span>
+          </div>
+        )}
+        {!needsReminder && lastBackupTs && (
+          <div style={{background:C.success+'15',border:`1px solid ${C.success}`,borderRadius:10,padding:'8px 16px',marginBottom:16,
+            display:'flex',alignItems:'center',gap:8}}>
+            <span style={{color:C.success,fontSize:15}}>✓ גיבוי אחרון: לפני {daysSince} ימים ({new Date(lastBackupTs).toLocaleDateString('he-IL')})</span>
+          </div>
+        )}
+        <div style={{display:'grid',gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',gap:20,maxWidth:700}}>
         <div style={{background:C.card,borderRadius:16,padding:24,border:`1px solid ${C.border}`}}>
-          <div style={{fontSize:32,marginBottom:12}}>📤</div>
-          <h3 style={{color:C.text,fontSize:16,fontWeight:700,marginBottom:8}}>יצוא נתונים</h3>
-          <p style={{color:C.sub,fontSize:13,marginBottom:16,lineHeight:1.6}}>הורד קובץ JSON עם כל נתוני המשרד.</p>
+          <div style={{fontSize:38,marginBottom:12}}>📤</div>
+          <h3 style={{color:C.text,fontSize:19,fontWeight:700,marginBottom:8}}>יצוא נתונים</h3>
+          <p style={{color:C.sub,fontSize:16,marginBottom:16,lineHeight:1.6}}>הורד קובץ JSON עם כל נתוני המשרד.</p>
           <Btn onClick={doExport} style={{width:'100%'}}>יצוא גיבוי</Btn>
         </div>
         <div style={{background:C.card,borderRadius:16,padding:24,border:`1px solid ${C.border}`}}>
-          <div style={{fontSize:32,marginBottom:12}}>📥</div>
-          <h3 style={{color:C.text,fontSize:16,fontWeight:700,marginBottom:8}}>יבוא נתונים</h3>
-          <p style={{color:C.sub,fontSize:13,marginBottom:16,lineHeight:1.6}}>שחזר נתונים מקובץ גיבוי. הנתונים הנוכחיים יוחלפו.</p>
+          <div style={{fontSize:38,marginBottom:12}}>📥</div>
+          <h3 style={{color:C.text,fontSize:19,fontWeight:700,marginBottom:8}}>יבוא נתונים</h3>
+          <p style={{color:C.sub,fontSize:16,marginBottom:16,lineHeight:1.6}}>שחזר נתונים מקובץ גיבוי. הנתונים הנוכחיים יוחלפו.</p>
           <input ref={inputRef} type="file" accept=".json" onChange={doImport} style={{display:'none'}}/>
           <Btn onClick={()=>inputRef.current?.click()} variant="ghost" style={{width:'100%'}}>בחר קובץ גיבוי</Btn>
         </div>
       </div>
       {msg && <div style={{marginTop:16,padding:'12px 16px',borderRadius:10,
         background:msg.includes('שגיאה')?C.danger+'22':C.success+'22',
-        color:msg.includes('שגיאה')?C.danger:C.success,fontSize:14}}>{msg}</div>}
+        color:msg.includes('שגיאה')?C.danger:C.success,fontSize:17}}>{msg}</div>}
+      </div>
     </div>
   );
 }
@@ -1130,16 +1703,16 @@ function BackupPanel({ data, setData, onBack }) {
 // ─── SHARE PANEL ─────────────────────────────────────────────────────────────
 function SharePanel({ project, onClose }) {
   const sd = {name:project.name,client:project.clientName,progress:project.progress,status:project.status};
-  const url = window.location.origin+'?share='+btoa(JSON.stringify(sd));
+  const url = window.location.origin+'?share='+encodeURIComponent(JSON.stringify(sd));
   const [copied,setCopied] = React.useState(false);
   const copy = ()=>{ navigator.clipboard.writeText(url).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000);}); };
   return (
     <Modal title="שיתוף פרויקט" onClose={onClose} width={480}>
-      <p style={{color:C.sub,fontSize:13,marginBottom:16,lineHeight:1.7}}>
+      <p style={{color:C.sub,fontSize:16,marginBottom:16,lineHeight:1.7}}>
         קישור לצפייה בלבד עבור הלקוח. ללא אפשרות עריכה.
       </p>
       <div style={{background:C.bg,borderRadius:10,padding:'12px 14px',marginBottom:16,
-        fontSize:12,color:C.sub,wordBreak:'break-all',fontFamily:'monospace'}}>{url.slice(0,80)}...</div>
+        fontSize:14,color:C.sub,wordBreak:'break-all',fontFamily:'monospace'}}>{url.slice(0,80)}...</div>
       <Btn onClick={copy} style={{width:'100%'}}>{copied?'✓ הועתק!':'📋 העתק קישור'}</Btn>
     </Modal>
   );
@@ -1152,44 +1725,119 @@ function DashboardTab({ project }) {
   const pendingApprovals = (project.approvals||[]).filter(a=>a.status==='pending').length;
   const openPunch = (project.punchList||[]).filter(p=>p.status==='open'||p.status==='in-progress').length;
   const phase = PHASES[(project.currentPhase||1)-1];
+  const completedPhases = (project.phases||[]).filter(p=>p.status==='completed').length;
+  const paidPct = Math.round(paid/(total||1)*100);
+
+  const kpis = [
+    { value:project.progress||0, max:100, color:C.primary, label:'התקדמות', sublabel:'%', size:90 },
+    { value:project.currentPhase||1, max:8, color:C.accent, label:'שלב נוכחי', sublabel:phase?.short, size:90 },
+    { value:paidPct, max:100, color:C.success, label:'גביה', sublabel:'%', size:90 },
+    { value:pendingApprovals, max:Math.max(pendingApprovals,5), color:C.warning, label:'אישורים', sublabel:'ממתין', size:90 },
+    { value:openPunch, max:Math.max(openPunch,5), color:C.danger, label:'ממצאים', sublabel:'פתוחים', size:90 },
+    { value:completedPhases, max:8, color:C.info, label:'שלבים', sublabel:'הושלמו', size:90 },
+  ];
+
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
-      <div style={{height:180,borderRadius:16,marginBottom:24,overflow:'hidden',position:'relative',
-        background:`linear-gradient(135deg,${C.primary}44,${C.accent}22)`,border:`1px solid ${C.border}`}}>
+      {/* Cover */}
+      <div style={{height:200,borderRadius:16,marginBottom:24,overflow:'hidden',position:'relative',
+        background:`linear-gradient(135deg,${C.primary}33 0%,${C.accent}22 40%,${C.bg} 100%)`,
+        border:`1px solid ${C.border}`}}>
         {project.coverImage
-          ? <img src={project.coverImage} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="cover"/>
-          : <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:56}}>🏗️</div>
+          ? <img src={project.coverImage} style={{width:'100%',height:'100%',objectFit:'cover',filter:'brightness(0.85)'}} alt="cover"/>
+          : (
+            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+              {/* Architectural grid lines */}
+              <svg style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:0.12}} viewBox="0 0 400 200" preserveAspectRatio="none">
+                {[...Array(8)].map((_,i)=><line key={'v'+i} x1={i*60} y1="0" x2={i*60} y2="200" stroke={C.text} strokeWidth="0.5"/>)}
+                {[...Array(4)].map((_,i)=><line key={'h'+i} x1="0" y1={i*50} x2="400" y2={i*50} stroke={C.text} strokeWidth="0.5"/>)}
+                <line x1="0" y1="0" x2="400" y2="200" stroke={C.accent} strokeWidth="1" opacity="0.6"/>
+                <line x1="400" y1="0" x2="0" y2="200" stroke={C.accent} strokeWidth="1" opacity="0.4"/>
+                <circle cx="200" cy="100" r="40" fill="none" stroke={C.primary} strokeWidth="0.8" opacity="0.5"/>
+                <circle cx="200" cy="100" r="70" fill="none" stroke={C.border} strokeWidth="0.5"/>
+              </svg>
+              <div style={{textAlign:'center',position:'relative',zIndex:1}}>
+                <div style={{fontSize:58,marginBottom:6}}>🏗️</div>
+                <div style={{fontSize:13,color:C.sub,letterSpacing:'0.1em',textTransform:'uppercase'}}>
+                  {project.template==='villa'?'Residential':project.template==='commercial'?'Commercial':project.template==='renovation'?'Renovation':'Construction'}
+                </div>
+              </div>
+            </div>
+          )
         }
-        <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'14px 18px',
-          background:'linear-gradient(transparent,rgba(0,0,0,0.75))'}}>
-          <div style={{color:'#fff',fontWeight:800,fontSize:20}}>{project.name}</div>
-          <div style={{color:'rgba(255,255,255,0.8)',fontSize:12}}>{project.address} · {project.clientName}</div>
+        <div style={{position:'absolute',bottom:0,left:0,right:0,padding:'16px 20px',
+          background:'linear-gradient(transparent,rgba(0,0,0,0.8))'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}>
+            <div>
+              <div style={{color:'#fff',fontWeight:800,fontSize:26,letterSpacing:'-0.01em'}}>{project.name}</div>
+              <div style={{color:'rgba(255,255,255,0.65)',fontSize:14,marginTop:2}}>{project.address} · {project.clientName}</div>
+            </div>
+            <div style={{textAlign:'left'}}>
+              <StatusBadge status={project.status}/>
+            </div>
+          </div>
+          {/* Progress bar on cover */}
+          <div style={{marginTop:12,height:3,background:'rgba(255,255,255,0.2)',borderRadius:2,overflow:'hidden'}}>
+            <div style={{width:(project.progress||0)+'%',height:'100%',borderRadius:2,
+              background:`linear-gradient(90deg,${C.accent},${C.primary})`,transition:'width 1.5s ease'}}/>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',marginTop:4}}>
+            <span style={{fontSize:12,color:'rgba(255,255,255,0.5)'}}>{PHASES[0]?.short}</span>
+            <span style={{fontSize:12,color:'rgba(255,255,255,0.7)',fontWeight:600}}>{project.progress||0}%</span>
+            <span style={{fontSize:12,color:'rgba(255,255,255,0.5)'}}>{PHASES[PHASES.length-1]?.short}</span>
+          </div>
         </div>
       </div>
-      <div style={{background:C.card,borderRadius:16,padding:20,marginBottom:20,border:`1px solid ${C.border}`,
-        display:'flex',gap:28,flexWrap:'wrap',justifyContent:'center'}}>
-        <SVGCircle value={project.progress||0} max={100} color={C.primary} label="התקדמות" sublabel="%" size={80}/>
-        <SVGCircle value={project.currentPhase||1} max={8} color={C.accent} label="שלב" sublabel={phase?.short} size={80}/>
-        <SVGCircle value={pendingApprovals} max={10} color={C.warning} label="אישורים ממתינים" size={80}/>
-        <SVGCircle value={openPunch} max={20} color={C.danger} label="ממצאים פתוחים" size={80}/>
-        <SVGCircle value={Math.round(paid/(total||1)*100)} max={100} color={C.success} label="גביה" sublabel="%" size={80}/>
+
+      {/* KPI Circles */}
+      <div style={{background:C.card,borderRadius:16,padding:'24px 20px',marginBottom:20,
+        border:`1px solid ${C.border}`,
+        background:`linear-gradient(135deg,${C.card},${C.bg})`}}>
+        <div style={{fontSize:12,color:C.sub,letterSpacing:'0.12em',fontWeight:700,marginBottom:20,textTransform:'uppercase'}}>
+          מדדי ביצוע — KPIs
+        </div>
+        <div style={{display:'flex',gap:20,flexWrap:'wrap',justifyContent:'center'}}>
+          {kpis.map((k,i)=>(
+            <SVGCircle key={i} {...k}/>
+          ))}
+        </div>
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+
+      {/* Info grid */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
         <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
-          <h4 style={{color:C.sub,fontSize:12,fontWeight:600,marginBottom:10}}>פרטי פרויקט</h4>
+          <h4 style={{color:C.sub,fontSize:13,fontWeight:700,marginBottom:12,letterSpacing:'0.1em',textTransform:'uppercase'}}>פרטי פרויקט</h4>
           {[['אדריכל',project.architectName],['לקוח',project.clientName],
-            ['שטח',project.area?project.area+'מ"ר':'—'],['תקציב',fmtCurrency(project.budget)],
+            ['שטח',project.area?project.area+' מ"ר':'—'],['תקציב',fmtCurrency(project.budget)],
             ['תחילה',fmtDate(project.startDate)],['סיום',fmtDate(project.endDate)]
           ].map(([k,v])=>(
-            <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:`1px solid ${C.border}`}}>
-              <span style={{color:C.sub,fontSize:13}}>{k}</span>
-              <span style={{color:C.text,fontSize:13,fontWeight:500}}>{v||'—'}</span>
+            <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',
+              borderBottom:`1px solid ${C.border}`}}>
+              <span style={{color:C.sub,fontSize:14}}>{k}</span>
+              <span style={{color:C.text,fontSize:14,fontWeight:600}}>{v||'—'}</span>
             </div>
           ))}
         </div>
-        <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
-          <h4 style={{color:C.sub,fontSize:12,fontWeight:600,marginBottom:10}}>תיאור</h4>
-          <p style={{color:C.text,fontSize:13,lineHeight:1.8}}>{project.description||'אין תיאור.'}</p>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`,flex:1}}>
+            <h4 style={{color:C.sub,fontSize:13,fontWeight:700,marginBottom:10,letterSpacing:'0.1em',textTransform:'uppercase'}}>תיאור</h4>
+            <p style={{color:C.text,fontSize:16,lineHeight:1.8}}>{project.description||'אין תיאור.'}</p>
+          </div>
+          {/* Payment summary mini bar */}
+          <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}>
+              <span style={{color:C.sub,fontSize:13,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.1em'}}>גביה</span>
+              <span style={{color:C.success,fontSize:16,fontWeight:700}}>{paidPct}%</span>
+            </div>
+            <div style={{height:6,background:C.border,borderRadius:3,overflow:'hidden',marginBottom:8}}>
+              <div style={{width:paidPct+'%',height:'100%',borderRadius:3,
+                background:`linear-gradient(90deg,${C.success}99,${C.success})`,transition:'width 1.5s'}}/>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:14}}>
+              <span style={{color:C.success}}>{fmtCurrency(paid)} שולם</span>
+              <span style={{color:C.sub}}>{fmtCurrency(total-paid)} נותר</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1221,21 +1869,21 @@ function BriefTab({ project, setProject, user }) {
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
         <div>
-          <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>תקציר לקוח</h3>
-          <p style={{color:C.sub,fontSize:13}}>8 שאלות לפני הפגישה הראשונה</p>
+          <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>תקציר לקוח</h3>
+          <p style={{color:C.sub,fontSize:16}}>8 שאלות לפני הפגישה הראשונה</p>
         </div>
         {brief.submitted && <Badge text="✓ הוגש" color={C.success}/>}
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:12}}>
         {questions.map(q=>(
           <div key={q.key} style={{background:C.card,borderRadius:12,padding:16,border:`1px solid ${C.border}`}}>
-            <div style={{fontWeight:600,color:C.text,fontSize:14,marginBottom:4}}>{q.q}</div>
-            <div style={{color:C.sub,fontSize:12,marginBottom:8}}>{q.hint}</div>
-            {readOnly ? <div style={{color:C.text,fontSize:13}}>{answers[q.key]||'—'}</div>
+            <div style={{fontWeight:600,color:C.text,fontSize:17,marginBottom:4}}>{q.q}</div>
+            <div style={{color:C.sub,fontSize:14,marginBottom:8}}>{q.hint}</div>
+            {readOnly ? <div style={{color:C.text,fontSize:16}}>{answers[q.key]||'—'}</div>
               : <textarea value={answers[q.key]||''} onChange={e=>setAnswers(a=>({...a,[q.key]:e.target.value}))}
                   rows={2} placeholder="הזן תשובה..."
                   style={{width:'100%',padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
-                    background:C.inputBg,color:C.text,fontSize:13,resize:'vertical',
+                    background:C.inputBg,color:C.text,fontSize:16,resize:'vertical',
                     fontFamily:'Heebo,Arial,sans-serif',outline:'none',direction:'rtl'}}/>
             }
           </div>
@@ -1243,7 +1891,7 @@ function BriefTab({ project, setProject, user }) {
       </div>
       {!readOnly && (
         <div style={{display:'flex',gap:10,marginTop:20,justifyContent:'flex-end'}}>
-          {saved && <span style={{color:C.success,fontSize:13,alignSelf:'center'}}>✓ נשמר</span>}
+          {saved && <span style={{color:C.success,fontSize:16,alignSelf:'center'}}>✓ נשמר</span>}
           <Btn onClick={save} variant="ghost">שמור טיוטה</Btn>
           {!brief.submitted && <Btn onClick={submit}>הגש תקציר</Btn>}
         </div>
@@ -1292,14 +1940,14 @@ function AIAgentTab({ project }) {
     <div style={{padding:24,height:'calc(100vh - 140px)',display:'flex',flexDirection:'column',animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
         <div>
-          <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>🤖 AI Agent</h3>
-          <p style={{color:C.sub,fontSize:13}}>GPT-4.1 · עוזר חכם לפרויקט</p>
+          <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>🤖 AI Agent</h3>
+          <p style={{color:C.sub,fontSize:16}}>GPT-4.1 · עוזר חכם לפרויקט</p>
         </div>
       </div>
       <div ref={chatRef} style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:12,marginBottom:16}}>
         {chat.map((m,i)=>(
           <div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-start':'flex-end'}}>
-            <div style={{maxWidth:'75%',padding:'12px 16px',borderRadius:16,fontSize:14,lineHeight:1.7,
+            <div style={{maxWidth:'75%',padding:'12px 16px',borderRadius:16,fontSize:17,lineHeight:1.7,
               background:m.role==='user'?C.primary:C.card,
               color:m.role==='user'?'#fff':C.text,
               border:m.role==='user'?'none':`1px solid ${C.border}`,
@@ -1312,7 +1960,7 @@ function AIAgentTab({ project }) {
         {loading && (
           <div style={{display:'flex',justifyContent:'flex-end'}}>
             <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:'12px 16px',
-              color:C.sub,fontSize:14,display:'flex',gap:6,alignItems:'center'}}>
+              color:C.sub,fontSize:17,display:'flex',gap:6,alignItems:'center'}}>
               <span style={{animation:'pulse 1s infinite'}}>●</span>
               <span style={{animation:'pulse 1s .2s infinite'}}>●</span>
               <span style={{animation:'pulse 1s .4s infinite'}}>●</span>
@@ -1325,7 +1973,7 @@ function AIAgentTab({ project }) {
           onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}}
           placeholder="שאל אותי על הפרויקט... (Enter לשליחה)" rows={2}
           style={{flex:1,padding:'10px 14px',borderRadius:12,border:`1px solid ${C.border}`,
-            background:C.inputBg,color:C.text,fontSize:14,resize:'none',
+            background:C.inputBg,color:C.text,fontSize:17,resize:'none',
             fontFamily:'Heebo,Arial,sans-serif',outline:'none',direction:'rtl'}}/>
         <Btn onClick={send} disabled={loading||!msg.trim()} style={{alignSelf:'flex-end'}}>שלח</Btn>
       </div>
@@ -1333,7 +1981,7 @@ function AIAgentTab({ project }) {
         {['סכם את הפרויקט','מה השלב הבא?','כתוב עדכון ללקוח','זהה סיכונים בפרויקט'].map(s=>(
           <button key={s} onClick={()=>{setMsg(s);}}
             style={{padding:'5px 12px',borderRadius:20,border:`1px solid ${C.border}`,
-              background:'transparent',color:C.sub,cursor:'pointer',fontSize:12}}>
+              background:'transparent',color:C.sub,cursor:'pointer',fontSize:14}}>
             {s}
           </button>
         ))}
@@ -1344,53 +1992,97 @@ function AIAgentTab({ project }) {
 
 // ─── TIMELINE TAB ────────────────────────────────────────────────────────────
 function TimelineTab({ project, setProject }) {
+  const [viewMode, setViewMode] = React.useState('list');
   const phases = project.phases || PHASES.map((p,i)=>({phaseId:p.id,status:i===0?'active':'pending',completedDate:null,notes:''}));
   const updatePhase = (idx, field, val) => {
     const updated = phases.map((p,i)=>i===idx?{...p,[field]:val}:p);
     setProject(pr=>({...pr,phases:updated}));
   };
   const statusColors = { completed:C.success, active:C.primary, pending:C.border };
+
+  const start = project.startDate ? new Date(project.startDate) : new Date();
+  const end   = project.endDate   ? new Date(project.endDate)   : new Date(start.getTime()+365*86400000);
+  const totalDays = Math.max(1, (end-start)/86400000);
+  const phaseSegLen = totalDays / PHASES.length;
+
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
-      <h3 style={{color:C.text,fontSize:18,fontWeight:700,marginBottom:20}}>ציר זמן פרויקט</h3>
-      <div style={{position:'relative'}}>
-        <div style={{position:'absolute',right:19,top:32,bottom:32,width:2,background:C.border,zIndex:0}}/>
-        {PHASES.map((phase,i)=>{
-          const ph = phases[i] || {status:'pending',completedDate:null,notes:''};
-          const color = statusColors[ph.status] || C.border;
-          return (
-            <div key={phase.id} style={{display:'flex',gap:20,marginBottom:20,position:'relative'}}>
-              <div style={{width:40,height:40,borderRadius:'50%',background:color,
-                border:`3px solid ${ph.status==='active'?C.primary:C.border}`,
-                display:'flex',alignItems:'center',justifyContent:'center',
-                color:'#fff',fontWeight:700,fontSize:14,flexShrink:0,zIndex:1,
-                boxShadow:ph.status==='active'?`0 0 0 4px ${C.primary}33`:'none'}}>
-                {ph.status==='completed'?'✓':phase.id}
-              </div>
-              <div style={{flex:1,background:C.card,borderRadius:12,padding:16,border:`1px solid ${ph.status==='active'?C.primary:C.border}`}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-                  <div style={{fontWeight:700,color:C.text,fontSize:15}}>{phase.name}</div>
-                  <Select value={ph.status} onChange={v=>updatePhase(i,'status',v)}
-                    options={[{value:'pending',label:'ממתין'},{value:'active',label:'פעיל'},{value:'completed',label:'הושלם'}]}
-                    style={{width:120}}/>
-                </div>
-                {ph.status==='completed' && (
-                  <div style={{marginBottom:8}}>
-                    <input type="date" value={ph.completedDate||''} onChange={e=>updatePhase(i,'completedDate',e.target.value)}
-                      style={{padding:'5px 10px',borderRadius:8,border:`1px solid ${C.border}`,
-                        background:C.inputBg,color:C.text,fontSize:12,outline:'none'}}/>
-                  </div>
-                )}
-                <input value={ph.notes||''} onChange={e=>updatePhase(i,'notes',e.target.value)}
-                  placeholder="הוסף הערות..."
-                  style={{width:'100%',padding:'6px 10px',borderRadius:8,border:`1px solid ${C.border}`,
-                    background:C.inputBg,color:C.text,fontSize:12,outline:'none',direction:'rtl',
-                    fontFamily:'Heebo,Arial,sans-serif'}}/>
-              </div>
-            </div>
-          );
-        })}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>ציר זמן פרויקט</h3>
+        <button onClick={()=>setViewMode(v=>v==='list'?'gantt':'list')}
+          style={{padding:'6px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,
+            color:C.sub,cursor:'pointer',fontSize:13}}>
+          {viewMode==='list' ? '📊 תצוגת Gantt' : '☰ רשימה'}
+        </button>
       </div>
+
+      {viewMode==='gantt' && (
+        <div style={{background:C.card,borderRadius:16,padding:20,border:`1px solid ${C.border}`,marginBottom:20,overflowX:'auto'}}>
+          <div style={{fontSize:13,color:C.sub,marginBottom:12,display:'flex',justifyContent:'space-between'}}>
+            <span>{project.startDate||'—'}</span><span>{project.endDate||'—'}</span>
+          </div>
+          {PHASES.map((phase,i)=>{
+            const ph = phases[i]||{status:'pending'};
+            const color = ph.status==='completed'?C.success:ph.status==='active'?C.primary:C.border;
+            const left  = (i/PHASES.length)*100;
+            const width = (1/PHASES.length)*100;
+            return (
+              <div key={phase.id} style={{marginBottom:8,display:'flex',alignItems:'center',gap:10}}>
+                <div style={{width:90,fontSize:12,color:C.sub,textAlign:'right',flexShrink:0}}>{phase.short}</div>
+                <div style={{flex:1,height:20,background:C.border,borderRadius:4,position:'relative',minWidth:200}}>
+                  <div style={{position:'absolute',right:`${100-left-width}%`,width:width+'%',height:'100%',
+                    background:color,borderRadius:4,transition:'width .8s ease',
+                    display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    {ph.status==='completed'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>✓</span>}
+                    {ph.status==='active'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>▶</span>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {viewMode==='list' && (
+        <div style={{position:'relative'}}>
+          <div style={{position:'absolute',right:19,top:32,bottom:32,width:2,background:C.border,zIndex:0}}/>
+          {PHASES.map((phase,i)=>{
+            const ph = phases[i] || {status:'pending',completedDate:null,notes:''};
+            const color = statusColors[ph.status] || C.border;
+            return (
+              <div key={phase.id} style={{display:'flex',gap:20,marginBottom:20,position:'relative'}}>
+                <div style={{width:40,height:40,borderRadius:'50%',background:color,
+                  border:`3px solid ${ph.status==='active'?C.primary:C.border}`,
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  color:'#fff',fontWeight:700,fontSize:17,flexShrink:0,zIndex:1,
+                  boxShadow:ph.status==='active'?`0 0 0 4px ${C.primary}33`:'none'}}>
+                  {ph.status==='completed'?'✓':phase.id}
+                </div>
+                <div style={{flex:1,background:C.card,borderRadius:12,padding:16,border:`1px solid ${ph.status==='active'?C.primary:C.border}`}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                    <div style={{fontWeight:700,color:C.text,fontSize:18}}>{phase.name}</div>
+                    <Select value={ph.status} onChange={v=>updatePhase(i,'status',v)}
+                      options={[{value:'pending',label:'ממתין'},{value:'active',label:'פעיל'},{value:'completed',label:'הושלם'}]}
+                      style={{width:120}}/>
+                  </div>
+                  {ph.status==='completed' && (
+                    <div style={{marginBottom:8}}>
+                      <input type="date" value={ph.completedDate||''} onChange={e=>updatePhase(i,'completedDate',e.target.value)}
+                        style={{padding:'5px 10px',borderRadius:8,border:`1px solid ${C.border}`,
+                          background:C.inputBg,color:C.text,fontSize:14,outline:'none'}}/>
+                    </div>
+                  )}
+                  <input value={ph.notes||''} onChange={e=>updatePhase(i,'notes',e.target.value)}
+                    placeholder="הוסף הערות..."
+                    style={{width:'100%',padding:'6px 10px',borderRadius:8,border:`1px solid ${C.border}`,
+                      background:C.inputBg,color:C.text,fontSize:14,outline:'none',direction:'rtl',
+                      fontFamily:'Heebo,Arial,sans-serif'}}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -1398,42 +2090,67 @@ function TimelineTab({ project, setProject }) {
 // ─── TASKS TAB ────────────────────────────────────────────────────────────────
 function TasksTab({ project, setProject, user }) {
   const [showAdd, setShowAdd] = React.useState(false);
+  const [logHoursId, setLogHoursId] = React.useState(null);
+  const [hoursInput, setHoursInput] = React.useState('');
   const [form, setForm] = React.useState({title:'',desc:'',assignee:'',priority:'medium',dueDate:''});
   const tasks = project.tasks || [];
   const add = () => {
     if (!form.title) return;
-    setProject(p=>({...p, tasks:[...tasks,{...form,id:'t'+uid(),status:'todo',createdBy:user.name,createdAt:today()}]}));
+    setProject(p=>({...p, tasks:[...tasks,{...form,id:'t'+uid(),status:'todo',createdBy:user.name,createdAt:today(),hoursLogged:[]}]}));
     setForm({title:'',desc:'',assignee:'',priority:'medium',dueDate:''}); setShowAdd(false);
   };
   const updateStatus = (id, s) => setProject(p=>({...p,tasks:tasks.map(t=>t.id===id?{...t,status:s}:t)}));
+  const logHours = (id) => {
+    const h = parseFloat(hoursInput); if (!h||h<=0) return;
+    setProject(p=>({...p,tasks:tasks.map(t=>t.id===id?{...t,hoursLogged:[...(t.hoursLogged||[]),{hours:h,by:user.name,date:today()}]}:t)}));
+    setHoursInput(''); setLogHoursId(null);
+  };
+  const totalHours = tasks.reduce((s,t)=>(t.hoursLogged||[]).reduce((a,l)=>a+l.hours,0)+s,0);
   const priColors = {high:C.danger,medium:C.warning,low:C.success};
   const cols = [{k:'todo',l:'לביצוע'},{k:'in-progress',l:'בביצוע'},{k:'done',l:'בוצע'}];
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-        <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>משימות</h3>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>משימות</h3>
         {user.role!=='client' && <Btn onClick={()=>setShowAdd(true)}>+ משימה חדשה</Btn>}
       </div>
+      {/* Hours summary */}
+      {totalHours>0 && (
+        <div style={{background:C.card,borderRadius:12,padding:'12px 18px',marginBottom:16,
+          border:`1px solid ${C.border}`,display:'flex',gap:20,flexWrap:'wrap'}}>
+          <div style={{color:C.sub,fontSize:14}}>⏱️ סה"כ שעות מדווחות: <strong style={{color:C.primary}}>{totalHours.toFixed(1)}</strong></div>
+          {tasks.filter(t=>(t.hoursLogged||[]).length>0).map(t=>(
+            <div key={t.id} style={{fontSize:13,color:C.sub}}>
+              {t.title}: <strong style={{color:C.text}}>{(t.hoursLogged||[]).reduce((s,l)=>s+l.hours,0).toFixed(1)}h</strong>
+            </div>
+          ))}
+        </div>
+      )}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
         {cols.map(col=>(
           <div key={col.k}>
-            <div style={{fontWeight:700,color:C.sub,fontSize:12,marginBottom:10}}>
+            <div style={{fontWeight:700,color:C.sub,fontSize:14,marginBottom:10}}>
               {col.l} ({tasks.filter(t=>t.status===col.k).length})
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:10,minHeight:80}}>
               {tasks.filter(t=>t.status===col.k).map(t=>(
                 <div key={t.id} style={{background:C.card,borderRadius:12,padding:14,
                   border:`1px solid ${C.border}`,borderRight:`3px solid ${priColors[t.priority]||C.border}`}}>
-                  <div style={{fontWeight:600,color:C.text,fontSize:13,marginBottom:4}}>{t.title}</div>
-                  {t.desc && <div style={{color:C.sub,fontSize:12,marginBottom:6}}>{t.desc}</div>}
+                  <div style={{fontWeight:600,color:C.text,fontSize:16,marginBottom:4}}>{t.title}</div>
+                  {t.desc && <div style={{color:C.sub,fontSize:14,marginBottom:6}}>{t.desc}</div>}
+                  {(t.hoursLogged||[]).length>0 && (
+                    <div style={{fontSize:12,color:C.ai,marginBottom:6}}>
+                      ⏱️ {(t.hoursLogged||[]).reduce((s,l)=>s+l.hours,0).toFixed(1)}h מדווח
+                    </div>
+                  )}
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                       {t.assignee && <Badge text={t.assignee} color={C.info}/>}
-                      {t.dueDate && <span style={{fontSize:11,color:C.sub}}>{fmtDate(t.dueDate)}</span>}
+                      {t.dueDate && <span style={{fontSize:13,color:C.sub}}>{fmtDate(t.dueDate)}</span>}
                     </div>
                     {user.role!=='client' && (
                       <select value={t.status} onChange={e=>updateStatus(t.id,e.target.value)}
-                        style={{fontSize:11,padding:'3px 6px',borderRadius:6,border:`1px solid ${C.border}`,
+                        style={{fontSize:13,padding:'3px 6px',borderRadius:6,border:`1px solid ${C.border}`,
                           background:C.inputBg,color:C.text,cursor:'pointer',outline:'none'}}>
                         <option value="todo">לביצוע</option>
                         <option value="in-progress">בביצוע</option>
@@ -1441,6 +2158,23 @@ function TasksTab({ project, setProject, user }) {
                       </select>
                     )}
                   </div>
+                  {user.role!=='client' && (
+                    <div style={{marginTop:8}}>
+                      {logHoursId===t.id ? (
+                        <div style={{display:'flex',gap:6}}>
+                          <input type="number" min="0.5" step="0.5" value={hoursInput}
+                            onChange={e=>setHoursInput(e.target.value)}
+                            placeholder="שעות"
+                            style={{width:70,padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,
+                              background:C.inputBg,color:C.text,fontSize:13,outline:'none'}}/>
+                          <Btn size="sm" onClick={()=>logHours(t.id)}>שמור</Btn>
+                          <Btn size="sm" variant="ghost" onClick={()=>setLogHoursId(null)}>✕</Btn>
+                        </div>
+                      ) : (
+                        <Btn size="sm" variant="ghost" onClick={()=>{setLogHoursId(t.id);setHoursInput('');}}>⏱️ דווח שעות</Btn>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1469,50 +2203,99 @@ function TasksTab({ project, setProject, user }) {
 
 // ─── MEETINGS TAB ─────────────────────────────────────────────────────────────
 function MeetingsTab({ project, setProject, user }) {
+  const emptyForm = {title:'',date:'',time:'',location:'',link:'',notes:'',summary:'',participants:''};
   const [showAdd, setShowAdd] = React.useState(false);
-  const [form, setForm] = React.useState({title:'',date:'',time:'',location:'',link:'',notes:'',participants:''});
+  const [editId, setEditId] = React.useState(null);
+  const [form, setForm] = React.useState(emptyForm);
+  const [copiedId, setCopiedId] = React.useState(null);
   const meetings = project.meetings || [];
-  const add = () => {
-    if (!form.title||!form.date) return;
-    const m = {...form,id:'mt'+uid(),status:'scheduled',createdBy:user.name,
-      participants:form.participants.split(',').map(p=>p.trim()).filter(Boolean)};
-    setProject(p=>({...p,meetings:[...meetings,m]}));
-    setForm({title:'',date:'',time:'',location:'',link:'',notes:'',participants:''}); setShowAdd(false);
+
+  const openAdd = () => { setEditId(null); setForm(emptyForm); setShowAdd(true); };
+  const openEdit = (m) => {
+    setEditId(m.id);
+    setForm({...emptyForm,...m, participants:Array.isArray(m.participants)?m.participants.join(', '):''});
+    setShowAdd(true);
   };
+
+  const save = () => {
+    if (!form.title||!form.date) return;
+    const participants = form.participants.split(',').map(p=>p.trim()).filter(Boolean);
+    if (editId) {
+      setProject(p=>({...p,meetings:meetings.map(m=>m.id===editId?{...m,...form,participants}:m)}));
+    } else {
+      const m = {...form,id:'mt'+uid(),status:'scheduled',createdBy:user.name,participants};
+      setProject(p=>({...p,meetings:[...meetings,m]}));
+    }
+    setForm(emptyForm); setShowAdd(false); setEditId(null);
+  };
+
   const updateStatus = (id,s) => setProject(p=>({...p,meetings:meetings.map(m=>m.id===id?{...m,status:s}:m)}));
+  const updateSummary = (id,summary) => setProject(p=>({...p,meetings:meetings.map(m=>m.id===id?{...m,summary}:m)}));
+
+  const shareMeeting = (m) => {
+    const text = `פגישה: ${m.title}\nתאריך: ${fmtDate(m.date)}${m.time?' · '+m.time:''}${m.location?' · '+m.location:''}\n${m.link?'קישור: '+m.link:''}`;
+    if (navigator.share) { navigator.share({title:m.title, text}); }
+    else { navigator.clipboard.writeText(text); setCopiedId(m.id); setTimeout(()=>setCopiedId(null),2000); }
+  };
+
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-        <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>פגישות</h3>
-        {user.role!=='client' && <Btn onClick={()=>setShowAdd(true)}>+ פגישה חדשה</Btn>}
+        <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>פגישות</h3>
+        {user.role!=='client' && <Btn onClick={openAdd}>+ פגישה חדשה</Btn>}
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:12}}>
-        {meetings.length===0 && <div style={{color:C.sub,fontSize:14,textAlign:'center',padding:40}}>אין פגישות מתוכננות</div>}
+        {meetings.length===0 && <div style={{color:C.sub,fontSize:17,textAlign:'center',padding:40}}>אין פגישות מתוכננות</div>}
         {[...meetings].sort((a,b)=>b.date.localeCompare(a.date)).map(m=>(
           <div key={m.id} style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
               <div>
-                <div style={{fontWeight:700,color:C.text,fontSize:15}}>{m.title}</div>
-                <div style={{color:C.sub,fontSize:13,marginTop:4}}>
+                <div style={{fontWeight:700,color:C.text,fontSize:18}}>{m.title}</div>
+                <div style={{color:C.sub,fontSize:16,marginTop:4}}>
                   📅 {fmtDate(m.date)}{m.time&&' · ⏰ '+m.time}{m.location&&' · 📍 '+m.location}
                 </div>
               </div>
               <StatusBadge status={m.status}/>
             </div>
             {m.participants?.length>0 && <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>{m.participants.map((p,i)=><Badge key={i} text={p} color={C.info}/>)}</div>}
-            {m.notes && <div style={{color:C.sub,fontSize:13,marginBottom:8}}>{m.notes}</div>}
-            {m.link && <a href={m.link} target="_blank" rel="noreferrer" style={{color:C.primary,fontSize:13}}>🔗 {m.link}</a>}
-            {user.role!=='client' && m.status==='scheduled' && (
-              <div style={{marginTop:10,display:'flex',gap:8}}>
-                <Btn size="sm" onClick={()=>updateStatus(m.id,'done')}>✓ בוצע</Btn>
-                <Btn size="sm" variant="ghost" onClick={()=>updateStatus(m.id,'cancelled')}>ביטול</Btn>
+            {m.notes && <div style={{color:C.sub,fontSize:15,marginBottom:8}}>📝 {m.notes}</div>}
+            {m.link && <a href={m.link} target="_blank" rel="noreferrer" style={{color:C.primary,fontSize:16}}>🔗 {m.link}</a>}
+            {/* Summary section */}
+            {m.status==='done' && (
+              <div style={{marginTop:10,background:C.bg,borderRadius:8,padding:10}}>
+                <div style={{fontSize:13,fontWeight:600,color:C.sub,marginBottom:6}}>סיכום פגישה</div>
+                <textarea value={m.summary||''} onChange={e=>updateSummary(m.id,e.target.value)}
+                  rows={3} placeholder="כתוב סיכום פגישה כאן..."
+                  style={{width:'100%',padding:'8px 10px',borderRadius:8,border:`1px solid ${C.border}`,
+                    background:C.inputBg,color:C.text,fontSize:14,resize:'vertical',
+                    fontFamily:'Heebo,Arial,sans-serif',outline:'none',direction:'rtl'}}/>
               </div>
             )}
+            <div style={{marginTop:10,display:'flex',gap:8,flexWrap:'wrap'}}>
+              {user.role!=='client' && m.status==='scheduled' && (
+                <>
+                  <Btn size="sm" onClick={()=>updateStatus(m.id,'done')}>✓ בוצע</Btn>
+                  <Btn size="sm" variant="ghost" onClick={()=>openEdit(m)}>✏️ עריכה</Btn>
+                  <Btn size="sm" variant="ghost" onClick={()=>updateStatus(m.id,'cancelled')}>ביטול</Btn>
+                </>
+              )}
+              <Btn size="sm" variant="ghost" onClick={()=>shareMeeting(m)}>
+                {copiedId===m.id ? '✓ הועתק!' : '📤 שתף'}
+              </Btn>
+              {m.link && (
+                <a href={`https://wa.me/?text=${encodeURIComponent(m.title+' — '+fmtDate(m.date)+(m.link?'\n'+m.link:''))}`}
+                  target="_blank" rel="noreferrer"
+                  style={{padding:'6px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:'transparent',
+                    color:C.success,fontSize:12,fontWeight:600,textDecoration:'none'}}>
+                  WhatsApp
+                </a>
+              )}
+            </div>
           </div>
         ))}
       </div>
       {showAdd && (
-        <Modal title="פגישה חדשה" onClose={()=>setShowAdd(false)} width={500}>
+        <Modal title={editId ? 'עריכת פגישה' : 'פגישה חדשה'} onClose={()=>{setShowAdd(false);setEditId(null);}} width={500}>
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <Input label="כותרת" value={form.title} onChange={v=>setForm(f=>({...f,title:v}))} required/>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
@@ -1524,8 +2307,8 @@ function MeetingsTab({ project, setProject, user }) {
             <Input label="משתתפים (בפסיק)" value={form.participants} onChange={v=>setForm(f=>({...f,participants:v}))}/>
             <Input label="הערות" value={form.notes} onChange={v=>setForm(f=>({...f,notes:v}))}/>
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
-              <Btn onClick={()=>setShowAdd(false)} variant="ghost">ביטול</Btn>
-              <Btn onClick={add}>צור פגישה</Btn>
+              <Btn onClick={()=>{setShowAdd(false);setEditId(null);}} variant="ghost">ביטול</Btn>
+              <Btn onClick={save}>{editId ? 'שמור שינויים' : 'צור פגישה'}</Btn>
             </div>
           </div>
         </Modal>
@@ -1551,27 +2334,41 @@ function PaymentsTab({ project, setProject }) {
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-        <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>תשלומים</h3>
+        <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>תשלומים</h3>
         <Btn onClick={()=>setShowAdd(true)}>+ תשלום חדש</Btn>
       </div>
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:24}}>
         {[['סה"כ',totalAll,C.text],['שולם',totalPaid,C.success],['ממתין',totalPending,C.warning]].map(([l,v,c])=>(
-          <div key={l} style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`,textAlign:'center'}}>
-            <div style={{color:C.sub,fontSize:12,marginBottom:6}}>{l}</div>
-            <div style={{fontSize:22,fontWeight:800,color:c}}>{fmtCurrency(v)}</div>
+          <div key={l} style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`,
+            textAlign:'center',borderTop:`2px solid ${c}`}}>
+            <div style={{color:C.sub,fontSize:13,marginBottom:6,letterSpacing:'0.08em',textTransform:'uppercase'}}>{l}</div>
+            <div style={{fontSize:24,fontWeight:800,color:c}}>{fmtCurrency(v)}</div>
           </div>
         ))}
       </div>
+      {/* Payment progress bar */}
+      {totalAll > 0 && (
+        <div style={{background:C.card,borderRadius:14,padding:16,border:`1px solid ${C.border}`,marginBottom:20}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:14}}>
+            <span style={{color:C.sub}}>אחוז גביה</span>
+            <span style={{color:C.success,fontWeight:700}}>{Math.round(totalPaid/totalAll*100)}%</span>
+          </div>
+          <div style={{height:8,background:C.border,borderRadius:4,overflow:'hidden'}}>
+            <div style={{width:Math.round(totalPaid/totalAll*100)+'%',height:'100%',borderRadius:4,
+              background:`linear-gradient(90deg,${C.success}88,${C.success})`,transition:'width 1.5s ease'}}/>
+          </div>
+        </div>
+      )}
       <div style={{display:'flex',flexDirection:'column',gap:12}}>
         {payments.map(py=>(
           <div key={py.id} style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`,
             display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <div>
-              <div style={{fontWeight:600,color:C.text,fontSize:15}}>{py.title}</div>
-              <div style={{color:C.sub,fontSize:13,marginTop:4}}>
+              <div style={{fontWeight:600,color:C.text,fontSize:18}}>{py.title}</div>
+              <div style={{color:C.sub,fontSize:16,marginTop:4}}>
                 {fmtCurrency(py.amount)}{py.dueDate&&' · יעד: '+fmtDate(py.dueDate)}{py.receivedDate&&' · התקבל: '+fmtDate(py.receivedDate)}
               </div>
-              {py.notes && <div style={{color:C.sub,fontSize:12}}>{py.notes}</div>}
+              {py.notes && <div style={{color:C.sub,fontSize:14}}>{py.notes}</div>}
             </div>
             <div style={{display:'flex',gap:10,alignItems:'center'}}>
               <StatusBadge status={py.status}/>
@@ -1601,38 +2398,46 @@ function PaymentsTab({ project, setProject }) {
 // ─── PUNCH LIST TAB ───────────────────────────────────────────────────────────
 function PunchListTab({ project, setProject }) {
   const [showAdd, setShowAdd] = React.useState(false);
-  const [form, setForm] = React.useState({title:'',desc:'',location:'',responsible:'',priority:'medium'});
+  const [form, setForm] = React.useState({title:'',desc:'',location:'',responsible:'',priority:'medium',img:null});
+  const imgRefs = React.useRef({});
+  const formImgRef = React.useRef();
   const list = project.punchList || [];
   const add = () => {
     if (!form.title) return;
-    setProject(p=>({...p,punchList:[...list,{...form,id:'pl'+uid(),number:list.length+1,status:'open',img:null,fixedAt:null}]}));
-    setForm({title:'',desc:'',location:'',responsible:'',priority:'medium'}); setShowAdd(false);
+    setProject(p=>({...p,punchList:[...list,{...form,id:'pl'+uid(),number:list.length+1,status:'open',fixedAt:null}]}));
+    setForm({title:'',desc:'',location:'',responsible:'',priority:'medium',img:null}); setShowAdd(false);
   };
   const updateStatus = (id,s) => setProject(p=>({...p,punchList:list.map(i=>i.id===id?{...i,status:s,fixedAt:s==='closed'?today():null}:i)}));
+  const uploadImg = (id, file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => setProject(p=>({...p,punchList:list.map(i=>i.id===id?{...i,img:ev.target.result}:i)}));
+    reader.readAsDataURL(file);
+  };
   const priColors = {high:C.danger,medium:C.warning,low:C.success};
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
         <div>
-          <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>Punch List — ממצאים</h3>
-          <p style={{color:C.sub,fontSize:13}}>{list.filter(i=>i.status==='open').length} פתוחים · {list.filter(i=>i.status==='closed').length} סגורים</p>
+          <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>Punch List — ממצאים</h3>
+          <p style={{color:C.sub,fontSize:16}}>{list.filter(i=>i.status==='open').length} פתוחים · {list.filter(i=>i.status==='closed').length} סגורים</p>
         </div>
         <Btn onClick={()=>setShowAdd(true)}>+ ממצא חדש</Btn>
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:12}}>
-        {list.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:14}}>אין ממצאים פתוחים</div>}
+        {list.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17}}>אין ממצאים פתוחים</div>}
         {list.map(item=>(
           <div key={item.id} style={{background:C.card,borderRadius:14,padding:18,
             border:`1px solid ${item.status==='open'?C.danger:item.status==='in-progress'?C.warning:C.border}`,
             borderRight:`4px solid ${priColors[item.priority]||C.border}`}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
               <div>
-                <div style={{fontWeight:700,color:C.text,fontSize:15}}>#{item.number} — {item.title}</div>
-                {item.desc && <div style={{color:C.sub,fontSize:13,marginTop:4}}>{item.desc}</div>}
+                <div style={{fontWeight:700,color:C.text,fontSize:18}}>#{item.number} — {item.title}</div>
+                {item.desc && <div style={{color:C.sub,fontSize:16,marginTop:4}}>{item.desc}</div>}
                 <div style={{display:'flex',gap:12,marginTop:6}}>
-                  {item.location && <span style={{fontSize:12,color:C.sub}}>📍 {item.location}</span>}
-                  {item.responsible && <span style={{fontSize:12,color:C.sub}}>👷 {item.responsible}</span>}
-                  {item.fixedAt && <span style={{fontSize:12,color:C.success}}>✓ תוקן: {fmtDate(item.fixedAt)}</span>}
+                  {item.location && <span style={{fontSize:14,color:C.sub}}>📍 {item.location}</span>}
+                  {item.responsible && <span style={{fontSize:14,color:C.sub}}>👷 {item.responsible}</span>}
+                  {item.fixedAt && <span style={{fontSize:14,color:C.success}}>✓ תוקן: {fmtDate(item.fixedAt)}</span>}
                 </div>
               </div>
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
@@ -1640,9 +2445,16 @@ function PunchListTab({ project, setProject }) {
                 <Badge text={item.priority==='high'?'גבוה':item.priority==='medium'?'בינוני':'נמוך'} color={priColors[item.priority]}/>
               </div>
             </div>
-            <div style={{display:'flex',gap:8,marginTop:8}}>
+            {item.img && (
+              <img src={item.img} alt="ממצא" style={{width:'100%',maxHeight:180,objectFit:'cover',borderRadius:8,marginTop:10}}/>
+            )}
+            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap'}}>
               {item.status==='open' && <Btn size="sm" onClick={()=>updateStatus(item.id,'in-progress')}>בטיפול</Btn>}
               {(item.status==='open'||item.status==='in-progress') && <Btn size="sm" variant="ghost" onClick={()=>updateStatus(item.id,'closed')}>✓ סגור</Btn>}
+              <input type="file" accept="image/*" style={{display:'none'}}
+                ref={el=>imgRefs.current[item.id]=el}
+                onChange={e=>uploadImg(item.id, e.target.files[0])}/>
+              <Btn size="sm" variant="ghost" onClick={()=>imgRefs.current[item.id]?.click()}>📷 {item.img?'החלף תמונה':'הוסף תמונה'}</Btn>
             </div>
           </div>
         ))}
@@ -1656,6 +2468,15 @@ function PunchListTab({ project, setProject }) {
             <Input label="אחראי" value={form.responsible} onChange={v=>setForm(f=>({...f,responsible:v}))}/>
             <Select label="עדיפות" value={form.priority} onChange={v=>setForm(f=>({...f,priority:v}))}
               options={[{value:'high',label:'גבוהה'},{value:'medium',label:'בינונית'},{value:'low',label:'נמוכה'}]}/>
+            <div>
+              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>תמונת ממצא (אופציונלי)</label>
+              <input ref={formImgRef} type="file" accept="image/*" style={{display:'none'}}
+                onChange={e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>setForm(f=>({...f,img:ev.target.result}));r.readAsDataURL(file);}}/>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <Btn size="sm" variant="ghost" onClick={()=>formImgRef.current?.click()}>📷 בחר תמונה</Btn>
+                {form.img && <span style={{fontSize:13,color:C.success}}>✓ תמונה נטענה</span>}
+              </div>
+            </div>
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
               <Btn onClick={()=>setShowAdd(false)} variant="ghost">ביטול</Btn>
               <Btn onClick={add}>הוסף ממצא</Btn>
@@ -1688,37 +2509,37 @@ function RFITab({ project, setProject }) {
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
         <div>
-          <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>RFI — בקשות מידע</h3>
-          <p style={{color:C.sub,fontSize:13}}>{rfis.filter(r=>!r.reply).length} ממתינות לתשובה</p>
+          <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>RFI — בקשות מידע</h3>
+          <p style={{color:C.sub,fontSize:16}}>{rfis.filter(r=>!r.reply).length} ממתינות לתשובה</p>
         </div>
         <Btn onClick={()=>setShowAdd(true)}>+ RFI חדש</Btn>
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:14}}>
-        {rfis.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:14}}>אין בקשות מידע</div>}
+        {rfis.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17}}>אין בקשות מידע</div>}
         {rfis.map(r=>(
           <div key={r.id} style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${r.reply?C.border:C.warning}`}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
               <div>
-                <div style={{fontWeight:700,color:C.text,fontSize:15}}>RFI #{r.number} — {r.title}</div>
-                <div style={{color:C.sub,fontSize:13,marginTop:4}}>{r.desc}</div>
+                <div style={{fontWeight:700,color:C.text,fontSize:18}}>RFI #{r.number} — {r.title}</div>
+                <div style={{color:C.sub,fontSize:16,marginTop:4}}>{r.desc}</div>
                 <div style={{display:'flex',gap:12,marginTop:6}}>
-                  {r.from && <span style={{fontSize:12,color:C.sub}}>מ: {r.from}</span>}
-                  {r.dueDate && <span style={{fontSize:12,color:C.sub}}>יעד: {fmtDate(r.dueDate)}</span>}
+                  {r.from && <span style={{fontSize:14,color:C.sub}}>מ: {r.from}</span>}
+                  {r.dueDate && <span style={{fontSize:14,color:C.sub}}>יעד: {fmtDate(r.dueDate)}</span>}
                 </div>
               </div>
               <Badge text={r.priority==='high'?'דחוף':r.priority==='medium'?'בינוני':'רגיל'} color={priColors[r.priority]}/>
             </div>
             {r.reply ? (
               <div style={{background:C.success+'15',borderRadius:8,padding:'10px 12px',marginTop:10}}>
-                <div style={{fontSize:12,fontWeight:600,color:C.success,marginBottom:4}}>✓ תשובה — {r.repliedBy} · {fmtDate(r.repliedAt)}</div>
-                <div style={{color:C.text,fontSize:13}}>{r.reply}</div>
+                <div style={{fontSize:14,fontWeight:600,color:C.success,marginBottom:4}}>✓ תשובה — {r.repliedBy} · {fmtDate(r.repliedAt)}</div>
+                <div style={{color:C.text,fontSize:16}}>{r.reply}</div>
               </div>
             ) : (
               <div style={{marginTop:12,display:'flex',gap:10}}>
                 <input value={replyForm[r.id]||''} onChange={e=>setReplyForm(f=>({...f,[r.id]:e.target.value}))}
                   placeholder="כתוב תשובה..."
                   style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,
-                    background:C.inputBg,color:C.text,fontSize:13,outline:'none',direction:'rtl',fontFamily:'Heebo,Arial,sans-serif'}}/>
+                    background:C.inputBg,color:C.text,fontSize:16,outline:'none',direction:'rtl',fontFamily:'Heebo,Arial,sans-serif'}}/>
                 <Btn size="sm" onClick={()=>reply(r.id)}>שלח</Btn>
               </div>
             )}
@@ -1748,46 +2569,100 @@ function RFITab({ project, setProject }) {
 // ─── GALLERY TAB ──────────────────────────────────────────────────────────────
 function GalleryTab({ project, setProject }) {
   const [showAdd, setShowAdd] = React.useState(false);
-  const [form, setForm] = React.useState({title:'',phase:1,isAI:false});
+  const [form, setForm] = React.useState({title:'',phase:1,isAI:false,url:null});
+  const [view, setView] = React.useState('grid');
+  const fileRef = React.useRef();
+  const coverRef = React.useRef();
   const gallery = project.gallery || [];
   const add = () => {
     if (!form.title) return;
-    setProject(p=>({...p,gallery:[...gallery,{...form,id:'g'+uid(),date:today(),url:null}]}));
-    setForm({title:'',phase:1,isAI:false}); setShowAdd(false);
+    setProject(p=>({...p,gallery:[...gallery,{...form,id:'g'+uid(),date:today()}]}));
+    setForm({title:'',phase:1,isAI:false,url:null}); setShowAdd(false);
   };
   const setCover = (url) => setProject(p=>({...p,coverImage:url}));
+  const handleFileChange = (e, onRead) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => onRead(ev.target.result);
+    reader.readAsDataURL(file);
+  };
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-        <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>גלריה</h3>
-        <Btn onClick={()=>setShowAdd(true)}>+ הוסף תמונה</Btn>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:10}}>
+        <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>גלריה</h3>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <input ref={coverRef} type="file" accept="image/*" style={{display:'none'}}
+            onChange={e=>handleFileChange(e, url=>setCover(url))}/>
+          <Btn size="sm" variant="ghost" onClick={()=>coverRef.current?.click()}>🖼️ תמונת רקע לפרויקט</Btn>
+          <button onClick={()=>setView(v=>v==='grid'?'mood':'grid')}
+            style={{padding:'6px 12px',borderRadius:8,border:`1px solid ${C.border}`,background:C.bg,
+              color:C.sub,cursor:'pointer',fontSize:13}}>
+            {view==='grid' ? '🎨 Mood Board' : '⊞ גריד'}
+          </button>
+          <Btn onClick={()=>setShowAdd(true)}>+ הוסף תמונה</Btn>
+        </div>
       </div>
-      {gallery.length===0 && <div style={{color:C.sub,textAlign:'center',padding:60,fontSize:14}}>אין תמונות בגלריה</div>}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:14}}>
-        {gallery.map(img=>(
-          <div key={img.id} style={{background:C.card,borderRadius:14,overflow:'hidden',
-            border:`1px solid ${C.border}`,position:'relative'}}>
-            <div style={{height:140,background:`linear-gradient(135deg,${C.primary}33,${C.accent}22)`,
-              display:'flex',alignItems:'center',justifyContent:'center',fontSize:48}}>
-              {img.isAI ? '🤖' : '🖼️'}
-            </div>
-            <div style={{padding:'10px 12px'}}>
-              <div style={{fontWeight:600,color:C.text,fontSize:13,marginBottom:4}}>{img.title}</div>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <span style={{fontSize:11,color:C.sub}}>{PHASES[(img.phase||1)-1]?.short} · {fmtDate(img.date)}</span>
-                {img.isAI && <Badge text="AI" color={C.ai}/>}
+      {gallery.length===0 && <div style={{color:C.sub,textAlign:'center',padding:60,fontSize:17}}>אין תמונות בגלריה</div>}
+      {view==='grid' ? (
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:14}}>
+          {gallery.map(img=>(
+            <div key={img.id} style={{background:C.card,borderRadius:14,overflow:'hidden',
+              border:`1px solid ${C.border}`,position:'relative'}}>
+              <div style={{height:140,background:`linear-gradient(135deg,${C.primary}33,${C.accent}22)`,
+                display:'flex',alignItems:'center',justifyContent:'center',fontSize:58,position:'relative',overflow:'hidden'}}>
+                {img.url
+                  ? <img src={img.url} style={{width:'100%',height:'100%',objectFit:'cover',position:'absolute',inset:0}} alt={img.title}/>
+                  : (img.isAI ? '🤖' : '🖼️')}
+              </div>
+              <div style={{padding:'10px 12px'}}>
+                <div style={{fontWeight:600,color:C.text,fontSize:16,marginBottom:4}}>{img.title}</div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                  <span style={{fontSize:13,color:C.sub}}>{PHASES[(img.phase||1)-1]?.short} · {fmtDate(img.date)}</span>
+                  {img.isAI && <Badge text="AI" color={C.ai}/>}
+                </div>
+                {img.url && (
+                  <button onClick={()=>setCover(img.url)}
+                    style={{marginTop:6,fontSize:12,background:'none',border:`1px solid ${C.border}`,
+                      borderRadius:6,padding:'3px 8px',color:C.sub,cursor:'pointer'}}>
+                    קבע כרקע
+                  </button>
+                )}
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{columns:3,gap:12}}>
+          {gallery.map(img=>(
+            <div key={img.id} style={{marginBottom:12,breakInside:'avoid',borderRadius:10,overflow:'hidden',
+              border:`1px solid ${C.border}`,background:C.card}}>
+              <div style={{height:img.url?'auto':120,background:`linear-gradient(135deg,${C.primary}22,${C.accent}11)`,
+                display:'flex',alignItems:'center',justifyContent:'center',fontSize:48}}>
+                {img.url
+                  ? <img src={img.url} style={{width:'100%',height:'auto',display:'block'}} alt={img.title}/>
+                  : (img.isAI ? '🤖' : '🖼️')}
+              </div>
+              <div style={{padding:'8px 12px',fontSize:13,color:C.sub}}>{img.title}</div>
+            </div>
+          ))}
+        </div>
+      )}
       {showAdd && (
         <Modal title="הוסף לגלריה" onClose={()=>setShowAdd(false)} width={440}>
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <Input label="כותרת" value={form.title} onChange={v=>setForm(f=>({...f,title:v}))} required/>
             <Select label="שלב" value={String(form.phase)} onChange={v=>setForm(f=>({...f,phase:Number(v)}))}
               options={PHASES.map(p=>({value:String(p.id),label:p.name}))}/>
-            <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',color:C.text,fontSize:14}}>
+            <div>
+              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>העלאת תמונה</label>
+              <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}}
+                onChange={e=>handleFileChange(e, url=>setForm(f=>({...f,url})))}/>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <Btn size="sm" variant="ghost" onClick={()=>fileRef.current?.click()}>בחר קובץ</Btn>
+                {form.url && <span style={{fontSize:13,color:C.success}}>✓ תמונה נטענה</span>}
+              </div>
+            </div>
+            <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',color:C.text,fontSize:17}}>
               <input type="checkbox" checked={form.isAI} onChange={e=>setForm(f=>({...f,isAI:e.target.checked}))}/>
               תמונה שנוצרה על ידי AI
             </label>
@@ -1805,31 +2680,42 @@ function GalleryTab({ project, setProject }) {
 // ─── DOCUMENTS TAB ────────────────────────────────────────────────────────────
 function DocumentsTab({ project, setProject }) {
   const [showAdd, setShowAdd] = React.useState(false);
-  const [form, setForm] = React.useState({name:'',type:'drawing',uploadedBy:''});
+  const [form, setForm] = React.useState({name:'',type:'drawing',uploadedBy:'',fileType:'pdf',fileData:null});
+  const fileRef = React.useRef();
   const docs = project.documents || [];
   const add = () => {
     if (!form.name) return;
-    setProject(p=>({...p,documents:[...docs,{...form,id:'d'+uid(),date:today(),fileType:'pdf',thumb:null}]}));
-    setForm({name:'',type:'drawing',uploadedBy:''}); setShowAdd(false);
+    setProject(p=>({...p,documents:[...docs,{...form,id:'d'+uid(),date:today(),thumb:null}]}));
+    setForm({name:'',type:'drawing',uploadedBy:'',fileType:'pdf',fileData:null}); setShowAdd(false);
+  };
+  const handleFile = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    setForm(f=>({...f, name:f.name||file.name.replace(/\.[^.]+$/,''), fileType:ext}));
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = ev => setForm(f=>({...f,fileData:ev.target.result}));
+      reader.readAsDataURL(file);
+    }
   };
   const typeIcons = {drawing:'📐',contract:'📋',permit:'🏛️',report:'📊',other:'📄'};
   const typeLabels = {drawing:'תרשים',contract:'חוזה',permit:'היתר',report:'דוח',other:'אחר'};
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-        <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>מסמכים</h3>
+        <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>מסמכים</h3>
         <Btn onClick={()=>setShowAdd(true)}>+ הוסף מסמך</Btn>
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:10}}>
-        {docs.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:14}}>אין מסמכים</div>}
+        {docs.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17}}>אין מסמכים</div>}
         {docs.map(doc=>(
           <div key={doc.id} style={{background:C.card,borderRadius:12,padding:'14px 18px',
             border:`1px solid ${C.border}`,display:'flex',alignItems:'center',gap:14}}>
-            <div style={{fontSize:32}}>{typeIcons[doc.type]||'📄'}</div>
+            <div style={{fontSize:38}}>{typeIcons[doc.type]||'📄'}</div>
             <div style={{flex:1}}>
-              <div style={{fontWeight:600,color:C.text,fontSize:14}}>{doc.name}</div>
-              <div style={{color:C.sub,fontSize:12,marginTop:4}}>
-                {typeLabels[doc.type]||doc.type} · {fmtDate(doc.date)} · {doc.uploadedBy}
+              <div style={{fontWeight:600,color:C.text,fontSize:17}}>{doc.name}</div>
+              <div style={{color:C.sub,fontSize:14,marginTop:4}}>
+                {typeLabels[doc.type]||doc.type} · {fmtDate(doc.date)}{doc.uploadedBy&&' · '+doc.uploadedBy}
               </div>
             </div>
             <Badge text={doc.fileType?.toUpperCase()||'PDF'} color={C.info}/>
@@ -1839,6 +2725,14 @@ function DocumentsTab({ project, setProject }) {
       {showAdd && (
         <Modal title="הוסף מסמך" onClose={()=>setShowAdd(false)} width={440}>
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div>
+              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>העלאת קובץ (PDF / תמונה)</label>
+              <input ref={fileRef} type="file" accept=".pdf,image/*" style={{display:'none'}} onChange={handleFile}/>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <Btn size="sm" variant="ghost" onClick={()=>fileRef.current?.click()}>📂 בחר קובץ</Btn>
+                {form.fileType!=='pdf' && <Badge text={form.fileType.toUpperCase()} color={C.info}/>}
+              </div>
+            </div>
             <Input label="שם מסמך" value={form.name} onChange={v=>setForm(f=>({...f,name:v}))} required/>
             <Select label="סוג" value={form.type} onChange={v=>setForm(f=>({...f,type:v}))}
               options={[{value:'drawing',label:'תרשים'},{value:'contract',label:'חוזה'},{value:'permit',label:'היתר'},{value:'report',label:'דוח'},{value:'other',label:'אחר'}]}/>
@@ -1870,7 +2764,7 @@ function QuotesTab({ project, setProject }) {
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-        <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>הצעות מחיר</h3>
+        <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>הצעות מחיר</h3>
         <Btn onClick={()=>setShowAdd(true)}>+ הצעת מחיר</Btn>
       </div>
       <div style={{display:'flex',flexDirection:'column',gap:12}}>
@@ -1878,19 +2772,34 @@ function QuotesTab({ project, setProject }) {
           <div key={q.id} style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
               <div>
-                <div style={{fontWeight:700,color:C.text,fontSize:15}}>{q.title}</div>
-                <div style={{fontSize:24,fontWeight:800,color:C.primary,marginTop:4}}>{fmtCurrency(q.amount)}</div>
-                <div style={{color:C.sub,fontSize:13,marginTop:4}}>
+                <div style={{fontWeight:700,color:C.text,fontSize:18}}>{q.title}</div>
+                <div style={{fontSize:29,fontWeight:800,color:C.primary,marginTop:4}}>{fmtCurrency(q.amount)}</div>
+                <div style={{color:C.sub,fontSize:16,marginTop:4}}>
                   הוצאה: {fmtDate(q.date)}{q.validUntil&&' · בתוקף עד: '+fmtDate(q.validUntil)}
                 </div>
               </div>
               <StatusBadge status={q.status}/>
             </div>
-            {q.signature && <div style={{background:C.success+'15',borderRadius:8,padding:'8px 12px',marginBottom:10,fontSize:13,color:C.success}}>✓ חתום: {q.signature}</div>}
-            <div style={{display:'flex',gap:8}}>
+            {q.signature && <div style={{background:C.success+'15',borderRadius:8,padding:'8px 12px',marginBottom:10,fontSize:16,color:C.success}}>✓ חתום: {q.signature}</div>}
+            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
               {q.status==='pending' && <Btn size="sm" onClick={()=>updateStatus(q.id,'approved')}>✓ אשר</Btn>}
               {q.status==='pending' && <Btn size="sm" variant="ghost" onClick={()=>setSigModal(q.id)}>✍️ חתימה</Btn>}
               {q.status==='pending' && <Btn size="sm" variant="ghost" onClick={()=>updateStatus(q.id,'rejected')}>דחה</Btn>}
+              <Btn size="sm" variant="ghost" onClick={()=>{
+                const w=window.open('','_blank');
+                w.document.write(`<html dir="rtl"><head><title>הצעת מחיר — ${sanitize(q.title)}</title>
+                  <style>body{font-family:Arial,sans-serif;padding:40px;direction:rtl}h1{font-size:28px}
+                  .amount{font-size:36px;font-weight:800;color:#AF8C5C;margin:12px 0}
+                  .meta{color:#777;margin-bottom:8px}.sig{margin-top:24px;padding:12px;border:1px solid #ccc;border-radius:8px;background:#f9f9f9}
+                  @media print{button{display:none}}</style></head>
+                  <body><h1>הצעת מחיר</h1><h2>${sanitize(q.title)}</h2>
+                  <div class="amount">${fmtCurrency(q.amount)}</div>
+                  <div class="meta">הוצאה: ${fmtDate(q.date)}${q.validUntil?' · בתוקף עד: '+fmtDate(q.validUntil):''}</div>
+                  <div class="meta">סטטוס: ${q.status==='approved'?'מאושר':q.status==='rejected'?'נדחה':'ממתין'}</div>
+                  ${q.signature?`<div class="sig">חתימה: ${sanitize(q.signature)}</div>`:''}
+                  <br/><button onclick="window.print()">🖨️ הדפס PDF</button></body></html>`);
+                w.document.close();
+              }}>🖨️ PDF</Btn>
             </div>
           </div>
         ))}
@@ -1911,9 +2820,9 @@ function QuotesTab({ project, setProject }) {
       {sigModal && (
         <Modal title="חתימה דיגיטלית" onClose={()=>setSigModal(null)} width={400}>
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
-            <p style={{color:C.sub,fontSize:13}}>הכנס שם לחתימה דיגיטלית:</p>
+            <p style={{color:C.sub,fontSize:16}}>הכנס שם לחתימה דיגיטלית:</p>
             <input id="sigInput" type="text" placeholder="שם מלא"
-              style={{padding:'10px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:C.inputBg,color:C.text,fontSize:14,outline:'none',direction:'rtl',fontFamily:'Heebo,Arial,sans-serif'}}/>
+              style={{padding:'10px 14px',borderRadius:8,border:`1px solid ${C.border}`,background:C.inputBg,color:C.text,fontSize:17,outline:'none',direction:'rtl',fontFamily:'Heebo,Arial,sans-serif'}}/>
             <Btn onClick={()=>{const v=document.getElementById('sigInput')?.value;if(v)addSig(sigModal,v);}}>חתום</Btn>
           </div>
         </Modal>
@@ -1925,12 +2834,18 @@ function QuotesTab({ project, setProject }) {
 // ─── APPROVALS TAB ────────────────────────────────────────────────────────────
 function ApprovalsTab({ project, setProject, user }) {
   const [showAdd, setShowAdd] = React.useState(false);
-  const [form, setForm] = React.useState({title:'',requestedBy:''});
+  const [form, setForm] = React.useState({title:'',requestedBy:'',attachmentName:null});
+  const attachRefs = React.useRef({});
+  const formAttachRef = React.useRef();
   const approvals = project.approvals || [];
   const add = () => {
     if (!form.title) return;
     setProject(p=>({...p,approvals:[...approvals,{...form,id:'a'+uid(),date:today(),status:'pending',approvedBy:null,comment:''}]}));
-    setForm({title:'',requestedBy:''}); setShowAdd(false);
+    setForm({title:'',requestedBy:'',attachmentName:null}); setShowAdd(false);
+  };
+  const attachPDF = (id, file) => {
+    if (!file) return;
+    setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,attachmentName:file.name}:a)}));
   };
   const approve = (id,comment='') => setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,status:'approved',approvedBy:user.name,comment}:a)}));
   const reject  = (id,comment='') => setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,status:'rejected',approvedBy:user.name,comment}:a)}));
@@ -1940,38 +2855,45 @@ function ApprovalsTab({ project, setProject, user }) {
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
         <div>
-          <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>מרכז אישורים</h3>
-          <p style={{color:C.sub,fontSize:13}}>{pending.length} ממתינים לאישור</p>
+          <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>מרכז אישורים</h3>
+          <p style={{color:C.sub,fontSize:16}}>{pending.length} ממתינים לאישור</p>
         </div>
         {user.role!=='client' && <Btn onClick={()=>setShowAdd(true)}>+ בקשת אישור</Btn>}
       </div>
       {pending.length>0 && (
         <div style={{marginBottom:20}}>
-          <div style={{fontWeight:700,color:C.warning,fontSize:13,marginBottom:10}}>⏳ ממתינים לאישור</div>
+          <div style={{fontWeight:700,color:C.warning,fontSize:16,marginBottom:10}}>⏳ ממתינים לאישור</div>
           {pending.map(a=>(
             <div key={a.id} style={{background:C.card,borderRadius:14,padding:18,marginBottom:10,
               border:`1px solid ${C.warning}`,position:'relative'}}>
-              <div style={{fontWeight:700,color:C.text,fontSize:15,marginBottom:4}}>{a.title}</div>
-              <div style={{color:C.sub,fontSize:13,marginBottom:12}}>בקשה מ: {a.requestedBy} · {fmtDate(a.date)}</div>
-              {(user.role==='client'||user.role==='admin') && (
-                <div style={{display:'flex',gap:10}}>
-                  <Btn size="sm" onClick={()=>approve(a.id,'מאושר')}>✓ אשר</Btn>
-                  <Btn size="sm" variant="ghost" onClick={()=>reject(a.id,'נדחה')}>✗ דחה</Btn>
-                </div>
-              )}
+              <div style={{fontWeight:700,color:C.text,fontSize:18,marginBottom:4}}>{a.title}</div>
+              <div style={{color:C.sub,fontSize:16,marginBottom:12}}>בקשה מ: {a.requestedBy} · {fmtDate(a.date)}</div>
+              {a.attachmentName && <div style={{fontSize:13,color:C.info,marginBottom:8}}>📎 {a.attachmentName}</div>}
+              <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                {(user.role==='client'||user.role==='admin') && (
+                  <>
+                    <Btn size="sm" onClick={()=>approve(a.id,'מאושר')}>✓ אשר</Btn>
+                    <Btn size="sm" variant="ghost" onClick={()=>reject(a.id,'נדחה')}>✗ דחה</Btn>
+                  </>
+                )}
+                <input type="file" accept=".pdf,image/*" style={{display:'none'}}
+                  ref={el=>attachRefs.current[a.id]=el}
+                  onChange={e=>attachPDF(a.id, e.target.files[0])}/>
+                <Btn size="sm" variant="ghost" onClick={()=>attachRefs.current[a.id]?.click()}>📎 צרף PDF</Btn>
+              </div>
             </div>
           ))}
         </div>
       )}
       {done.length>0 && (
         <div>
-          <div style={{fontWeight:700,color:C.sub,fontSize:13,marginBottom:10}}>היסטוריה</div>
+          <div style={{fontWeight:700,color:C.sub,fontSize:16,marginBottom:10}}>היסטוריה</div>
           {done.map(a=>(
             <div key={a.id} style={{background:C.card,borderRadius:14,padding:16,marginBottom:10,border:`1px solid ${C.border}`}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <div>
-                  <div style={{fontWeight:600,color:C.text,fontSize:14}}>{a.title}</div>
-                  <div style={{color:C.sub,fontSize:12,marginTop:4}}>
+                  <div style={{fontWeight:600,color:C.text,fontSize:17}}>{a.title}</div>
+                  <div style={{color:C.sub,fontSize:14,marginTop:4}}>
                     {a.approvedBy && `${a.status==='approved'?'אושר':'נדחה'} ע"י ${a.approvedBy}`}
                     {a.comment && ' · '+a.comment}
                   </div>
@@ -1987,6 +2909,15 @@ function ApprovalsTab({ project, setProject, user }) {
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <Input label="נושא האישור" value={form.title} onChange={v=>setForm(f=>({...f,title:v}))} required/>
             <Input label="בקשה מ" value={form.requestedBy} onChange={v=>setForm(f=>({...f,requestedBy:v}))} placeholder="שם האדריכל"/>
+            <div>
+              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>צרף קובץ (אופציונלי)</label>
+              <input ref={formAttachRef} type="file" accept=".pdf,image/*" style={{display:'none'}}
+                onChange={e=>{if(e.target.files[0])setForm(f=>({...f,attachmentName:e.target.files[0].name}));}}/>
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <Btn size="sm" variant="ghost" onClick={()=>formAttachRef.current?.click()}>📎 בחר קובץ</Btn>
+                {form.attachmentName && <span style={{fontSize:13,color:C.success}}>✓ {form.attachmentName}</span>}
+              </div>
+            </div>
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
               <Btn onClick={()=>setShowAdd(false)} variant="ghost">ביטול</Btn>
               <Btn onClick={add}>שלח לאישור</Btn>
@@ -2013,19 +2944,19 @@ function MessagesTab({ project, setProject, user }) {
   React.useEffect(()=>{chatRef.current?.scrollTo({top:9999});},[messages.length]);
   return (
     <div style={{padding:24,height:'calc(100vh - 140px)',display:'flex',flexDirection:'column',animation:'fadeIn .3s ease'}}>
-      <h3 style={{color:C.text,fontSize:18,fontWeight:700,marginBottom:16}}>💬 הודעות פנימיות</h3>
+      <h3 style={{color:C.text,fontSize:22,fontWeight:700,marginBottom:16}}>💬 הודעות פנימיות</h3>
       <div ref={chatRef} style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:12,marginBottom:16}}>
         {messages.map((m,i)=>{
           const isMe = m.from===user.name;
           return (
             <div key={m.id||i} style={{display:'flex',flexDirection:'column',alignItems:isMe?'flex-end':'flex-start'}}>
-              <div style={{maxWidth:'70%',padding:'10px 14px',borderRadius:16,fontSize:14,lineHeight:1.7,
+              <div style={{maxWidth:'70%',padding:'10px 14px',borderRadius:16,fontSize:17,lineHeight:1.7,
                 background:isMe?C.primary:C.card,color:isMe?'#fff':C.text,
                 border:isMe?'none':`1px solid ${C.border}`,
                 borderTopRightRadius:isMe?4:16,borderTopLeftRadius:isMe?16:4}}>
                 {m.text}
               </div>
-              <div style={{fontSize:11,color:C.sub,marginTop:4,marginRight:isMe?0:4,marginLeft:isMe?4:0}}>
+              <div style={{fontSize:13,color:C.sub,marginTop:4,marginRight:isMe?0:4,marginLeft:isMe?4:0}}>
                 {m.from} · {m.time}
               </div>
             </div>
@@ -2037,7 +2968,7 @@ function MessagesTab({ project, setProject, user }) {
           onKeyDown={e=>{if(e.key==='Enter')send();}}
           placeholder="כתוב הודעה... (Enter לשליחה)"
           style={{flex:1,padding:'11px 16px',borderRadius:24,border:`1px solid ${C.border}`,
-            background:C.inputBg,color:C.text,fontSize:14,outline:'none',direction:'rtl',
+            background:C.inputBg,color:C.text,fontSize:17,outline:'none',direction:'rtl',
             fontFamily:'Heebo,Arial,sans-serif'}}/>
         <Btn onClick={send} disabled={!msg.trim()}>שלח</Btn>
       </div>
@@ -2049,46 +2980,122 @@ function MessagesTab({ project, setProject, user }) {
 function BIReportsTab({ project, data }) {
   const allProjects = data?.projects || [project];
   const totalRevenue = allProjects.reduce((s,p)=>(p.payments||[]).filter(py=>py.status==='paid').reduce((a,py)=>a+py.amount,0)+s,0);
+  const totalPending = allProjects.reduce((s,p)=>(p.payments||[]).filter(py=>py.status==='pending').reduce((a,py)=>a+py.amount,0)+s,0);
   const totalBudget  = allProjects.reduce((s,p)=>s+(p.budget||0),0);
-  const phasesDist   = PHASES.map(ph=>({ name:ph.short, count:allProjects.filter(p=>p.currentPhase===ph.id).length }));
+  const phaseColors  = [C.primary,C.accent,C.success,C.warning,C.danger,C.info,C.ai,C.sub];
+  const phasesBar    = PHASES.map((ph,i)=>({
+    label:ph.short,
+    value:allProjects.filter(p=>p.currentPhase===ph.id).length,
+    color:phaseColors[i%8]
+  }));
+  const progressBar  = allProjects.map(p=>({
+    label:p.name.slice(0,6),
+    value:p.progress||0,
+    color: p.status==='active'?C.success:p.status==='planning'?C.info:C.sub
+  }));
+  const paymentTimeline = allProjects.flatMap(p=>(p.payments||[]).filter(py=>py.receivedDate))
+    .sort((a,b)=>a.receivedDate?.localeCompare(b.receivedDate))
+    .slice(-6)
+    .map((py,i)=>({ v:py.amount/1000, label:(i+1)+'', color:C.success }));
+
+  const collectionRate = Math.round(totalRevenue/(totalRevenue+totalPending||1)*100);
+
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
-      <h3 style={{color:C.text,fontSize:18,fontWeight:700,marginBottom:20}}>📊 BI Reports</h3>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
-        <div style={{background:C.card,borderRadius:14,padding:20,border:`1px solid ${C.border}`}}>
-          <div style={{color:C.sub,fontSize:12,marginBottom:6}}>הכנסות כולל</div>
-          <div style={{fontSize:28,fontWeight:800,color:C.success}}>{fmtCurrency(totalRevenue)}</div>
-        </div>
-        <div style={{background:C.card,borderRadius:14,padding:20,border:`1px solid ${C.border}`}}>
-          <div style={{color:C.sub,fontSize:12,marginBottom:6}}>תקציב כולל</div>
-          <div style={{fontSize:28,fontWeight:800,color:C.primary}}>{fmtCurrency(totalBudget)}</div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
+        <div>
+          <h3 style={{color:C.text,fontSize:22,fontWeight:800,letterSpacing:'-0.01em'}}>📊 BI Reports</h3>
+          <p style={{color:C.sub,fontSize:16,marginTop:2}}>ניתוח עסקי — {allProjects.length} פרויקטים</p>
         </div>
       </div>
-      <div style={{background:C.card,borderRadius:14,padding:20,border:`1px solid ${C.border}`,marginBottom:16}}>
-        <h4 style={{color:C.text,fontSize:14,fontWeight:700,marginBottom:16}}>פיזור לפי שלב</h4>
-        <div style={{display:'flex',gap:16,flexWrap:'wrap',justifyContent:'center'}}>
-          {phasesDist.filter(p=>p.count>0).map((p,i)=>(
-            <SVGCircle key={i} value={p.count} max={allProjects.length||1}
-              color={[C.primary,C.accent,C.success,C.warning,C.danger,C.info,C.ai,C.sub][i%8]}
-              label={p.name} size={70}/>
-          ))}
-          {phasesDist.filter(p=>p.count>0).length===0 && <div style={{color:C.sub,fontSize:14}}>אין נתונים</div>}
-        </div>
-      </div>
-      <div style={{background:C.card,borderRadius:14,padding:20,border:`1px solid ${C.border}`}}>
-        <h4 style={{color:C.text,fontSize:14,fontWeight:700,marginBottom:16}}>התקדמות פרויקטים</h4>
-        {allProjects.map(p=>(
-          <div key={p.id} style={{marginBottom:14}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-              <span style={{fontSize:13,color:C.text,fontWeight:600}}>{p.name}</span>
-              <span style={{fontSize:13,color:C.sub}}>{p.progress||0}%</span>
-            </div>
-            <div style={{height:8,background:C.border,borderRadius:4,overflow:'hidden'}}>
-              <div style={{width:(p.progress||0)+'%',height:'100%',background:C.primary,borderRadius:4,transition:'width 1s'}}/>
-            </div>
+
+      {/* Top KPIs */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+        {[
+          {label:'הכנסות שהתקבלו', value:fmtCurrency(totalRevenue), color:C.success, sub:'שולם'},
+          {label:'תשלומים ממתינים', value:fmtCurrency(totalPending), color:C.warning, sub:'ממתין'},
+          {label:'תקציב כולל', value:fmtCurrency(totalBudget), color:C.primary, sub:'מחויב'},
+          {label:'אחוז גביה', value:collectionRate+'%', color:collectionRate>80?C.success:collectionRate>60?C.warning:C.danger, sub:'collection rate'},
+        ].map((k,i)=>(
+          <div key={i} style={{background:C.card,borderRadius:14,padding:16,border:`1px solid ${C.border}`,
+            borderTop:`2px solid ${k.color}`}}>
+            <div style={{fontSize:12,color:C.sub,letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:6}}>{k.label}</div>
+            <div style={{fontSize:24,fontWeight:800,color:k.color,letterSpacing:'-0.02em'}}>{k.value}</div>
+            <div style={{fontSize:12,color:C.sub,marginTop:4}}>{k.sub}</div>
           </div>
         ))}
       </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+        {/* Phase distribution bar chart */}
+        <div style={{background:C.card,borderRadius:14,padding:20,border:`1px solid ${C.border}`}}>
+          <h4 style={{color:C.text,fontSize:16,fontWeight:700,marginBottom:4,letterSpacing:'-0.01em'}}>פיזור לפי שלב</h4>
+          <p style={{color:C.sub,fontSize:13,marginBottom:16}}>מספר פרויקטים בכל שלב</p>
+          <SVGBarChart data={phasesBar.filter(d=>d.value>0).length>0 ? phasesBar : [{label:'—',value:1,color:C.border}]} height={130}/>
+          {phasesBar.every(d=>d.value===0) && (
+            <div style={{textAlign:'center',color:C.sub,fontSize:16,padding:20}}>אין נתונים</div>
+          )}
+        </div>
+
+        {/* Projects progress chart */}
+        <div style={{background:C.card,borderRadius:14,padding:20,border:`1px solid ${C.border}`}}>
+          <h4 style={{color:C.text,fontSize:16,fontWeight:700,marginBottom:4,letterSpacing:'-0.01em'}}>התקדמות פרויקטים</h4>
+          <p style={{color:C.sub,fontSize:13,marginBottom:16}}>אחוז השלמה</p>
+          <SVGBarChart data={progressBar} height={130}/>
+        </div>
+      </div>
+
+      {/* Detailed progress with stacked bars */}
+      <div style={{background:C.card,borderRadius:14,padding:20,border:`1px solid ${C.border}`,marginBottom:16}}>
+        <h4 style={{color:C.text,fontSize:16,fontWeight:700,marginBottom:16}}>ניתוח פרויקטים מפורט</h4>
+        {allProjects.map(p=>{
+          const ppaid = (p.payments||[]).filter(py=>py.status==='paid').reduce((s,py)=>s+py.amount,0);
+          const ptotal = (p.payments||[]).reduce((s,py)=>s+py.amount,0);
+          const ppct = Math.round(ppaid/(ptotal||1)*100);
+          const statusColor = p.status==='active'?C.success:p.status==='planning'?C.info:C.sub;
+          return (
+            <div key={p.id} style={{marginBottom:18,paddingBottom:18,borderBottom:`1px solid ${C.border}`}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                <div>
+                  <span style={{fontSize:17,color:C.text,fontWeight:700}}>{p.name}</span>
+                  <span style={{fontSize:13,color:C.sub,marginRight:8}}> · {p.clientName}</span>
+                </div>
+                <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                  <span style={{fontSize:14,color:C.sub}}>{PHASES[(p.currentPhase||1)-1]?.name}</span>
+                  <StatusBadge status={p.status}/>
+                </div>
+              </div>
+              {/* Progress */}
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+                <div style={{fontSize:13,color:C.sub,width:52,textAlign:'left'}}>התקדמות</div>
+                <div style={{flex:1,height:6,background:C.border,borderRadius:3,overflow:'hidden'}}>
+                  <div style={{width:(p.progress||0)+'%',height:'100%',borderRadius:3,
+                    background:`linear-gradient(90deg,${statusColor}88,${statusColor})`,transition:'width 1.5s'}}/>
+                </div>
+                <span style={{fontSize:13,color:statusColor,fontWeight:700,width:32}}>{p.progress||0}%</span>
+              </div>
+              {/* Payment */}
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <div style={{fontSize:13,color:C.sub,width:52,textAlign:'left'}}>גביה</div>
+                <div style={{flex:1,height:6,background:C.border,borderRadius:3,overflow:'hidden'}}>
+                  <div style={{width:ppct+'%',height:'100%',borderRadius:3,
+                    background:`linear-gradient(90deg,${C.success}88,${C.success})`,transition:'width 1.5s'}}/>
+                </div>
+                <span style={{fontSize:13,color:C.success,fontWeight:700,width:32}}>{ppct}%</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Payment timeline line chart */}
+      {paymentTimeline.length >= 2 && (
+        <div style={{background:C.card,borderRadius:14,padding:20,border:`1px solid ${C.border}`}}>
+          <h4 style={{color:C.text,fontSize:16,fontWeight:700,marginBottom:4}}>מגמת תשלומים (אלפי ₪)</h4>
+          <p style={{color:C.sub,fontSize:13,marginBottom:16}}>תשלומים אחרונים שהתקבלו</p>
+          <SVGLineChart points={paymentTimeline} color={C.success} height={80} label="payments"/>
+        </div>
+      )}
     </div>
   );
 }
@@ -2118,8 +3125,8 @@ function ClientSuccessTab({ project, setProject }) {
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
         <div>
-          <h3 style={{color:C.text,fontSize:18,fontWeight:700}}>🧠 Client Success</h3>
-          <p style={{color:C.sub,fontSize:13}}>ניהול קשרי לקוחות חכם · Client Relationship Intelligence</p>
+          <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>🧠 Client Success</h3>
+          <p style={{color:C.sub,fontSize:16}}>ניהול קשרי לקוחות חכם · Client Relationship Intelligence</p>
         </div>
         <SVGCircle value={health} max={100} color={healthColor} label="Health Score" size={72}/>
       </div>
@@ -2127,7 +3134,7 @@ function ClientSuccessTab({ project, setProject }) {
       <div style={{display:'flex',gap:8,marginBottom:20,borderBottom:`1px solid ${C.border}`,paddingBottom:12}}>
         {sections.map(s=>(
           <button key={s.k} onClick={()=>setActiveSection(s.k)}
-            style={{padding:'7px 16px',borderRadius:20,border:'none',cursor:'pointer',fontSize:13,fontWeight:600,
+            style={{padding:'7px 16px',borderRadius:20,border:'none',cursor:'pointer',fontSize:16,fontWeight:600,
               background:activeSection===s.k?C.primary:'transparent',
               color:activeSection===s.k?'#fff':C.sub}}>
             {s.l}
@@ -2138,7 +3145,7 @@ function ClientSuccessTab({ project, setProject }) {
       {activeSection==='profile' && (
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
           <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
-            <h4 style={{color:C.text,fontSize:14,fontWeight:700,marginBottom:12}}>פרטי תקשורת מועדפת</h4>
+            <h4 style={{color:C.text,fontSize:17,fontWeight:700,marginBottom:12}}>פרטי תקשורת מועדפת</h4>
             {[
               ['סגנון עבודה',profile.style||'—'],['זמינות',profile.responseStyle||'—'],
               ['ערוץ מועדף',profile.preferredContact||'—'],
@@ -2146,18 +3153,18 @@ function ClientSuccessTab({ project, setProject }) {
               ['שפה מועדפת',profile.preferredLang||'—']
             ].map(([k,v])=>(
               <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:`1px solid ${C.border}`}}>
-                <span style={{color:C.sub,fontSize:13}}>{k}</span>
-                <span style={{color:C.text,fontSize:13,fontWeight:500}}>{v}</span>
+                <span style={{color:C.sub,fontSize:16}}>{k}</span>
+                <span style={{color:C.text,fontSize:16,fontWeight:500}}>{v}</span>
               </div>
             ))}
           </div>
           <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
-            <h4 style={{color:C.text,fontSize:14,fontWeight:700,marginBottom:12}}>תגיות ורשומות</h4>
+            <h4 style={{color:C.text,fontSize:17,fontWeight:700,marginBottom:12}}>תגיות ורשומות</h4>
             <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:12}}>
               {(profile.tags||[]).map((t,i)=><Badge key={i} text={t} color={C.primary}/>)}
-              {(!profile.tags||profile.tags.length===0)&&<span style={{color:C.sub,fontSize:13}}>אין תגיות</span>}
+              {(!profile.tags||profile.tags.length===0)&&<span style={{color:C.sub,fontSize:16}}>אין תגיות</span>}
             </div>
-            {profile.notes && <p style={{color:C.text,fontSize:13,lineHeight:1.7}}>{profile.notes}</p>}
+            {profile.notes && <p style={{color:C.text,fontSize:16,lineHeight:1.7}}>{profile.notes}</p>}
           </div>
         </div>
       )}
@@ -2167,15 +3174,15 @@ function ClientSuccessTab({ project, setProject }) {
           <div style={{display:'flex',justifyContent:'flex-end',marginBottom:14}}>
             <Btn onClick={()=>setShowCRForm(true)}>+ בקשת שינוי</Btn>
           </div>
-          {crs.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:14}}>אין בקשות שינוי</div>}
+          {crs.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17}}>אין בקשות שינוי</div>}
           {crs.map(cr=>(
             <div key={cr.id} style={{background:C.card,borderRadius:12,padding:16,marginBottom:10,border:`1px solid ${C.border}`}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                <div style={{fontWeight:700,color:C.text,fontSize:14}}>{cr.title}</div>
+                <div style={{fontWeight:700,color:C.text,fontSize:17}}>{cr.title}</div>
                 <StatusBadge status={cr.status}/>
               </div>
-              <div style={{color:C.sub,fontSize:12}}>סוג: {cr.type} · {fmtDate(cr.date)}</div>
-              {cr.impact && <div style={{color:C.warning,fontSize:12,marginTop:4}}>השפעה: {cr.impact}</div>}
+              <div style={{color:C.sub,fontSize:14}}>סוג: {cr.type} · {fmtDate(cr.date)}</div>
+              {cr.impact && <div style={{color:C.warning,fontSize:14,marginTop:4}}>השפעה: {cr.impact}</div>}
             </div>
           ))}
           {showCRForm && (
@@ -2199,12 +3206,12 @@ function ClientSuccessTab({ project, setProject }) {
       {activeSection==='decisions' && (
         <div>
           <div style={{display:'flex',flexDirection:'column',gap:10}}>
-            {dl.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:14}}>אין החלטות מתועדות</div>}
+            {dl.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17}}>אין החלטות מתועדות</div>}
             {dl.map((d,i)=>(
               <div key={i} style={{background:C.card,borderRadius:12,padding:16,border:`1px solid ${C.border}`}}>
-                <div style={{fontWeight:700,color:C.text,fontSize:14,marginBottom:4}}>{d.title}</div>
-                <div style={{color:C.sub,fontSize:12}}>{fmtDate(d.date)} · ע"י {d.by}</div>
-                {d.note && <div style={{color:C.text,fontSize:13,marginTop:6}}>{d.note}</div>}
+                <div style={{fontWeight:700,color:C.text,fontSize:17,marginBottom:4}}>{d.title}</div>
+                <div style={{color:C.sub,fontSize:14}}>{fmtDate(d.date)} · ע"י {d.by}</div>
+                {d.note && <div style={{color:C.text,fontSize:16,marginTop:6}}>{d.note}</div>}
               </div>
             ))}
           </div>
@@ -2229,11 +3236,79 @@ function ClientSuccessTab({ project, setProject }) {
   );
 }
 
+// ─── CUSTOM BLOCKS TAB ────────────────────────────────────────────────────────
+function CustomBlocksTab({ project, setProject }) {
+  const [showAdd, setShowAdd] = React.useState(false);
+  const [form, setForm] = React.useState({title:'',content:''});
+  const blocks = project.customBlocks || [];
+  const add = () => {
+    if (!form.title) return;
+    setProject(p=>({...p,customBlocks:[...blocks,{...form,id:'cb'+uid(),createdAt:today()}]}));
+    setForm({title:'',content:''}); setShowAdd(false);
+  };
+  const update = (id,content) => setProject(p=>({...p,customBlocks:blocks.map(b=>b.id===id?{...b,content}:b)}));
+  const remove = (id) => setProject(p=>({...p,customBlocks:blocks.filter(b=>b.id!==id)}));
+  return (
+    <div style={{padding:24,animation:'fadeIn .3s ease'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+        <div>
+          <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>🧩 אזורים חופשיים</h3>
+          <p style={{color:C.sub,fontSize:14}}>הגדר תוכן חופשי לפרויקט — מצב קיים, השראות, עבודה שוטפת ועוד</p>
+        </div>
+        <Btn onClick={()=>setShowAdd(true)}>+ אזור חדש</Btn>
+      </div>
+      {blocks.length===0 && (
+        <div style={{color:C.sub,textAlign:'center',padding:60,fontSize:17}}>
+          <div style={{fontSize:48,marginBottom:12}}>🧩</div>
+          לחץ "+ אזור חדש" כדי להוסיף משבצת תוכן חופשית לפרויקט
+        </div>
+      )}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:16,marginTop:16}}>
+        {blocks.map(b=>(
+          <div key={b.id} style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+              <div style={{fontWeight:700,color:C.text,fontSize:17}}>{b.title}</div>
+              <button onClick={()=>remove(b.id)}
+                style={{background:'none',border:'none',color:C.danger,cursor:'pointer',fontSize:18}}>×</button>
+            </div>
+            <textarea value={b.content||''} onChange={e=>update(b.id,e.target.value)}
+              rows={5} placeholder="הכנס תוכן..."
+              style={{width:'100%',padding:'8px 10px',borderRadius:8,border:`1px solid ${C.border}`,
+                background:C.bg,color:C.text,fontSize:14,resize:'vertical',
+                fontFamily:'Heebo,Arial,sans-serif',outline:'none',direction:'rtl'}}/>
+          </div>
+        ))}
+      </div>
+      {showAdd && (
+        <Modal title="אזור חדש" onClose={()=>setShowAdd(false)} width={440}>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <Input label="כותרת האזור" value={form.title} onChange={v=>setForm(f=>({...f,title:v}))}
+              placeholder="מצב קיים / השראות / עבודה שוטפת / הדמיות..." required/>
+            <div>
+              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:4}}>תוכן</label>
+              <textarea value={form.content} onChange={e=>setForm(f=>({...f,content:e.target.value}))}
+                rows={4} placeholder="תוכן חופשי..."
+                style={{width:'100%',padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
+                  background:C.inputBg,color:C.text,fontSize:15,resize:'vertical',
+                  fontFamily:'Heebo,Arial,sans-serif',outline:'none',direction:'rtl'}}/>
+            </div>
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <Btn onClick={()=>setShowAdd(false)} variant="ghost">ביטול</Btn>
+              <Btn onClick={add}>הוסף אזור</Btn>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
 // ─── PROJECT VIEW (main container) ───────────────────────────────────────────
-function ProjectView({ projectId, data, setData, user, onBack }) {
+function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack }) {
   const project = (data.projects||[]).find(p=>p.id===projectId);
   const [activeTab, setActiveTab] = React.useState('dashboard');
   const [showShare, setShowShare] = React.useState(false);
+  const isMobile = useIsMobile();
 
   if (!project) return <div style={{padding:40,color:C.text}}>פרויקט לא נמצא</div>;
 
@@ -2257,12 +3332,15 @@ function ProjectView({ projectId, data, setData, user, onBack }) {
     {id:'approvals',label:'אישורים',icon:'✍️',feature:'approvals'},
     {id:'messages',label:'הודעות',icon:'💬',feature:'messages'},
     {id:'bi',label:'BI Reports',icon:'📈',feature:'bi'},
-    {id:'clientsuccess',label:'Client Success',icon:'🧠',feature:'clientsuccess'}
+    {id:'clientsuccess',label:'Client Success',icon:'🧠',feature:'clientsuccess'},
+    {id:'customblocks',label:'אזורים חופשיים',icon:'🧩',feature:'portal'}
   ];
 
   const visibleTabs = user.role==='client'
     ? allTabs.filter(t=>['dashboard','brief','gallery','approvals','messages','payments','quotes'].includes(t.id))
-    : allTabs.filter(t=>canUse(t.feature));
+    : user.role==='arch'
+      ? allTabs.filter(t=>canUse(t.feature) && !['payments','quotes'].includes(t.id) && (t.id!=='ai' || user.aiEnabled))
+      : allTabs.filter(t=>canUse(t.feature));
 
   const renderTab = () => {
     switch(activeTab) {
@@ -2282,6 +3360,7 @@ function ProjectView({ projectId, data, setData, user, onBack }) {
       case 'messages':     return <MessagesTab project={project} setProject={setProject} user={user}/>;
       case 'bi':           return <BIReportsTab project={project} data={data}/>;
       case 'clientsuccess':return <ClientSuccessTab project={project} setProject={setProject}/>;
+      case 'customblocks': return <CustomBlocksTab project={project} setProject={setProject}/>;
       default:             return null;
     }
   };
@@ -2292,37 +3371,42 @@ function ProjectView({ projectId, data, setData, user, onBack }) {
 
       {/* Calq-style top header */}
       <div style={{background:C.sidebar,borderBottom:`1px solid ${C.border}`,
-        padding:'0 40px',flexShrink:0,zIndex:10,position:'relative'}}>
+        padding: isMobile ? '0 12px' : '0 40px',flexShrink:0,zIndex:10,position:'relative'}}>
         {/* Project identity row */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
           height:56,borderBottom:`1px solid ${C.border}`}}>
-          <div style={{display:'flex',alignItems:'center',gap:20}}>
-            <button onClick={onBack}
-              style={{background:'none',border:'none',color:C.sub,cursor:'pointer',
-                fontSize:13,letterSpacing:'0.05em',fontFamily:"'Space Grotesk',sans-serif",
-                display:'flex',alignItems:'center',gap:6}}>
-              ← PROJECTS
+          <div style={{display:'flex',alignItems:'center',gap: isMobile ? 10 : 20, minWidth:0}}>
+            <button onClick={onGoHome}
+              style={{background:'none',border:'none',cursor:'pointer',padding:0,
+                display:'flex',alignItems:'center',flexShrink:0}}>
+              <img src={isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+                style={{width: isMobile ? 72 : 'clamp(90px,12vw,180px)', height:'auto', display:'block', transition:'opacity .15s'}}
+                onMouseEnter={e=>e.currentTarget.style.opacity='0.7'}
+                onMouseLeave={e=>e.currentTarget.style.opacity='1'}/>
             </button>
-            <div style={{width:1,height:16,background:C.border}}/>
-            <span style={{color:C.text,fontWeight:700,fontSize:15,letterSpacing:'-0.01em',
-              fontFamily:"'Space Grotesk',sans-serif"}}>{project.name}</span>
-            <span style={{color:C.sub,fontSize:13}}>{project.clientName}</span>
+            <div style={{width:1,height:16,background:C.border,flexShrink:0}}/>
+            <span style={{color:C.text,fontWeight:700,fontSize: isMobile ? 15 : 18,letterSpacing:'-0.01em',
+              fontFamily:"'Space Grotesk',sans-serif",overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+              {project.name}
+            </span>
+            {!isMobile && <span style={{color:C.sub,fontSize:16,flexShrink:0}}>{project.clientName}</span>}
           </div>
-          <div style={{display:'flex',alignItems:'center',gap:16}}>
-            {/* Progress */}
-            <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <div style={{width:80,height:1,background:C.border,position:'relative'}}>
-                <div style={{position:'absolute',top:0,right:0,height:'100%',
-                  width:(project.progress||0)+'%',background:C.text,transition:'width 1s'}}/>
+          <div style={{display:'flex',alignItems:'center',gap: isMobile ? 8 : 16, flexShrink:0}}>
+            {!isMobile && (
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <div style={{width:80,height:1,background:C.border,position:'relative'}}>
+                  <div style={{position:'absolute',top:0,right:0,height:'100%',
+                    width:(project.progress||0)+'%',background:C.text,transition:'width 1s'}}/>
+                </div>
+                <span style={{color:C.sub,fontSize:13,letterSpacing:'0.08em'}}>
+                  {project.progress||0}%
+                </span>
               </div>
-              <span style={{color:C.sub,fontSize:11,letterSpacing:'0.08em'}}>
-                {project.progress||0}%
-              </span>
-            </div>
+            )}
             {canUse('share') && (
               <button onClick={()=>setShowShare(true)}
-                style={{background:'none',border:`1px solid ${C.border}`,padding:'5px 14px',
-                  color:C.sub,cursor:'pointer',fontSize:12,letterSpacing:'0.06em',borderRadius:0}}>
+                style={{background:'none',border:`1px solid ${C.border}`,padding: isMobile ? '4px 10px' : '5px 14px',
+                  color:C.sub,cursor:'pointer',fontSize: isMobile ? 12 : 14,letterSpacing:'0.06em',borderRadius:0}}>
                 SHARE
               </button>
             )}
@@ -2335,20 +3419,20 @@ function ProjectView({ projectId, data, setData, user, onBack }) {
           {visibleTabs.map(tab=>(
             <button key={tab.id} onClick={()=>setActiveTab(tab.id)}
               className="tab-btn"
-              style={{padding:'14px 20px',background:'transparent',border:'none',
+              style={{padding: isMobile ? '10px 12px' : '14px 20px',background:'transparent',border:'none',
                 borderBottom:activeTab===tab.id?`2px solid ${C.text}`:'2px solid transparent',
                 color:activeTab===tab.id?C.text:C.sub,
-                cursor:'pointer',fontSize:12,fontWeight:activeTab===tab.id?700:400,
-                letterSpacing:'0.05em',whiteSpace:'nowrap',flexShrink:0,
+                cursor:'pointer',fontSize: isMobile ? 12 : 14,fontWeight:activeTab===tab.id?700:400,
+                letterSpacing:'0.04em',whiteSpace:'nowrap',flexShrink:0,
                 fontFamily:"'Space Grotesk',sans-serif",transition:'color .15s'}}>
-              {tab.label}
+              {isMobile ? tab.icon : tab.label}
             </button>
           ))}
         </div>
       </div>
 
       {/* Main content */}
-      <div style={{flex:1,overflowY:'auto',position:'relative'}}>
+      <div style={{flex:1,overflowY:'auto',position:'relative',paddingBottom:44}}>
         <div style={{position:'relative',zIndex:1,animation:'pageEnter .3s ease'}}
           key={activeTab}>
           {renderTab()}
@@ -2364,9 +3448,11 @@ function ProjectView({ projectId, data, setData, user, onBack }) {
 function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDash, onUsers, onBackup, onSuperAdmin, onSecurity }) {
   const [showNewProject, setShowNewProject] = React.useState(false);
   const [showTheme, setShowTheme] = React.useState(false);
-  const [themeId, setThemeId] = React.useState('lightStone');
+  const [themeId, setThemeId] = React.useState('calqNoir');
   const [form, setForm] = React.useState({name:'',address:'',clientName:'',architectName:'',budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
   const [search, setSearch] = React.useState('');
+  const [showMobileMenu, setShowMobileMenu] = React.useState(false);
+  const isMobile = useIsMobile();
 
   const projects = (data.projects||[]).filter(p=>{
     if (user.role==='arch') return p.architectName.includes(user.name.replace('אדר. ',''));
@@ -2396,108 +3482,154 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
   const completed = projects.filter(p=>p.status==='completed').length;
 
   return (
-    <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
+    <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column',position:'relative'}}>
+      <div className="scanline-overlay"/>
       {/* Calq-style top nav */}
-      <div style={{background:C.sidebar,padding:'0 40px',display:'flex',alignItems:'center',
-        justifyContent:'space-between',height:64,flexShrink:0,position:'relative',zIndex:10,
+      <div style={{background:C.sidebar,padding: isMobile ? '0 16px' : '0 40px',display:'flex',alignItems:'center',
+        justifyContent:'space-between',height:56,flexShrink:0,position:'relative',zIndex:10,
         borderBottom:`1px solid ${C.border}`}}>
-        <div style={{display:'flex',alignItems:'center',gap:40}}>
-          <span style={{fontSize:18,fontWeight:700,color:C.sidebarText,letterSpacing:'0.08em',
-            fontFamily:"'Space Grotesk',sans-serif"}}>TEKTONA</span>
-          <div style={{width:1,height:20,background:C.border}}/>
-          {user.role==='admin' && (
-            <div style={{display:'flex',gap:24}}>
-              <button onClick={onSystemDash}
-                style={{background:'none',border:'none',color:C.sub,cursor:'pointer',
-                  fontSize:13,letterSpacing:'0.05em',fontFamily:"'Space Grotesk',sans-serif"}}>
-                מערכת
-              </button>
-              <button onClick={onUsers}
-                style={{background:'none',border:'none',color:C.sub,cursor:'pointer',
-                  fontSize:13,letterSpacing:'0.05em',fontFamily:"'Space Grotesk',sans-serif"}}>
-                משתמשים
-              </button>
-              <button onClick={onBackup}
-                style={{background:'none',border:'none',color:C.sub,cursor:'pointer',
-                  fontSize:13,letterSpacing:'0.05em',fontFamily:"'Space Grotesk',sans-serif"}}>
-                גיבוי
-              </button>
-              <button onClick={onSecurity}
-                style={{background:'none',border:'none',color:C.sub,cursor:'pointer',
-                  fontSize:13,letterSpacing:'0.05em',fontFamily:"'Space Grotesk',sans-serif"}}>
-                אבטחה
-              </button>
-            </div>
-          )}
-          <div style={{display:'flex',alignItems:'center',gap:20}}>
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="חיפוש..."
-              style={{padding:'6px 14px',border:'none',borderBottom:`1px solid ${C.border}`,
-                background:'transparent',color:C.sidebarText,fontSize:13,outline:'none',
-                direction:'rtl',fontFamily:"'Space Grotesk',sans-serif",width:180}}/>
-            {canUse('themes') && (
-              <button onClick={()=>setShowTheme(true)}
-                style={{background:'none',border:`1px solid ${C.border}`,padding:'5px 12px',
-                  color:C.sub,cursor:'pointer',fontSize:11,letterSpacing:'0.06em',borderRadius:0}}>
-                THEME
-              </button>
-            )}
-            <div style={{width:1,height:20,background:C.border}}/>
-            <span style={{color:C.sub,fontSize:13}}>{user.name}</span>
-            <button onClick={onLogout}
-              style={{background:'none',border:`1px solid ${C.border}`,padding:'5px 14px',
-                color:C.sub,cursor:'pointer',fontSize:12,letterSpacing:'0.06em',borderRadius:0}}>
-              יציאה
-            </button>
+        {/* Mobile center logo (absolute) */}
+        {isMobile && (
+          <div style={{position:'absolute',left:0,right:0,top:0,bottom:0,
+            display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'none',zIndex:0}}>
+            <img src={isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+              style={{width:87, height:'auto', display:'block'}}/>
           </div>
+        )}
+
+        {/* RIGHT group (first in DOM = rightmost in RTL) */}
+        <div style={{display:'flex',alignItems:'center',gap: isMobile ? 10 : 32, flexShrink:0, zIndex:1}}>
+          {isMobile ? (
+            /* Mobile: only ≡ button — logo is centered absolutely */
+            <>
+              <button onClick={()=>setShowMobileMenu(m=>!m)}
+                style={{background:'none',border:`1px solid ${C.border}`,padding:'5px 11px',
+                  color:C.sidebarText,cursor:'pointer',fontSize:20,borderRadius:4,lineHeight:1}}>
+                ≡
+              </button>
+            </>
+          ) : (
+            /* Desktop: logo first (= far right), then divider + admin links */
+            <>
+              <button onClick={onLogout} style={{background:'none',border:'none',padding:0,cursor:'pointer',display:'flex',alignItems:'center'}}
+                onMouseEnter={e=>e.currentTarget.querySelector('img').style.opacity='0.7'}
+                onMouseLeave={e=>e.currentTarget.querySelector('img').style.opacity='1'}>
+                <img src={isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+                  style={{width:'clamp(110px,16vw,240px)', height:'auto', display:'block', transition:'opacity .15s'}}/>
+              </button>
+              <div style={{width:1,height:20,background:C.border}}/>
+              {user.role==='admin' && (
+                <div style={{display:'flex',gap:24}}>
+                  {[['מערכת',onSystemDash],['משתמשים',onUsers],['גיבוי',onBackup]].map(([l,fn])=>(
+                    <button key={l} onClick={fn}
+                      style={{background:'none',border:'none',color:C.sub,cursor:'pointer',
+                        fontSize:16,letterSpacing:'0.05em',fontFamily:"'Space Grotesk',sans-serif",
+                        transition:'color .15s'}}
+                      onMouseOver={e=>e.target.style.color=C.text}
+                      onMouseOut={e=>e.target.style.color=C.sub}>
+                      {l}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* LEFT group (last in DOM = leftmost in RTL) */}
+        <div style={{display:'flex',alignItems:'center',gap: isMobile ? 8 : 16, flexShrink:0}}>
+          {!isMobile && (
+            <>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="חיפוש..."
+                style={{padding:'6px 14px',border:'none',borderBottom:`1px solid ${C.border}`,
+                  background:'transparent',color:C.sidebarText,fontSize:16,outline:'none',
+                  direction:'rtl',fontFamily:"'Space Grotesk',sans-serif",width:180}}/>
+              {canUse('themes') && (
+                <button onClick={()=>setShowTheme(true)}
+                  style={{background:'none',border:`1px solid ${C.border}`,padding:'5px 12px',
+                    color:C.sub,cursor:'pointer',fontSize:13,letterSpacing:'0.06em',borderRadius:0}}>
+                  THEME
+                </button>
+              )}
+              <div style={{width:1,height:20,background:C.border}}/>
+              <span style={{color:C.sub,fontSize:15,maxWidth:120,overflow:'hidden',
+                textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.name}</span>
+            </>
+          )}
+          <button onClick={onLogout}
+            style={{background:'none',border:`1px solid ${C.border}`,
+              padding: isMobile ? '5px 10px' : '5px 14px',
+              color:C.sub,cursor:'pointer',fontSize: isMobile ? 12 : 14,
+              letterSpacing:'0.06em',borderRadius:0,flexShrink:0}}>
+            יציאה
+          </button>
         </div>
       </div>
 
-      <div style={{flex:1,overflowY:'auto',position:'relative',zIndex:1}}>
-        {/* Stats bar — calq horizontal */}
-        <div style={{borderBottom:`1px solid ${C.border}`,padding:'24px 40px',
-          display:'flex',gap:40,alignItems:'center',animation:'pageEnter .4s ease'}}>
+      <div style={{flex:1,overflowY:'auto',position:'relative',zIndex:1,paddingBottom:44}}>
+        {/* Stats bar — always one row, scroll on overflow */}
+        <div style={{borderBottom:`1px solid ${C.border}`,
+          padding: isMobile ? '14px 16px' : '24px 40px',
+          display:'flex',gap: isMobile ? 14 : 40,alignItems:'center',
+          animation:'pageEnter .4s ease',overflowX:'auto',flexWrap:'nowrap',
+          scrollbarWidth:'none',msOverflowStyle:'none'}}>
           {[
             {label:'PROJECTS', value:projects.length, max:OFFICE_PLAN.plan==='studio'?30:15, color:C.text},
             {label:'ACTIVE', value:active, max:projects.length||1, color:C.success},
             {label:'PLANNING', value:projects.filter(p=>p.status==='planning').length, max:projects.length||1, color:C.info},
             {label:'COMPLETED', value:completed, max:projects.length||1, color:C.sub}
           ].map((s,i)=>(
-            <div key={i} style={{display:'flex',alignItems:'baseline',gap:10}}>
-              <span style={{fontSize:36,fontWeight:700,color:s.color,letterSpacing:'-0.02em',
-                fontFamily:"'Space Grotesk',sans-serif"}}>{s.value}</span>
+            <div key={i} style={{display:'flex',alignItems:'baseline',gap: isMobile ? 6 : 10, flexShrink:0}}>
+              {i===1 && (
+                <div className="led-active" style={{width:6,height:6,borderRadius:'50%',
+                  background:C.success,color:C.success,marginBottom:4,alignSelf:'center'}}/>
+              )}
+              <span className={i===0?'shimmer-text':''} style={{fontSize: isMobile ? 26 : 43,fontWeight:700,
+                color:i===0?'transparent':s.color,letterSpacing:'-0.02em',
+                fontFamily:"'Space Grotesk',sans-serif",
+                animation:`countUp .6s ${i*.15}s ease both`}}>{s.value}</span>
               <div>
-                <div style={{fontSize:10,letterSpacing:'0.12em',color:C.sub,fontWeight:500}}>{s.label}</div>
-                <div style={{width:s.max>0?(s.value/s.max*60):0,height:1,background:s.color,marginTop:4,transition:'width 1s'}}/>
+                <div style={{fontSize: isMobile ? 10 : 12,letterSpacing:'0.12em',color:C.sub,fontWeight:500}}>{s.label}</div>
+                <div style={{width:s.max>0?(s.value/s.max*60):0,height:1,background:s.color,marginTop:4,transition:'width 1.5s ease'}}/>
               </div>
-              {i<3 && <div style={{width:1,height:32,background:C.border,marginLeft:20}}/>}
+              {i<3 && <div style={{width:1,height: isMobile ? 24 : 32,background:C.border,marginLeft: isMobile ? 8 : 20}}/>}
             </div>
           ))}
+        </div>
+
+        {/* Projects header + Add button */}
+        <div style={{padding: isMobile ? '14px 16px 10px' : '24px 40px 14px',animation:'pageEnter .5s ease',
+          display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div>
+            <div style={{display:'flex',alignItems:'baseline',gap:12,marginBottom:4}}>
+              <h2 style={{color:C.text,fontSize:16,fontWeight:700,letterSpacing:'0.15em',
+                fontFamily:"'Space Grotesk',sans-serif"}}>
+                {user.role==='client'?'MY PROJECTS':'PROJECTS'}
+              </h2>
+              <span style={{color:C.sub,fontSize:16}}>{projects.length}</span>
+            </div>
+            <div style={{width:32,height:1,background:C.sub}}/>
+          </div>
           {user.role!=='client' && (
             <button onClick={()=>setShowNewProject(true)}
-              style={{marginRight:'auto',padding:'10px 28px',background:C.text,color:C.bg,
-                border:'none',cursor:'pointer',fontSize:13,fontWeight:700,letterSpacing:'0.08em',
-                fontFamily:"'Space Grotesk',sans-serif",borderRadius:0}}>
+              style={{padding: isMobile ? '8px 18px' : '10px 28px',background:C.text,color:C.bg,
+                border:'none',cursor:'pointer',fontSize: isMobile ? 14 : 16,fontWeight:700,
+                letterSpacing:'0.08em',fontFamily:"'Space Grotesk',sans-serif",borderRadius:0,
+                flexShrink:0}}>
               + פרויקט
             </button>
           )}
         </div>
 
-        {/* Projects section header */}
-        <div style={{padding:'32px 40px 16px',animation:'pageEnter .5s ease'}}>
-          <div style={{display:'flex',alignItems:'baseline',gap:12,marginBottom:4}}>
-            <h2 style={{color:C.text,fontSize:13,fontWeight:700,letterSpacing:'0.15em',
-              fontFamily:"'Space Grotesk',sans-serif"}}>
-              {user.role==='client'?'MY PROJECTS':'PROJECTS'}
-            </h2>
-            <span style={{color:C.sub,fontSize:13}}>{projects.length}</span>
-          </div>
-          <div style={{width:32,height:1,background:C.sub}}/>
-        </div>
-
         {/* Projects grid — calq editorial style */}
-        <div style={{padding:'0 40px 40px',display:'grid',
-          gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))',gap:1,
-          border:`1px solid ${C.border}`,margin:'0 40px 40px',animation:'pageEnter .6s ease'}}>
+        <div style={{
+          padding: isMobile ? '0 0 40px' : '0 40px 40px',
+          display:'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill,minmax(340px,1fr))',
+          gap:1,
+          border:`1px solid ${C.border}`,
+          margin: isMobile ? '0 16px 40px' : '0 40px 40px',
+          animation:'pageEnter .6s ease'}}>
           {projects.map((p,idx)=>{
             const paid = (p.payments||[]).filter(py=>py.status==='paid').reduce((s,py)=>s+py.amount,0);
             const total = (p.payments||[]).reduce((s,py)=>s+py.amount,0);
@@ -2505,38 +3637,58 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
               <div key={p.id} className="proj-card" onClick={()=>onOpenProject(p.id)}
                 style={{background:C.card,cursor:'pointer',padding:28,
                   borderBottom:`1px solid ${C.border}`,borderRight:`1px solid ${C.border}`,
-                  position:'relative',animation:`pageEnter ${.4+idx*.08}s ease`}}>
+                  position:'relative',animation:`pageEnter ${.4+idx*.08}s ease`,overflow:'hidden'}}>
+                {/* Subtle corner accent */}
+                <div style={{position:'absolute',top:0,right:0,width:3,height:'100%',
+                  background:`linear-gradient(180deg,${p.status==='active'?C.success:p.status==='planning'?C.info:C.sub}55,transparent)`}}/>
                 {/* Cover */}
                 {p.coverImage && (
-                  <div style={{height:180,marginBottom:20,overflow:'hidden'}}>
+                  <div style={{height:160,marginBottom:20,overflow:'hidden',borderRadius:8,margin:'-28px -28px 20px'}}>
                     <img src={p.coverImage} style={{width:'100%',height:'100%',objectFit:'cover',
-                      filter:'grayscale(20%)'}} alt="cover"/>
+                      filter:'grayscale(20%) brightness(0.85)'}} alt="cover"/>
+                    <div style={{position:'absolute',top:0,left:0,right:0,height:160,
+                      background:'linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.5))'}}/>
                   </div>
                 )}
-                {/* Number */}
-                <div style={{fontSize:11,color:C.sub,letterSpacing:'0.12em',marginBottom:8,
-                  fontFamily:"'Space Grotesk',sans-serif"}}>
-                  {String(idx+1).padStart(2,'0')} — {PHASES[(p.currentPhase||1)-1]?.name}
+                {/* Number + phase */}
+                <div style={{fontSize:12,color:C.sub,letterSpacing:'0.14em',marginBottom:10,
+                  fontFamily:"'Space Grotesk',sans-serif",display:'flex',justifyContent:'space-between'}}>
+                  <span>{String(idx+1).padStart(2,'0')}</span>
+                  <span style={{color:p.status==='active'?C.success:C.sub}}>{PHASES[(p.currentPhase||1)-1]?.name}</span>
                 </div>
                 {/* Name */}
-                <div style={{fontWeight:700,color:C.text,fontSize:22,marginBottom:6,
-                  letterSpacing:'-0.01em',lineHeight:1.2,fontFamily:"'Space Grotesk',sans-serif"}}>
+                <div style={{fontWeight:800,color:C.text,fontSize:24,marginBottom:4,
+                  letterSpacing:'-0.02em',lineHeight:1.2,fontFamily:"'Space Grotesk',sans-serif"}}>
                   {p.name}
                 </div>
-                <div style={{color:C.sub,fontSize:13,marginBottom:16}}>{p.clientName} · {p.address}</div>
-                {/* Progress line */}
-                <div style={{height:1,background:C.border,marginBottom:16,position:'relative'}}>
-                  <div style={{position:'absolute',top:0,right:0,height:'100%',
-                    width:(p.progress||0)+'%',background:C.text,transition:'width 1.2s ease'}}/>
+                <div style={{color:C.sub,fontSize:14,marginBottom:18,display:'flex',gap:8}}>
+                  <span>{p.clientName}</span>
+                  <span style={{color:C.border}}>·</span>
+                  <span>{p.address}</span>
                 </div>
+                {/* Progress bar — thicker, with gradient */}
+                <div style={{height:3,background:C.border,marginBottom:4,borderRadius:2,overflow:'hidden'}}>
+                  <div style={{position:'relative',height:'100%',borderRadius:2,
+                    width:(p.progress||0)+'%',
+                    background:`linear-gradient(90deg,${p.status==='active'?C.success:p.status==='planning'?C.info:C.sub}88,${p.status==='active'?C.success:p.status==='planning'?C.info:C.sub})`,
+                    transition:'width 1.2s cubic-bezier(.4,0,.2,1)'}}/>
+                </div>
+                <div style={{fontSize:12,color:C.sub,marginBottom:16,textAlign:'left'}}>{p.progress||0}%</div>
                 {/* Footer */}
-                <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:C.sub,
-                  fontFamily:"'Space Grotesk',sans-serif"}}>
-                  <span>{fmtCurrency(paid)} / {fmtCurrency(total)}</span>
-                  <span style={{color:p.status==='active'?C.success:C.sub,fontWeight:600,
-                    letterSpacing:'0.08em',fontSize:11}}>
-                    {p.status==='active'?'ACTIVE':p.status==='completed'?'DONE':'PLANNING'}
-                  </span>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:14,color:C.sub,
+                  fontFamily:"'Space Grotesk',sans-serif",alignItems:'center',
+                  paddingTop:12,borderTop:`1px solid ${C.border}`}}>
+                  <span style={{fontSize:13}}>{fmtCurrency(paid)}<span style={{opacity:0.5}}> / {fmtCurrency(total)}</span></span>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}>
+                    {p.status==='active' && (
+                      <div className="led-active" style={{width:5,height:5,borderRadius:'50%',
+                        background:C.success,color:C.success}}/>
+                    )}
+                    <span style={{color:p.status==='active'?C.success:p.status==='planning'?C.info:C.sub,
+                      fontWeight:700,letterSpacing:'0.1em',fontSize:12}}>
+                      {p.status==='active'?'ACTIVE':p.status==='completed'?'DONE':'PLANNING'}
+                    </span>
+                  </div>
                 </div>
               </div>
             );
@@ -2544,12 +3696,50 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
         </div>
         {projects.length===0 && (
           <div style={{textAlign:'center',padding:80}}>
-            <div style={{fontSize:64,marginBottom:16}}>🏗️</div>
-            <div style={{color:C.sub,fontSize:18,marginBottom:8}}>אין פרויקטים עדיין</div>
+            <div style={{fontSize:77,marginBottom:16}}>🏗️</div>
+            <div style={{color:C.sub,fontSize:22,marginBottom:8}}>אין פרויקטים עדיין</div>
             {user.role!=='client' && <Btn onClick={()=>setShowNewProject(true)}>צור פרויקט ראשון</Btn>}
           </div>
         )}
       </div>
+
+      {/* Mobile menu dropdown */}
+      {showMobileMenu && (
+        <div style={{position:'fixed',inset:0,zIndex:500}} onClick={()=>setShowMobileMenu(false)}>
+          <div onClick={e=>e.stopPropagation()} style={{position:'fixed',top:56,right:0,left:0,
+            background:C.sidebar,borderBottom:`1px solid ${C.border}`,zIndex:501,
+            display:'flex',flexDirection:'column',padding:'8px 0',animation:'fadeIn .15s ease'}}>
+            {/* Search row */}
+            <div style={{padding:'10px 20px',borderBottom:`1px solid ${C.border}`}}>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="חיפוש פרויקט..."
+                style={{width:'100%',padding:'8px 14px',border:`1px solid ${C.border}`,
+                  background:C.bg,color:C.text,fontSize:15,outline:'none',
+                  direction:'rtl',fontFamily:"'Space Grotesk',sans-serif",borderRadius:4}}/>
+            </div>
+            {/* User row */}
+            <div style={{padding:'10px 20px',borderBottom:`1px solid ${C.border}`,
+              display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <span style={{color:C.sub,fontSize:15}}>{user.name}</span>
+              {canUse('themes') && (
+                <button onClick={()=>{setShowTheme(true);setShowMobileMenu(false);}}
+                  style={{background:'none',border:`1px solid ${C.border}`,padding:'4px 12px',
+                    color:C.sub,cursor:'pointer',fontSize:12,borderRadius:0}}>
+                  THEME
+                </button>
+              )}
+            </div>
+            {/* Admin links */}
+            {user.role==='admin' && [['⚙️ מערכת',onSystemDash],['👥 משתמשים',onUsers],['💾 גיבוי',onBackup]].map(([l,fn])=>(
+              <button key={l} onClick={()=>{fn();setShowMobileMenu(false);}}
+                style={{background:'none',border:'none',color:C.sidebarText,cursor:'pointer',
+                  fontSize:16,padding:'12px 20px',textAlign:'right',letterSpacing:'0.03em',
+                  fontFamily:"'Space Grotesk',sans-serif",borderBottom:`1px solid ${C.border}`}}>
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* New project modal */}
       {showNewProject && (
@@ -2566,11 +3756,11 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
             <Select label="תבנית" value={form.template} onChange={v=>setForm(f=>({...f,template:v}))} style={{gridColumn:'1/-1'}}
               options={[{value:'villa',label:'🏡 וילה / בית פרטי'},{value:'renovation',label:'🔧 שיפוץ'},{value:'commercial',label:'🏢 מסחרי'},{value:'addition',label:'➕ תוספת בנייה'}]}/>
             <div style={{gridColumn:'1/-1'}}>
-              <label style={{fontSize:12,fontWeight:600,color:C.sub,display:'block',marginBottom:4}}>תיאור</label>
+              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:4}}>תיאור</label>
               <textarea value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))}
                 rows={3} placeholder="תיאור קצר של הפרויקט..."
                 style={{width:'100%',padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
-                  background:C.inputBg,color:C.text,fontSize:13,resize:'vertical',
+                  background:C.inputBg,color:C.text,fontSize:16,resize:'vertical',
                   fontFamily:'Heebo,Arial,sans-serif',outline:'none',direction:'rtl'}}/>
             </div>
           </div>
@@ -2615,36 +3805,43 @@ function App() {
     initApp();
   },[]);
 
-  const handleLogin = (u) => { setUser(u); setScreen(u.role==='super'?'superadmin':'projects'); };
+  const handleLogin = (u) => { setUser(u); setScreen(u.role==='super'?'superadmin':u.role==='admin'?'systemdash':'projects'); };
   const handleLogout = () => { sessionClear(); setUser(null); setActiveProject(null); setScreen('login'); };
 
   if (screen==='loading') return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
       <div style={{textAlign:'center'}}>
-        <div style={{fontSize:40,fontWeight:800,color:C.primary,marginBottom:12}}>Tektona</div>
-        <div style={{color:C.sub,fontSize:14,animation:'pulse 1s infinite'}}>טוען...</div>
+        <div style={{fontSize:48,fontWeight:800,color:C.primary,marginBottom:12}}>Tektona</div>
+        <div style={{color:C.sub,fontSize:17,animation:'pulse 1s infinite'}}>טוען...</div>
       </div>
     </div>
   );
 
   if (screen==='login') return <LoginScreen onLogin={handleLogin}/>;
-  if (screen==='superadmin') return <SuperAdminDashboard onBack={handleLogout}/>;
-  if (screen==='systemdash') return <SystemDashboard data={data} user={user} onBack={()=>setScreen('projects')}/>;
-  if (screen==='users') return <UsersScreen data={data} setData={updateData} onBack={()=>setScreen('projects')}/>;
-  if (screen==='backup') return <BackupPanel data={data} setData={updateData} onBack={()=>setScreen('projects')}/>;
-  if (screen==='security') return <SecurityAudit onBack={()=>setScreen('projects')}/>;
-  if (screen==='project' && activeProject) return (
-    <ProjectView projectId={activeProject} data={data} setData={updateData}
-      user={user} onBack={()=>setScreen('projects')}/>
-  );
+
+  const goHome = () => setScreen('projects');
   return (
-    <ProjectsList data={data} setData={updateData} user={user} onLogout={handleLogout}
-      onOpenProject={(id)=>{ setActiveProject(id); setScreen('project'); }}
-      onSystemDash={()=>setScreen('systemdash')}
-      onUsers={()=>setScreen('users')}
-      onBackup={()=>setScreen('backup')}
-      onSuperAdmin={()=>setScreen('superadmin')}
-      onSecurity={()=>setScreen('security')}/>
+    <>
+      {screen==='superadmin' && <SuperAdminDashboard onBack={handleLogout} onGoHome={handleLogout} onSecurity={()=>setScreen('security')}/>}
+      {screen==='systemdash' && <SystemDashboard data={data} user={user} onBack={goHome} onGoHome={handleLogout}/>}
+      {screen==='users' && <UsersScreen data={data} setData={updateData} onBack={goHome} onGoHome={handleLogout}/>}
+      {screen==='backup' && <BackupPanel data={data} setData={updateData} onBack={goHome} onGoHome={handleLogout}/>}
+      {screen==='security' && <SecurityAudit onBack={goHome} onGoHome={handleLogout}/>}
+      {screen==='project' && activeProject && (
+        <ProjectView projectId={activeProject} data={data} setData={updateData}
+          user={user} onBack={goHome} onGoHome={handleLogout}/>
+      )}
+      {(screen==='projects' || (!['superadmin','systemdash','users','backup','security','project'].includes(screen))) && (
+        <ProjectsList data={data} setData={updateData} user={user} onLogout={handleLogout}
+          onOpenProject={(id)=>{ setActiveProject(id); setScreen('project'); }}
+          onSystemDash={()=>setScreen('systemdash')}
+          onUsers={()=>setScreen('users')}
+          onBackup={()=>setScreen('backup')}
+          onSuperAdmin={()=>setScreen('superadmin')}
+          onSecurity={()=>setScreen('security')}/>
+      )}
+      <AppFooter/>
+    </>
   );
 }
 

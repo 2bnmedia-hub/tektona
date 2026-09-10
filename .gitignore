@@ -1,3 +1,5 @@
 node_modules/
 app.compiled.js
 .vercel
+.DS_Store
+My Files/

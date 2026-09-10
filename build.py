@@ -112,6 +112,228 @@ html = '''<!DOCTYPE html>
 
     /* Selection */
     ::selection { background: rgba(255,255,255,0.2); color: #fff; }
+
+    /* Mobile base */
+    @media (max-width: 767px) {
+      body { overflow: hidden auto; }
+      #root { height: auto; min-height: 100vh; }
+      .proj-card:hover { transform: none; }
+    }
+
+    /* ── TECH EFFECTS ─────────────────────────────── */
+
+    /* Glitch text */
+    @keyframes glitch {
+      0%,100%  { clip-path: none; transform: none; }
+      2%       { clip-path: inset(20% 0 50% 0); transform: translate(-4px, 0); }
+      4%       { clip-path: inset(60% 0 20% 0); transform: translate(4px, 0); }
+      6%       { clip-path: inset(40% 0 40% 0); transform: translate(-2px, 0); }
+      8%       { clip-path: none; transform: none; }
+      92%      { clip-path: none; transform: none; }
+      94%      { clip-path: inset(10% 0 80% 0); transform: translate(3px, 0); }
+      96%      { clip-path: inset(70% 0 10% 0); transform: translate(-3px, 0); }
+      98%      { clip-path: none; transform: none; }
+    }
+
+    @keyframes glitchBefore {
+      0%,100%  { content: 'TEKTONA'; color: #0ff; left: 2px; }
+      20%      { content: 'T3KTONA'; color: #f0f; left: -2px; }
+      40%      { content: 'TEKTONA'; color: #0ff; left: 2px; }
+      60%      { content: 'TEK7ONA'; color: #f0f; left: 0; }
+      80%      { content: 'TEKTONA'; color: #0ff; left: -2px; }
+    }
+
+    .glitch-text {
+      position: relative;
+      animation: glitch 6s infinite;
+    }
+    .glitch-text::before,
+    .glitch-text::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      opacity: 0.8;
+    }
+    .glitch-text::before {
+      animation: glitchBefore 6s infinite;
+      color: #00ffff;
+      clip-path: inset(0 0 60% 0);
+      transform: translateX(-2px);
+    }
+    .glitch-text::after {
+      color: #ff00ff;
+      clip-path: inset(60% 0 0 0);
+      transform: translateX(2px);
+      animation: glitch 6s .15s infinite;
+    }
+
+    /* Scanline overlay */
+    @keyframes scanMove {
+      0%   { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+    .scanline-overlay {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      overflow: hidden;
+    }
+    .scanline-overlay::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(transparent, rgba(255,255,255,0.04), transparent);
+      animation: scanMove 4s linear infinite;
+    }
+    .scanline-overlay::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+    }
+
+    /* LED blink */
+    @keyframes ledBlink {
+      0%,49%,51%,100% { opacity: 1; }
+      50%             { opacity: 0.1; }
+    }
+    @keyframes ledPulse {
+      0%,100% { box-shadow: 0 0 4px 1px currentColor; opacity: 1; }
+      50%     { box-shadow: 0 0 10px 3px currentColor; opacity: 0.7; }
+    }
+    .led-active {
+      animation: ledPulse 1.5s ease-in-out infinite;
+    }
+    .led-blink {
+      animation: ledBlink 1.2s step-end infinite;
+    }
+
+    /* Neon glow pulse */
+    @keyframes neonGlow {
+      0%,100% { text-shadow: 0 0 8px rgba(255,255,255,0.3), 0 0 20px rgba(255,255,255,0.1); }
+      50%     { text-shadow: 0 0 16px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.2), 0 0 80px rgba(255,255,255,0.1); }
+    }
+    .neon-text {
+      animation: neonGlow 3s ease-in-out infinite;
+    }
+
+    /* Border flicker */
+    @keyframes borderFlicker {
+      0%,100% { opacity: 1; }
+      92%     { opacity: 1; }
+      93%     { opacity: 0.4; }
+      94%     { opacity: 1; }
+      96%     { opacity: 0.6; }
+      97%     { opacity: 1; }
+    }
+    .border-flicker {
+      animation: borderFlicker 5s infinite;
+    }
+
+    /* Data stream (vertical dots) */
+    @keyframes dataStream {
+      0%   { transform: translateY(-100%); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { transform: translateY(100vh); opacity: 0; }
+    }
+
+    /* Number count up */
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Noise flicker on cards */
+    @keyframes noiseFlicker {
+      0%,100% { opacity: 0; }
+      5%      { opacity: 0.02; }
+      10%     { opacity: 0; }
+      15%     { opacity: 0.03; }
+      20%     { opacity: 0; }
+    }
+
+    /* Enter button pulse */
+    @keyframes btnPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+      50%     { box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+    }
+    .btn-pulse { animation: btnPulse 2s ease-out infinite; }
+
+    /* Typewriter cursor */
+    @keyframes cursorBlink {
+      0%,100% { opacity: 1; }
+      50%     { opacity: 0; }
+    }
+    .cursor::after {
+      content: '|';
+      animation: cursorBlink 1s step-end infinite;
+      margin-right: 2px;
+    }
+
+    /* Horizontal flicker line */
+    @keyframes hFlicker {
+      0%,100% { opacity: 0; width: 0; }
+      50%     { opacity: 1; width: 100%; }
+    }
+
+    /* Active state shimmer */
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .shimmer-text {
+      background: linear-gradient(90deg, #555 25%, #fff 50%, #555 75%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s linear infinite;
+    }
+
+    /* Gold shimmer heading */
+    @keyframes goldShimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    @keyframes goldGlow {
+      0%,100% {
+        text-shadow:
+          0 0 10px rgba(212,175,55,0.5),
+          0 0 28px rgba(212,175,55,0.2);
+      }
+      50% {
+        text-shadow:
+          0 0 22px rgba(212,175,55,1),
+          0 0 55px rgba(212,175,55,0.55),
+          0 0 100px rgba(254,244,227,0.18);
+      }
+    }
+    .shimmer-gold {
+      background: linear-gradient(
+        90deg,
+        #7A5500 0%,
+        #B8860B 12%,
+        #D4AF37 28%,
+        #FEF4E3 50%,
+        #D4AF37 72%,
+        #B8860B 88%,
+        #7A5500 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: goldShimmer 5s linear infinite, goldGlow 3s ease-in-out infinite;
+    }
   </style>
 </head>
 <body>
