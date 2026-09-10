@@ -1558,8 +1558,96 @@ function SharePanel({ project, onClose }) {
   );
 }
 
+// ─── PROJECT ACCESS EDITOR (real architect/client assignment, not name-matching) ──
+function ProjectAccessEditor({ officeId, architectId, clientIds, onChange }) {
+  const [members, setMembers] = React.useState(null);
+  const [showInvite, setShowInvite] = React.useState(false);
+  const [inviteForm, setInviteForm] = React.useState({name:'',email:''});
+  const [inviting, setInviting] = React.useState(false);
+  const [inviteError, setInviteError] = React.useState('');
+
+  const load = async () => {
+    const { data } = await sb.from('office_members').select('id,role,display_name').eq('office_id', officeId);
+    setMembers(data||[]);
+  };
+  React.useEffect(()=>{ load(); },[officeId]);
+
+  const archs = (members||[]).filter(m=>m.role==='arch');
+  const clients = (members||[]).filter(m=>m.role==='client');
+
+  const setArchitect = (id) => {
+    const m = archs.find(a=>a.id===id);
+    onChange({ architectId: id || null, architectName: m ? m.display_name : '' });
+  };
+  const toggleClient = (id) => {
+    const cur = clientIds || [];
+    const next = cur.includes(id) ? cur.filter(c=>c!==id) : [...cur, id];
+    const names = clients.filter(c=>next.includes(c.id)).map(c=>c.display_name).join(', ');
+    onChange({ clientIds: next, clientName: names });
+  };
+
+  const inviteClient = async () => {
+    if (!inviteForm.name || !inviteForm.email) return;
+    setInviting(true); setInviteError('');
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      const res = await fetch('/api/invite-user', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ officeId, name: inviteForm.name, email: inviteForm.email, role:'client' })
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'שגיאה בהזמנת הלקוח');
+      await load();
+      setInviteForm({name:'',email:''}); setShowInvite(false);
+    } catch(e) { setInviteError(e.message); }
+    setInviting(false);
+  };
+
+  if (members===null) return <div style={{color:C.sub,fontSize:14}}>טוען...</div>;
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:16}}>
+      <div>
+        <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>אדריכל אחראי</label>
+        {archs.length===0
+          ? <div style={{color:C.sub,fontSize:14}}>אין אדריכלים במשרד — הזמן דרך "ניהול משתמשים"</div>
+          : (
+            <select value={architectId||''} onChange={e=>setArchitect(e.target.value)}
+              style={{width:'100%',padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
+                background:C.inputBg,color:C.text,fontSize:16,outline:'none'}}>
+              <option value="">בחר אדריכל...</option>
+              {archs.map(a=><option key={a.id} value={a.id}>{a.display_name}</option>)}
+            </select>
+          )}
+      </div>
+      <div>
+        <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>לקוחות</label>
+        {clients.map(c=>(
+          <label key={c.id} style={{display:'flex',alignItems:'center',gap:8,padding:'4px 0',color:C.text,fontSize:16,cursor:'pointer'}}>
+            <input type="checkbox" checked={(clientIds||[]).includes(c.id)} onChange={()=>toggleClient(c.id)}/>
+            {c.display_name}
+          </label>
+        ))}
+        {!showInvite ? (
+          <Btn size="sm" variant="ghost" onClick={()=>setShowInvite(true)} style={{marginTop:6}}>+ הזמן לקוח חדש</Btn>
+        ) : (
+          <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:8,padding:12,background:C.bg,borderRadius:8}}>
+            <Input label="שם הלקוח" value={inviteForm.name} onChange={v=>setInviteForm(f=>({...f,name:v}))}/>
+            <Input label="אימייל" type="email" value={inviteForm.email} onChange={v=>setInviteForm(f=>({...f,email:v}))}/>
+            {inviteError && <div style={{color:C.danger,fontSize:13}}>{inviteError}</div>}
+            <div style={{display:'flex',gap:8}}>
+              <Btn size="sm" variant="ghost" onClick={()=>setShowInvite(false)}>ביטול</Btn>
+              <Btn size="sm" onClick={inviteClient} disabled={inviting}>{inviting?'שולח...':'הזמן והוסף'}</Btn>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── DASHBOARD TAB ────────────────────────────────────────────────────────────
-function DashboardTab({ project }) {
+function DashboardTab({ project, setProject, user }) {
   const paid = (project.payments||[]).filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
   const total = (project.payments||[]).reduce((s,p)=>s+p.amount,0);
   const pendingApprovals = (project.approvals||[]).filter(a=>a.status==='pending').length;
@@ -1680,6 +1768,15 @@ function DashboardTab({ project }) {
           </div>
         </div>
       </div>
+
+      {/* Project access — who can actually see this project (real assignment, not name text) */}
+      {user?.role==='admin' && (
+        <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
+          <h4 style={{color:C.sub,fontSize:13,fontWeight:700,marginBottom:14,letterSpacing:'0.1em',textTransform:'uppercase'}}>🔑 ניהול גישה לפרויקט</h4>
+          <ProjectAccessEditor officeId={user.officeId} architectId={project.architectId} clientIds={project.clientIds}
+            onChange={patch=>setProject(p=>({...p,...patch}))}/>
+        </div>
+      )}
     </div>
   );
 }
@@ -3243,7 +3340,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
 
   const renderTab = () => {
     switch(activeTab) {
-      case 'dashboard':    return <DashboardTab project={project} setProject={setProject}/>;
+      case 'dashboard':    return <DashboardTab project={project} setProject={setProject} user={user}/>;
       case 'brief':        return <BriefTab project={project} setProject={setProject} user={user}/>;
       case 'ai':           return <AIAgentTab project={project}/>;
       case 'timeline':     return <TimelineTab project={project} setProject={setProject}/>;
@@ -3348,14 +3445,14 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
   const [showNewProject, setShowNewProject] = React.useState(false);
   const [showTheme, setShowTheme] = React.useState(false);
   const [themeId, setThemeId] = React.useState('calqNoir');
-  const [form, setForm] = React.useState({name:'',address:'',clientName:'',architectName:'',budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
+  const [form, setForm] = React.useState({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
   const [search, setSearch] = React.useState('');
   const [showMobileMenu, setShowMobileMenu] = React.useState(false);
   const isMobile = useIsMobile();
 
   const projects = (data.projects||[]).filter(p=>{
-    if (user.role==='arch') return p.architectName.includes(user.name.replace('אדר. ',''));
-    if (user.role==='client') return p.clientName.includes(user.name);
+    if (user.role==='arch') return p.architectId === user.id;
+    if (user.role==='client') return (p.clientIds||[]).includes(user.id);
     return true;
   }).filter(p=>!search||p.name.includes(search)||p.clientName.includes(search));
 
@@ -3373,7 +3470,7 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
       clientProfile:{healthScore:80,paymentReliability:80,approvalSpeed:80,changeFrequency:10,tags:[],notes:'',history:[]}
     };
     setData(d=>({...d,projects:[...(d.projects||[]),np]}));
-    setForm({name:'',address:'',clientName:'',architectName:'',budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
+    setForm({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
     setShowNewProject(false);
   };
 
@@ -3645,9 +3742,11 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
         <Modal title="פרויקט חדש" onClose={()=>setShowNewProject(false)} width={580}>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
             <Input label="שם הפרויקט" value={form.name} onChange={v=>setForm(f=>({...f,name:v}))} required style={{gridColumn:'1/-1'}}/>
-            <Input label="כתובת" value={form.address} onChange={v=>setForm(f=>({...f,address:v}))}/>
-            <Input label="שם לקוח" value={form.clientName} onChange={v=>setForm(f=>({...f,clientName:v}))}/>
-            <Input label="אדריכל אחראי" value={form.architectName} onChange={v=>setForm(f=>({...f,architectName:v}))}/>
+            <Input label="כתובת" value={form.address} onChange={v=>setForm(f=>({...f,address:v}))} style={{gridColumn:'1/-1'}}/>
+            <div style={{gridColumn:'1/-1'}}>
+              <ProjectAccessEditor officeId={user.officeId} architectId={form.architectId} clientIds={form.clientIds}
+                onChange={patch=>setForm(f=>({...f,...patch}))}/>
+            </div>
             <Input label="תקציב (₪)" type="number" value={form.budget} onChange={v=>setForm(f=>({...f,budget:v}))}/>
             <Input label={'שטח (מ"ר)'} type="number" value={form.area} onChange={v=>setForm(f=>({...f,area:v}))}/>
             <Input label="תחילת פרויקט" type="date" value={form.startDate} onChange={v=>setForm(f=>({...f,startDate:v}))}/>

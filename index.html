@@ -4310,9 +4310,207 @@ function SharePanel({
   }, copied ? '✓ הועתק!' : '📋 העתק קישור'));
 }
 
+// ─── PROJECT ACCESS EDITOR (real architect/client assignment, not name-matching) ──
+function ProjectAccessEditor({
+  officeId,
+  architectId,
+  clientIds,
+  onChange
+}) {
+  const [members, setMembers] = React.useState(null);
+  const [showInvite, setShowInvite] = React.useState(false);
+  const [inviteForm, setInviteForm] = React.useState({
+    name: '',
+    email: ''
+  });
+  const [inviting, setInviting] = React.useState(false);
+  const [inviteError, setInviteError] = React.useState('');
+  const load = async () => {
+    const {
+      data
+    } = await sb.from('office_members').select('id,role,display_name').eq('office_id', officeId);
+    setMembers(data || []);
+  };
+  React.useEffect(() => {
+    load();
+  }, [officeId]);
+  const archs = (members || []).filter(m => m.role === 'arch');
+  const clients = (members || []).filter(m => m.role === 'client');
+  const setArchitect = id => {
+    const m = archs.find(a => a.id === id);
+    onChange({
+      architectId: id || null,
+      architectName: m ? m.display_name : ''
+    });
+  };
+  const toggleClient = id => {
+    const cur = clientIds || [];
+    const next = cur.includes(id) ? cur.filter(c => c !== id) : [...cur, id];
+    const names = clients.filter(c => next.includes(c.id)).map(c => c.display_name).join(', ');
+    onChange({
+      clientIds: next,
+      clientName: names
+    });
+  };
+  const inviteClient = async () => {
+    if (!inviteForm.name || !inviteForm.email) return;
+    setInviting(true);
+    setInviteError('');
+    try {
+      const {
+        data: {
+          session
+        }
+      } = await sb.auth.getSession();
+      const res = await fetch('/api/invite-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          officeId,
+          name: inviteForm.name,
+          email: inviteForm.email,
+          role: 'client'
+        })
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'שגיאה בהזמנת הלקוח');
+      await load();
+      setInviteForm({
+        name: '',
+        email: ''
+      });
+      setShowInvite(false);
+    } catch (e) {
+      setInviteError(e.message);
+    }
+    setInviting(false);
+  };
+  if (members === null) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 14
+    }
+  }, "\u05D8\u05D5\u05E2\u05DF...");
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 14,
+      fontWeight: 600,
+      color: C.sub,
+      display: 'block',
+      marginBottom: 6
+    }
+  }, "\u05D0\u05D3\u05E8\u05D9\u05DB\u05DC \u05D0\u05D7\u05E8\u05D0\u05D9"), archs.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 14
+    }
+  }, "\u05D0\u05D9\u05DF \u05D0\u05D3\u05E8\u05D9\u05DB\u05DC\u05D9\u05DD \u05D1\u05DE\u05E9\u05E8\u05D3 \u2014 \u05D4\u05D6\u05DE\u05DF \u05D3\u05E8\u05DA \"\u05E0\u05D9\u05D4\u05D5\u05DC \u05DE\u05E9\u05EA\u05DE\u05E9\u05D9\u05DD\"") : /*#__PURE__*/React.createElement("select", {
+    value: architectId || '',
+    onChange: e => setArchitect(e.target.value),
+    style: {
+      width: '100%',
+      padding: '9px 12px',
+      borderRadius: 8,
+      border: `1px solid ${C.border}`,
+      background: C.inputBg,
+      color: C.text,
+      fontSize: 16,
+      outline: 'none'
+    }
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "\u05D1\u05D7\u05E8 \u05D0\u05D3\u05E8\u05D9\u05DB\u05DC..."), archs.map(a => /*#__PURE__*/React.createElement("option", {
+    key: a.id,
+    value: a.id
+  }, a.display_name)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 14,
+      fontWeight: 600,
+      color: C.sub,
+      display: 'block',
+      marginBottom: 6
+    }
+  }, "\u05DC\u05E7\u05D5\u05D7\u05D5\u05EA"), clients.map(c => /*#__PURE__*/React.createElement("label", {
+    key: c.id,
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      padding: '4px 0',
+      color: C.text,
+      fontSize: 16,
+      cursor: 'pointer'
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: (clientIds || []).includes(c.id),
+    onChange: () => toggleClient(c.id)
+  }), c.display_name)), !showInvite ? /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    variant: "ghost",
+    onClick: () => setShowInvite(true),
+    style: {
+      marginTop: 6
+    }
+  }, "+ \u05D4\u05D6\u05DE\u05DF \u05DC\u05E7\u05D5\u05D7 \u05D7\u05D3\u05E9") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8,
+      marginTop: 8,
+      padding: 12,
+      background: C.bg,
+      borderRadius: 8
+    }
+  }, /*#__PURE__*/React.createElement(Input, {
+    label: "\u05E9\u05DD \u05D4\u05DC\u05E7\u05D5\u05D7",
+    value: inviteForm.name,
+    onChange: v => setInviteForm(f => ({
+      ...f,
+      name: v
+    }))
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05D0\u05D9\u05DE\u05D9\u05D9\u05DC",
+    type: "email",
+    value: inviteForm.email,
+    onChange: v => setInviteForm(f => ({
+      ...f,
+      email: v
+    }))
+  }), inviteError && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.danger,
+      fontSize: 13
+    }
+  }, inviteError), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    variant: "ghost",
+    onClick: () => setShowInvite(false)
+  }, "\u05D1\u05D9\u05D8\u05D5\u05DC"), /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    onClick: inviteClient,
+    disabled: inviting
+  }, inviting ? 'שולח...' : 'הזמן והוסף')))));
+}
+
 // ─── DASHBOARD TAB ────────────────────────────────────────────────────────────
 function DashboardTab({
-  project
+  project,
+  setProject,
+  user
 }) {
   const paid = (project.payments || []).filter(p => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
   const total = (project.payments || []).reduce((s, p) => s + p.amount, 0);
@@ -4698,7 +4896,31 @@ function DashboardTab({
     style: {
       color: C.sub
     }
-  }, fmtCurrency(total - paid), " \u05E0\u05D5\u05EA\u05E8"))))));
+  }, fmtCurrency(total - paid), " \u05E0\u05D5\u05EA\u05E8"))))), user?.role === 'admin' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.card,
+      borderRadius: 14,
+      padding: 18,
+      border: `1px solid ${C.border}`
+    }
+  }, /*#__PURE__*/React.createElement("h4", {
+    style: {
+      color: C.sub,
+      fontSize: 13,
+      fontWeight: 700,
+      marginBottom: 14,
+      letterSpacing: '0.1em',
+      textTransform: 'uppercase'
+    }
+  }, "\uD83D\uDD11 \u05E0\u05D9\u05D4\u05D5\u05DC \u05D2\u05D9\u05E9\u05D4 \u05DC\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8"), /*#__PURE__*/React.createElement(ProjectAccessEditor, {
+    officeId: user.officeId,
+    architectId: project.architectId,
+    clientIds: project.clientIds,
+    onChange: patch => setProject(p => ({
+      ...p,
+      ...patch
+    }))
+  })));
 }
 
 // ─── BRIEF TAB ────────────────────────────────────────────────────────────────
@@ -9137,7 +9359,8 @@ function ProjectView({
       case 'dashboard':
         return /*#__PURE__*/React.createElement(DashboardTab, {
           project: project,
-          setProject: setProject
+          setProject: setProject,
+          user: user
         });
       case 'brief':
         return /*#__PURE__*/React.createElement(BriefTab, {
@@ -9420,6 +9643,8 @@ function ProjectsList({
     address: '',
     clientName: '',
     architectName: '',
+    architectId: null,
+    clientIds: [],
     budget: '',
     area: '',
     startDate: '',
@@ -9431,8 +9656,8 @@ function ProjectsList({
   const [showMobileMenu, setShowMobileMenu] = React.useState(false);
   const isMobile = useIsMobile();
   const projects = (data.projects || []).filter(p => {
-    if (user.role === 'arch') return p.architectName.includes(user.name.replace('אדר. ', ''));
-    if (user.role === 'client') return p.clientName.includes(user.name);
+    if (user.role === 'arch') return p.architectId === user.id;
+    if (user.role === 'client') return (p.clientIds || []).includes(user.id);
     return true;
   }).filter(p => !search || p.name.includes(search) || p.clientName.includes(search));
   const handleTheme = id => {
@@ -9495,6 +9720,8 @@ function ProjectsList({
       address: '',
       clientName: '',
       architectName: '',
+      architectId: null,
+      clientIds: [],
       budget: '',
       area: '',
       startDate: '',
@@ -10126,22 +10353,23 @@ function ProjectsList({
     onChange: v => setForm(f => ({
       ...f,
       address: v
-    }))
-  }), /*#__PURE__*/React.createElement(Input, {
-    label: "\u05E9\u05DD \u05DC\u05E7\u05D5\u05D7",
-    value: form.clientName,
-    onChange: v => setForm(f => ({
+    })),
+    style: {
+      gridColumn: '1/-1'
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      gridColumn: '1/-1'
+    }
+  }, /*#__PURE__*/React.createElement(ProjectAccessEditor, {
+    officeId: user.officeId,
+    architectId: form.architectId,
+    clientIds: form.clientIds,
+    onChange: patch => setForm(f => ({
       ...f,
-      clientName: v
+      ...patch
     }))
-  }), /*#__PURE__*/React.createElement(Input, {
-    label: "\u05D0\u05D3\u05E8\u05D9\u05DB\u05DC \u05D0\u05D7\u05E8\u05D0\u05D9",
-    value: form.architectName,
-    onChange: v => setForm(f => ({
-      ...f,
-      architectName: v
-    }))
-  }), /*#__PURE__*/React.createElement(Input, {
+  })), /*#__PURE__*/React.createElement(Input, {
     label: "\u05EA\u05E7\u05E6\u05D9\u05D1 (\u20AA)",
     type: "number",
     value: form.budget,
