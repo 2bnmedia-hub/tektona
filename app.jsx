@@ -931,94 +931,37 @@ function AppFooter() {
   );
 }
 
+// ─── LEGAL DOCS (backed by the legal_documents table — see PlatformAdminDashboard for the editor) ──
+const LEGAL_DOC_ORDER = ['terms','privacy','accessibility','dpa'];
+const LEGAL_DOC_LABELS = { terms:'תקנון', privacy:'פרטיות', accessibility:'נגישות', dpa:'עיבוד נתונים' };
+
+async function fetchLegalDocs() {
+  const { data, error } = await sb.from('legal_documents')
+    .select('id, title, sections, updated_label, status');
+  if (error || !data) return null;
+  const map = {};
+  data.forEach(d => { map[d.id] = d; });
+  return map;
+}
+
 // ─── LEGAL MODAL ──────────────────────────────────────────────────────────────
 function LegalModal({ tab='terms', onClose }) {
   const [activeTab, setActiveTab] = React.useState(tab);
+  const [docs, setDocs] = React.useState(null);
+  const [loadError, setLoadError] = React.useState(false);
 
-  const terms = [
-    { h:'מבוא ותחולה',
-      t:'תקנון זה מסדיר את תנאי השימוש בפלטפורמת Tektona — מערכת SaaS לניהול משרדי אדריכלים ומתכננים (להלן: "הפלטפורמה" או "השירות"), המופעלת על ידי חברת Tektona (2BN Media) (להלן: "החברה"). השימוש בפלטפורמה מהווה הסכמה מלאה ובלתי מסויגת לכל תנאי תקנון זה. אם אינך מסכים לתנאים אלו, עליך להימנע מהשימוש בשירות.' },
-    { h:'1. הגדרות',
-      t:'"פלטפורמה" — מערכת Tektona, לרבות כל תכונותיה, ממשקיה, ותכניה, המיועדת לניהול פרויקטים, לקוחות, מסמכים, וזרמי עבודה במשרדי אדריכלות ועיצוב.\n"משרד" — גוף עסקי (חברה, שותפות, עוסק מורשה) שנרשם לשירות ומשלם עבורו.\n"מנהל" — נציג המשרד המורשה לנהל חשבון, להוסיף משתמשים, ולהגדיר הרשאות.\n"משתמש" — כל אדם (אדריכל, מעצב, לקוח קצה, או גורם אחר) שניתנה לו גישה לפלטפורמה מטעם המשרד.\n"תוכן" — כל מסמך, תכנית, תמונה, הערה, נתון, או קובץ שנטען לפלטפורמה על ידי המשרד או משתמשיו.' },
-    { h:'2. היקף השירות',
-      t:'הפלטפורמה מספקת כלים דיגיטליים לניהול מקיף של משרד אדריכלות: ניהול פרויקטים ולוחות זמן, פורטל לקוח ייעודי, ניהול מסמכים ותכניות, מעקב תקציב ותשלומים, ניהול אישורים וחתימות דיגיטליות, Punch List, יומן פגישות, צ\'אט פנים-ארגוני, וכלי AI לסיוע בעבודה. המשרד מכיר בכך שהפלטפורמה מיועדת לסיוע בניהול עסקי בלבד ואינה תחליף לייעוץ משפטי, הנדסי, או מקצועי.' },
-    { h:'3. הרשמה וחשבון',
-      t:'ההרשמה לשירות מחייבת מסירת פרטים מדויקים ומלאים. המנהל אחראי לשמור על סודיות פרטי הגישה ולהודיע לחברה מיידית בכל מקרה של חשד לשימוש לא מורשה. אין להעביר את פרטי ההתחברות לצדדים שלישיים. החברה שומרת הזכות להשעות חשבון שפרטיו אינם מדויקים או שיש חשד לשימוש לרעה.' },
-    { h:'4. רישיון שימוש',
-      t:'החברה מעניקה למשרד רישיון שימוש אישי, מוגבל, לא בלעדי, ולא ניתן להעברה בפלטפורמה, לתקופת המנוי ובהתאם לתוכנית שנרכשה. אין להעתיק, לשכפל, לפצל, למכור, להשכיר, לתת רישיון משנה, או ליצור יצירות נגזרות מהפלטפורמה או מכל חלק ממנה. הרישיון פוקע עם סיום המנוי מכל סיבה שהיא.' },
-    { h:'5. תשלומים, חיוב וחידוש',
-      t:'דמי המנוי משולמים מראש — חודשי או שנתי בהתאם לתוכנית שנבחרה. החיוב מתבצע אוטומטית בתאריך החידוש באמצעות אמצעי התשלום שנמסר. מחירי המנוי כוללים מע"מ כחוק. החברה רשאית לשנות את תעריפיה בהודעה של 30 יום מראש. שינוי בתוכנית תוך חודש גורם לזיכוי יחסי. לא יינתנו החזרים בגין תקופה ששולמה, למעט במקרים המפורטים בסעיף 6.' },
-    { h:'6. ביטול ומדיניות החזרים',
-      t:'ביטול מנוי אפשרי בכל עת דרך הממשק. הביטול ייכנס לתוקף בתום תקופת החיוב הנוכחית. לאחר הביטול תישמר גישת קריאה בלבד לנתונים למשך 30 יום לצורך ייצוא. לאחר 90 יום ממועד הביטול יימחקו הנתונים לצמיתות בהתאם למדיניות הפרטיות. בקשה להחזר כספי תבחן בנסיבות חריגות ומוצדקות בלבד, בשיקול דעת החברה.' },
-    { h:'7. חובות המשרד והמשתמשים',
-      t:'המשרד מתחייב: (א) להשתמש בפלטפורמה בהתאם לחוק הישראלי וכל דין רלוונטי; (ב) לא להעלות תוכן שהנו בלתי חוקי, פוגעני, מטעה, או מפר זכויות קניין רוחני; (ג) לא לנסות לגשת לחשבונות של משרדים אחרים; (ד) לא לבצע reverse engineering, פריצה, או ניסיון לנטרל מנגנוני אבטחה; (ה) לוודא שמשתמשי הקצה (לקוחות) שהוזמנו לפורטל מודעים לתנאי השימוש.' },
-    { h:'8. קניין רוחני',
-      t:'כל הזכויות בפלטפורמה, לרבות הקוד, העיצוב, הלוגו, שיטות העבודה, ממשקי ה-API, ומסדי הנתונים — שייכות לחברה באופן בלעדי ומוגנות בחוקי זכויות יוצרים, סימני מסחר, וסודות מסחריים. התוכן שהמשרד יוצר ומעלה לפלטפורמה (תכניות, מסמכים, תמונות) שייך למשרד. בנטען על ידי המשרד, ניתנת לחברה רשות מוגבלת לעבד ולאחסן את התוכן לצורך מתן השירות בלבד.' },
-    { h:'9. סודיות',
-      t:'כל צד מתחייב לשמור בסוד מידע עסקי רגיש של הצד האחר שנחשף במסגרת השימוש בפלטפורמה. החברה לא תחשוף מידע עסקי של המשרד לצדדים שלישיים ללא הסכמה מפורשת, למעט הנדרש על-פי דין, צו שיפוטי, או רגולציה.' },
-    { h:'10. זמינות ורמת שירות (SLA)',
-      t:'החברה שואפת לזמינות של 99.5% בממוצע חודשי. תחזוקה מתוכננת תתוקשר לפחות 48 שעות מראש ותתבצע בשעות הלילה ככל האפשר. במקרה של השבתה בלתי מתוכננת העולה על 4 שעות בחודש, יהיה המשרד זכאי לזיכוי יחסי בחשבונית הבאה. הזיכוי לא יעלה על 15% מדמי המנוי החודשיים.' },
-    { h:'11. הגבלת אחריות',
-      t:'החברה אינה אחראית לנזקים עקיפים, תוצאתיים, עונשיים, אקראיים, או אובדן רווחים הנובעים משימוש בפלטפורמה או מאי-יכולת להשתמש בה. האחריות המצטברת של החברה לא תעלה על סך דמי המנוי ששולמו ב-3 החודשים שקדמו לאירוע. הפלטפורמה ניתנת "כפי שהיא" (AS IS), ואין החברה מתחייבת שתהא נקייה לחלוטין מתקלות.' },
-    { h:'12. שיפוי',
-      t:'המשרד מתחייב לשפות את החברה, מנהליה, עובדיה, ושותפיה מכל תביעה, נזק, עלות, ודמי טיפול משפטי הנובעים מהפרת תנאי תקנון זה, מהפרת זכויות צד שלישי, או מהתוכן שהמשרד העלה לפלטפורמה.' },
-    { h:'13. שינויים בתנאים',
-      t:'החברה רשאית לעדכן תקנון זה מעת לעת. שינויים מהותיים יתוקשרו בדוא"ל ובהודעה בממשק לפחות 30 יום לפני כניסתם לתוקף. המשך השימוש בפלטפורמה לאחר מועד השינוי מהווה הסכמה לתנאים המעודכנים.' },
-    { h:'14. סיום ההסכם',
-      t:'ההסכם פוקע עם ביטול המנוי, עם פקיעתו, או עם הפסקת השירות. החברה רשאית להפסיק שירות לאחר התראה ועקב הפרה יסודית שלא תוקנה תוך 14 יום. עם סיום ההסכם, הרישיון מבוטל, אך זכויות המשרד בתכנים שהעלה נשמרות לצורך ייצוא בתקופת החסד.' },
-    { h:'15. דין ושיפוט',
-      t:'תקנון זה כפוף לחוקי מדינת ישראל. כל סכסוך ייושב תחילה בדרך של משא ומתן. לא הושגה הסכמה — הסמכות השיפוטית הייחודית נתונה לבתי המשפט המוסמכים בתל אביב-יפו.' },
-    { h:'16. יצירת קשר',
-      t:'לשאלות בנושא תנאי השימוש: legal@tektona.io | Tektona (2BN Media) | עדכון אחרון: ינואר 2025' }
-  ];
+  React.useEffect(() => {
+    let cancelled = false;
+    fetchLegalDocs().then(map => {
+      if (cancelled) return;
+      if (!map) { setLoadError(true); return; }
+      setDocs(map);
+    });
+    return () => { cancelled = true; };
+  }, []);
 
-  const privacy = [
-    { h:'מבוא',
-      t:'מדיניות פרטיות זו מסבירה כיצד חברת Tektona (2BN Media) (להלן: "החברה", "אנחנו") אוספת, משתמשת, מאחסנת ומגנה על המידע האישי שנמסר לה במסגרת השימוש בפלטפורמת Tektona. המדיניות מחויבת לחוק הגנת הפרטיות, תשמ"א-1981, לתקנות הגנת הפרטיות (אבטחת מידע), תשע"ז-2017, ולהוראות רגולטוריות רלוונטיות אחרות.' },
-    { h:'1. מידע שנאסף',
-      t:'אנו אוספים את הקטגוריות הבאות של מידע:\n\nמידע זיהוי: שם, כתובת דוא"ל, מספר טלפון, שם המשרד, כתובת.\nמידע פיננסי: פרטי חיוב (מעובדים בצורה מאובטחת דרך ספק תשלומים מאושר — אנו לא שומרים פרטי כרטיס אשראי).\nנתוני שימוש: תכיפות כניסות, תכונות בהן נעשה שימוש, זמני פעילות, כתובות IP.\nתוכן שהועלה: פרויקטים, מסמכים, תכניות אדריכלות, תמונות, הערות, פרטי לקוחות קצה.\nנתוני תקשורת: הודעות שנשלחו דרך הפלטפורמה, פניות תמיכה.\nנתוני AI: שאילתות שנשלחו לעוזר ה-AI במסגרת השירות.' },
-    { h:'2. כיצד המידע נאסף',
-      t:'המידע נאסף ממקורות הבאים:\n• ישירות מהמשרד ומשתמשיו בעת הרשמה, מילוי פרופיל, והשימוש השוטף.\n• אוטומטית דרך Cookies ומנגנוני מעקב טכניים (ראה סעיף 6).\n• מצדדים שלישיים — כגון ספקי שירותי אימות, ספקי תשלום, וכלי אנליטיקה — בהיקף המצומצם הנדרש.' },
-    { h:'3. מטרות השימוש במידע',
-      t:'המידע משמש אך ורק לצרכים הבאים:\n(א) מתן השירות — ניהול חשבון, אחסון תוכן, הרצת תהליכים.\n(ב) תמיכה טכנית — מענה לפניות ותקלות.\n(ג) שיפור המוצר — ניתוח דפוסי שימוש (בצורה אגרגטיבית ואנונימית).\n(ד) ציות לחוק — עמידה בהוראות גופי פיקוח, צווים שיפוטיים.\n(ה) אבטחת מידע — זיהוי איומים, מניעת הונאה.\n(ו) תקשורת שיווקית — רק בהסכמה מפורשת, עם אפשרות ביטול בכל עת.\nאנו לא נמכור, נחכיר, או נסחר במידע אישי.' },
-    { h:'4. שיתוף מידע עם צדדים שלישיים',
-      t:'אנו משתפים מידע באופן מוגבל בלבד:\n• ספקי תשתית ענן: לצורך אחסון ועיבוד (כפופים להסכמי עיבוד נתונים).\n• ספק תשלומים: לעיבוד חיוב מאובטח בלבד.\n• ספקי AI: שאילתות ל-AI מועברות בצורה מאובטחת; לא נשמרים נתונים לאימון מודלים ללא הסכמה.\n• רשויות: רק בכפוף לצו שיפוטי, בדין ישראלי.\nכל ספק חיצוני מחויב בהסכם סודיות ועיבוד נתונים.' },
-    { h:'5. אחסון ואבטחת מידע',
-      t:'הנתונים מאוחסנים בשרתים בישראל ו/או באיחוד האירופי (AWS / Google Cloud), תחת תקנות ה-GDPR ו/או הדין הישראלי המקביל.\nאמצעי אבטחה: הצפנה AES-256 בזמן אחסון, TLS 1.3 בזמן העברה, אימות דו-שלבי (2FA), הצפנת הגיבויים, בדיקות חדירה תקופתיות, ו-audit log לכל פעולה רגישה.\nבמקרה של אירוע אבטחה שעלול לפגוע בפרטיות, נדווח לרשות הגנת הפרטיות ולמשרדים הנפגעים תוך 72 שעות מרגע הגילוי.' },
-    { h:'6. Cookies וטכנולוגיות מעקב',
-      t:'אנו משתמשים ב-Cookies מסוגים הבאים:\n• Cookies הכרחיים (Session): לשמירת מצב הכניסה — אין אפשרות לבטל מבלי לפגוע בתפקוד.\n• Cookies ביצועיים: לניתוח שימוש אנונימי ושיפור הביצועים — ניתן לבטל בהגדרות הדפדפן.\nאנו לא משתמשים ב-Cookies שיווקיים של צדדים שלישיים. ניתן לנהל את הגדרות ה-Cookies דרך הגדרות הדפדפן שלך.' },
-    { h:'7. זכויות הנושא במידע',
-      t:'בהתאם לחוק הגנת הפרטיות הישראלי, יש לך הזכויות הבאות:\n• עיון: לקבל עותק של המידע שנשמר עליך.\n• תיקון: לבקש תיקון מידע שגוי.\n• מחיקה ("הזכות להישכח"): לבקש מחיקת מידע אישי, כפוף לחובות שמירה חוקיות.\n• הגבלת עיבוד: לבקש הגבלת שימוש במידע בנסיבות מסוימות.\n• ניידות נתונים: לקבל את נתוניך בפורמט מובנה (JSON/CSV) לצורך העברה.\nפנייה לממש זכויות אלו: privacy@tektona.io — נטפל תוך 30 יום.' },
-    { h:'8. העברת מידע מחוץ לישראל',
-      t:'בעת העברת מידע לשרתים מחוץ לישראל, הדבר יתבצע לאיחוד האירופי בלבד (הנחשב לבעל רמת הגנה מספקת לפי הדין הישראלי), תחת הסכמי Standard Contractual Clauses (SCC) בהתאם ל-GDPR.' },
-    { h:'9. שמירת מידע',
-      t:'מידע מנוי פעיל: נשמר לאורך כל תקופת המנוי ועד 90 יום לאחר סיומו.\nגיבויים: נשמרים עד 30 יום נוספים לצורך שחזור חירום.\nאחרי תום התקופה: נמחק לצמיתות מכל המערכות, כולל גיבויים, תוך 120 יום ממועד הסיום.\nנתוני audit log: נשמרים 3 שנים לצורכי ציות.' },
-    { h:'10. שינויים במדיניות',
-      t:'נעדכן מדיניות זו בהתאם לשינויים חוקיים, טכנולוגיים, או עסקיים. עדכונים מהותיים יתוקשרו בדוא"ל 30 יום מראש. תאריך "עדכון אחרון" מופיע בתחתית מסמך זה.' },
-    { h:'11. יצירת קשר — ממונה הגנת פרטיות',
-      t:'לשאלות, פניות לממש זכויות, או תלונות בנושא פרטיות:\nprivacy@tektona.io\nTektona (2BN Media) | עדכון אחרון: ינואר 2025\nנשתדל להשיב תוך 5 ימי עסקים לכל פנייה.' }
-  ];
+  const activeDoc = docs && docs[activeTab];
 
-  const accessibility = [
-    { h:'מבוא — מחויבות Tektona לנגישות',
-      t:'Tektona מאמינה כי כל אדם זכאי לגישה שווה לכלים דיגיטליים מקצועיים, ללא תלות ביכולותיו הפיזיות, החושיות, הקוגניטיביות, או הטכנולוגיות. אנו פועלים בהתאם לחוק שוויון זכויות לאנשים עם מוגבלות, תשנ"ח-1998, לתיקון מס. 5 לחוק (נגישות לשירות), ולתקן הישראלי IS 5568 — המקביל להנחיות WCAG 2.1 ברמה AA של ה-W3C.' },
-    { h:'1. רמת הנגישות הנוכחית',
-      t:'הפלטפורמה עומדת ברמת תאימות AA של WCAG 2.1 בהיקף הרחב של הממשק. בוצעו בדיקות נגישות ידניות ואוטומטיות עם הכלים הבאים:\n• Axe DevTools (בדיקה אוטומטית)\n• NVDA ו-JAWS (Windows)\n• VoiceOver (macOS / iOS)\n• ניווט מקלדת בלבד\n• בדיקת ניגודיות צבעים — כל יחסי הניגודיות עומדים ב-4.5:1 לטקסט רגיל ו-3:1 לטקסט גדול.' },
-    { h:'2. מאפייני נגישות זמינים',
-      t:'הפלטפורמה כוללת את המאפיינים הבאים:\n✓ ניווט מלא במקלדת — Tab, Shift+Tab, Enter, Arrow keys\n✓ מיקוד גלוי (focus indicator) בכל האלמנטים האינטראקטיביים\n✓ תמיכה מלאה בקוראי מסך עם aria-label, role, ו-aria-live\n✓ טקסט חלופי (alt text) לכל התמונות הפונקציונליות\n✓ כותרות היררכיות (H1–H4) מסודרות בכל דף\n✓ מבנה סמנטי תקין (HTML5 Landmarks)\n✓ תמיכה מלאה בכיוון RTL ובעברית\n✓ גודל גופן ניתן להגדלה עד 200% ללא אובדן תוכן או פונקציונליות\n✓ אין תוכן המהבהב יותר מ-3 פעמים בשנייה\n✓ הודעות שגיאה ברורות ומסומנות טקסטואלית (לא רק בצבע)\n✓ טפסים עם labels מפורשים לכל שדה\n✓ הניגודיות בממשק החשוך והבהיר עומדת בדרישות התקן' },
-    { h:'3. חסמי נגישות ידועים בתהליך תיקון',
-      t:'להלן אתגרים ידועים שאנו עובדים על תיקונם:\n\n• לוח Gantt (ציר זמן אינטראקטיבי): ניווט מקלדת חלקי — פיתוח גרסה נגישה מתוכנן לרבעון הבא.\n• מציג PDF מוטמע: אינו קריא במלואו לקוראי מסך — מוצעת חלופה: כפתור "הורדה" זמין.\n• גרפי נתונים (דוחות): נתונים זמינים גם בטבלה חלופית לצד כל גרף.\n• Drag & Drop ברשימות: זמינה חלופה של כפתורי "העלה/הורד".\n\nאנו מתחייבים לתקן חסמים אלו ולפרסם גרסה מעודכנת עד יוני 2025.' },
-    { h:'4. טכנולוגיות נתמכות',
-      t:'הפלטפורמה נבדקה ונתמכת בשילובים הבאים:\n\nדפדפנים: Chrome 120+, Firefox 121+, Safari 17+, Edge 120+\nקוראי מסך:\n• NVDA 2023.3+ עם Chrome (Windows)\n• JAWS 2024+ עם Chrome / Edge (Windows)\n• VoiceOver עם Safari (macOS 14, iOS 17)\n• TalkBack עם Chrome (Android 14)\n\nהפלטפורמה אינה מחייבת Java, Flash, או תוספים מיוחדים.' },
-    { h:'5. גורם אחראי נגישות',
-      t:'ממונה הנגישות של Tektona אחראי על יישום מדיניות הנגישות, טיפול בפניות ציבור, וביצוע בדיקות תקופתיות.\n\nשם: מחלקת נגישות — Tektona\nדוא"ל: accessibility@tektona.io\nשעות מענה: ימים א\'–ה\', 09:00–17:00\n\nבהתאם לתיקון 5 לחוק שוויון זכויות לאנשים עם מוגבלות, הממונה זמין לקבל פניות ציבור ולטפל בהן.' },
-    { h:'6. כיצד לדווח על בעיית נגישות',
-      t:'נתקלתם במחסום נגישות שמונע שימוש תקין? נשמח לדעת ולסייע:\n\n✉ accessibility@tektona.io\n📞 בקשה לשיחה — שלחו מייל ונחזור אליכם\n\nאנא כללו בפנייה: תיאור הבעיה, הדף/תכונה שבה נתקלתם בקושי, הדפדפן/קורא המסך שבשימוש, וצילום מסך אם ניתן.\n\nנטפל בפנייה תוך 5 ימי עסקים, ונעדכן אתכם בפתרון שנמצא.' },
-    { h:'7. בדיקות נגישות ועדכוני מדיניות',
-      t:'אנו מבצעים ביקורת נגישות מלאה אחת לשנה, וסריקה אוטומטית חודשית. בכל גרסה חדשה של הפלטפורמה מתבצעת בדיקת נגישות לפני עלייה לאוויר.\n\nהצהרה זו עודכנה לאחרונה: ינואר 2025\nגרסה הבאה המתוכננת: יולי 2025\n\nאנו מחויבים לשיפור מתמיד ומקבלים בברכה כל פנייה, הצעה, או משוב לשיפור הנגישות.' }
-  ];
-  const TABS = { terms:'תקנון', privacy:'פרטיות', accessibility:'נגישות' };
-  const items = activeTab === 'terms' ? terms : activeTab === 'privacy' ? privacy : accessibility;
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex',
       alignItems:'center', justifyContent:'center', zIndex:9500 }} onClick={onClose}>
@@ -1029,23 +972,30 @@ function LegalModal({ tab='terms', onClose }) {
           <h3 style={{ color:C.text, fontSize:22, fontWeight:700 }}>מסמכים משפטיים</h3>
           <button onClick={onClose} style={{ background:'none', border:'none', color:C.sub, fontSize:29, cursor:'pointer' }}>×</button>
         </div>
-        <div style={{ display:'flex', gap:8, marginBottom:20 }}>
-          {Object.entries(TABS).map(([key,label]) => (
+        <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap' }}>
+          {LEGAL_DOC_ORDER.map(key => (
             <button key={key} onClick={() => setActiveTab(key)}
               style={{ padding:'7px 20px', borderRadius:20, border:`1px solid ${C.border}`,
                 background: activeTab===key ? C.primary : 'transparent',
                 color: activeTab===key ? '#fff' : C.text, cursor:'pointer', fontSize:15 }}>
-              {label}
+              {(docs && docs[key] && docs[key].title) || LEGAL_DOC_LABELS[key]}
             </button>
           ))}
         </div>
         <div style={{ overflowY:'auto', flex:1 }}>
-          {items.map((item, i) => (
+          {loadError && <div style={{ color:C.danger, fontSize:15 }}>לא ניתן לטעון את המסמכים כרגע. נסו שוב מאוחר יותר.</div>}
+          {!loadError && !docs && <div style={{ color:C.sub, fontSize:15 }}>טוען מסמכים...</div>}
+          {activeDoc && activeDoc.sections.map((item, i) => (
             <div key={i} style={{ marginBottom:16, padding:'14px 16px', background:C.bg, borderRadius:10 }}>
               <div style={{ fontWeight:700, color:C.text, fontSize:17, marginBottom:6 }}>{item.h}</div>
               <div style={{ color:C.sub, fontSize:15, lineHeight:1.75, whiteSpace:'pre-line' }}>{item.t}</div>
             </div>
           ))}
+          {activeDoc && (
+            <div style={{ color:C.sub, fontSize:12, opacity:0.7, marginTop:4 }}>
+              {activeDoc.status ? `${activeDoc.status} · ` : ''}עודכן: {activeDoc.updated_label || '—'}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -3774,9 +3724,130 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
   );
 }
 
+// ─── LEGAL DOCS ADMIN (owner-only editor for legal_documents) ────────────────
+function LegalDocsAdmin() {
+  const [docs, setDocs] = React.useState(null);
+  const [activeTab, setActiveTab] = React.useState('terms');
+  const [saving, setSaving] = React.useState(false);
+  const [dirty, setDirty] = React.useState(false);
+  const [savedAt, setSavedAt] = React.useState(null);
+
+  const load = async () => {
+    const map = await fetchLegalDocs();
+    if (map) setDocs(map);
+  };
+  React.useEffect(()=>{ load(); },[]);
+
+  const doc = docs && docs[activeTab];
+  const patchDoc = (patch) => {
+    setDocs(d => ({ ...d, [activeTab]: { ...d[activeTab], ...patch } }));
+    setDirty(true); setSavedAt(null);
+  };
+  const patchSection = (idx, patch) => {
+    patchDoc({ sections: doc.sections.map((s,i)=> i===idx ? { ...s, ...patch } : s) });
+  };
+  const addSection = () => patchDoc({ sections: [...doc.sections, { h:'כותרת סעיף חדש', t:'' }] });
+  const removeSection = (idx) => {
+    if (!window.confirm('למחוק את הסעיף הזה מהמסמך?')) return;
+    patchDoc({ sections: doc.sections.filter((_,i)=>i!==idx) });
+  };
+  const moveSection = (idx, dir) => {
+    const j = idx+dir;
+    if (j<0 || j>=doc.sections.length) return;
+    const arr = [...doc.sections];
+    [arr[idx], arr[j]] = [arr[j], arr[idx]];
+    patchDoc({ sections: arr });
+  };
+
+  const save = async () => {
+    setSaving(true);
+    const { data:{ user } } = await sb.auth.getUser();
+    const { error } = await sb.from('legal_documents').update({
+      title: doc.title,
+      sections: doc.sections,
+      status: doc.status,
+      updated_label: doc.updated_label,
+      updated_at: new Date().toISOString(),
+      updated_by: user ? user.id : null,
+    }).eq('id', activeTab);
+    setSaving(false);
+    if (!error) { setDirty(false); setSavedAt(new Date()); }
+    else window.alert('שמירה נכשלה: ' + error.message);
+  };
+
+  const switchTab = (key) => {
+    if (dirty && !window.confirm('יש שינויים שלא נשמרו במסמך הנוכחי. לעבור בכל זאת?')) return;
+    setActiveTab(key); setDirty(false); setSavedAt(null);
+  };
+
+  const iconBtn = { width:30, height:30, borderRadius:8, border:`1px solid ${C.border}`, background:C.inputBg,
+    color:C.text, cursor:'pointer', fontSize:14, flexShrink:0 };
+
+  if (!docs) return <div style={{color:C.sub,fontSize:16}}>טוען מסמכים...</div>;
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:8,marginBottom:18,flexWrap:'wrap'}}>
+        {LEGAL_DOC_ORDER.map(key=>(
+          <button key={key} onClick={()=>switchTab(key)}
+            style={{padding:'7px 18px',borderRadius:20,border:`1px solid ${C.border}`,cursor:'pointer',fontSize:14,fontWeight:600,
+              background:activeTab===key?C.primary:'transparent',color:activeTab===key?'#fff':C.text}}>
+            {(docs[key] && docs[key].title) || LEGAL_DOC_LABELS[key]}
+          </button>
+        ))}
+      </div>
+
+      {doc && (
+        <>
+          <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:20}}>
+            <Input label="כותרת המסמך" value={doc.title} onChange={v=>patchDoc({title:v})}/>
+            <Input label="תווית ‘עודכן לאחרונה’" value={doc.updated_label||''} onChange={v=>patchDoc({updated_label:v})}/>
+            <div>
+              <div style={{fontSize:13,color:C.sub,marginBottom:6}}>סטטוס</div>
+              <select value={doc.status} onChange={e=>patchDoc({status:e.target.value})}
+                style={{padding:'10px 12px',borderRadius:10,border:`1px solid ${C.border}`,background:C.inputBg,color:C.text,fontSize:15,outline:'none'}}>
+                <option value="טיוטה">טיוטה</option>
+                <option value="בבדיקה משפטית">בבדיקה משפטית</option>
+                <option value="פעיל">פעיל</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            {doc.sections.map((s,i)=>(
+              <div key={i} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:16}}>
+                <div style={{display:'flex',gap:8,marginBottom:10,alignItems:'center'}}>
+                  <input value={s.h} onChange={e=>patchSection(i,{h:e.target.value})}
+                    style={{flex:1,minWidth:120,padding:'8px 10px',borderRadius:8,border:`1px solid ${C.border}`,
+                      background:C.inputBg,color:C.text,fontWeight:700,fontSize:15,outline:'none'}}/>
+                  <button onClick={()=>moveSection(i,-1)} disabled={i===0} title="הזז למעלה" style={iconBtn}>↑</button>
+                  <button onClick={()=>moveSection(i,1)} disabled={i===doc.sections.length-1} title="הזז למטה" style={iconBtn}>↓</button>
+                  <button onClick={()=>removeSection(i)} title="מחק סעיף" style={{...iconBtn,color:C.danger}}>✕</button>
+                </div>
+                <textarea value={s.t} onChange={e=>patchSection(i,{t:e.target.value})} rows={4}
+                  style={{width:'100%',padding:'10px 12px',borderRadius:8,border:`1px solid ${C.border}`,
+                    background:C.inputBg,color:C.text,fontSize:14,lineHeight:1.6,resize:'vertical',
+                    fontFamily:'inherit',outline:'none',boxSizing:'border-box'}}/>
+              </div>
+            ))}
+          </div>
+
+          <div style={{display:'flex',gap:12,marginTop:18,alignItems:'center',flexWrap:'wrap'}}>
+            <Btn onClick={addSection} variant="ghost">+ סעיף חדש</Btn>
+            <Btn onClick={save} disabled={saving || !dirty}>{saving?'שומר...':'שמור שינויים'}</Btn>
+            {!dirty && savedAt && <span style={{color:C.success,fontSize:13}}>נשמר בהצלחה · {savedAt.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}</span>}
+            {dirty && <span style={{color:C.warning,fontSize:13}}>יש שינויים שלא נשמרו</span>}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── PLATFORM ADMIN DASHBOARD (cross-tenant owner view) ──────────────────────
 function PlatformAdminDashboard({ onLogout }) {
   const isMobile = useIsMobile();
+  const [section, setSection] = React.useState('offices');
   const [offices, setOffices] = React.useState(null);
   const [showNew, setShowNew] = React.useState(false);
   const [form, setForm] = React.useState({ name:'', adminName:'', adminEmail:'' });
@@ -3817,12 +3888,22 @@ function PlatformAdminDashboard({ onLogout }) {
     <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
       <AppNavBar onGoHome={onLogout} title="Platform Owner" subtitle="כל המשרדים" onBack={onLogout}/>
       <div style={{flex:1,overflowY:'auto',padding: isMobile?16:28,paddingBottom:56}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:12}}>
           <h1 style={{color:C.text,fontSize:isMobile?22:29,fontWeight:800}}>⚡ Platform Owner</h1>
-          <Btn onClick={()=>setShowNew(true)}>+ משרד חדש</Btn>
+          {section==='offices' && <Btn onClick={()=>setShowNew(true)}>+ משרד חדש</Btn>}
         </div>
-        {offices===null && <div style={{color:C.sub,fontSize:16}}>טוען...</div>}
-        {offices && (
+        <div style={{display:'flex',gap:8,marginBottom:20}}>
+          {[['offices','משרדים'],['legal','מסמכים משפטיים']].map(([key,label])=>(
+            <button key={key} onClick={()=>setSection(key)}
+              style={{padding:'7px 18px',borderRadius:20,border:`1px solid ${C.border}`,cursor:'pointer',fontSize:14,fontWeight:600,
+                background:section===key?C.primary:'transparent',color:section===key?'#fff':C.text}}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {section==='legal' && <LegalDocsAdmin/>}
+        {section==='offices' && offices===null && <div style={{color:C.sub,fontSize:16}}>טוען...</div>}
+        {section==='offices' && offices && (
           <div style={{background:C.card,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden'}}>
             <div style={{overflowX:'auto'}}>
               <table style={{width:'100%',borderCollapse:'collapse'}}>
