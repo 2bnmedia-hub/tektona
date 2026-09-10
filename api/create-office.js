@@ -29,15 +29,20 @@ export default async function handler(req, res) {
     if (adminErr) return res.status(500).json({ error: adminErr.message });
     if (!isAdmin) return res.status(403).json({ error: 'Not a platform admin' });
 
+    // Invite first — it's the step most likely to fail (invalid/undeliverable email),
+    // and it's cheap to leave nothing behind if it does.
+    const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(adminEmail);
+    if (inviteErr) return res.status(400).json({ error: inviteErr.message });
+
     const { data: office, error: officeErr } = await admin
       .from('offices')
       .insert({ name, data: { projects: [], users: [] } })
       .select('id')
       .single();
-    if (officeErr) return res.status(400).json({ error: officeErr.message });
-
-    const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(adminEmail);
-    if (inviteErr) return res.status(400).json({ error: inviteErr.message });
+    if (officeErr) {
+      await admin.auth.admin.deleteUser(invited.user.id);
+      return res.status(400).json({ error: officeErr.message });
+    }
 
     const { error: memberErr } = await admin.from('office_members').insert({
       office_id: office.id,
@@ -46,7 +51,11 @@ export default async function handler(req, res) {
       display_name: adminName,
       ai_enabled: false,
     });
-    if (memberErr) return res.status(400).json({ error: memberErr.message });
+    if (memberErr) {
+      await admin.from('offices').delete().eq('id', office.id);
+      await admin.auth.admin.deleteUser(invited.user.id);
+      return res.status(400).json({ error: memberErr.message });
+    }
 
     res.status(200).json({ ok: true, officeId: office.id });
   } catch (e) {
