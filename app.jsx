@@ -310,6 +310,22 @@ function buildAppUser(member, email) {
     name: member.display_name, avatar: member.display_name[0], email, aiEnabled: member.ai_enabled };
 }
 
+// Notifies everyone with real, ID-based access to a project (its architect + clients,
+// plus every office admin) — sidesteps the free-text assignee/requestedBy fields
+// rather than trying to match them. Fire-and-forget; never blocks the caller's save.
+async function notifyProjectMembers(officeId, project, actor, type, title, body) {
+  try {
+    const { data: admins } = await sb.from('office_members').select('id').eq('office_id', officeId).eq('role','admin');
+    const recipientIds = new Set([project.architectId, ...(project.clientIds||[]), ...(admins||[]).map(a=>a.id)]);
+    recipientIds.delete(actor.id); recipientIds.delete(null); recipientIds.delete(undefined);
+    if (recipientIds.size === 0) return;
+    await sb.from('notifications').insert([...recipientIds].map(recipient_id => ({
+      office_id: officeId, recipient_id, project_id: project.id, project_name: project.name,
+      type, title, body, actor_name: actor.name
+    })));
+  } catch(e) { console.error('notifyProjectMembers failed:', e.message); }
+}
+
 // Platform owner is a role above any single office — checked separately from office_members.
 async function fetchPlatformAdmin(authUserId) {
   const { data, error } = await sb.from('platform_admins').select('id').eq('user_id', authUserId).maybeSingle();
@@ -936,6 +952,83 @@ function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent }) {
   );
 }
 
+// ─── NOTIFICATION BELL ────────────────────────────────────────────────────────
+function NotificationBell({ user, onOpenProject }) {
+  const [items, setItems] = React.useState([]);
+  const [open, setOpen] = React.useState(false);
+  const unread = items.filter(n=>!n.read).length;
+
+  const load = async () => {
+    const { data } = await sb.from('notifications').select('*')
+      .eq('recipient_id', user.id).order('created_at', {ascending:false}).limit(30);
+    setItems(data||[]);
+  };
+  React.useEffect(()=>{ load(); }, [user.id]);
+
+  React.useEffect(()=>{
+    const channel = sb.channel('notif-'+user.id)
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'notifications', filter:'recipient_id=eq.'+user.id },
+        payload => setItems(cur=>[payload.new, ...cur]))
+      .subscribe();
+    return () => sb.removeChannel(channel);
+  }, [user.id]);
+
+  const markRead = async (n) => {
+    if (!n.read) {
+      setItems(cur=>cur.map(i=>i.id===n.id?{...i,read:true}:i));
+      await sb.from('notifications').update({read:true}).eq('id', n.id);
+    }
+    setOpen(false);
+    if (n.project_id && onOpenProject) onOpenProject(n.project_id);
+  };
+
+  const typeIcons = {task:'✅', approval_requested:'✍️', approval_decided:'✓', message:'💬', rfi:'❓'};
+
+  return (
+    <div style={{position:'relative'}}>
+      <button onClick={()=>setOpen(o=>!o)} title="התראות"
+        style={{position:'relative', background:'none', border:`1px solid ${C.border}`, borderRadius:8,
+          width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer',
+          color:C.sidebarText||C.text, fontSize:17, flexShrink:0}}>
+        🔔
+        {unread>0 && (
+          <span style={{position:'absolute', top:-4, left:-4, background:C.danger, color:'#fff',
+            borderRadius:10, minWidth:18, height:18, fontSize:11, fontWeight:700,
+            display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px'}}>
+            {unread>9?'9+':unread}
+          </span>
+        )}
+      </button>
+      {open && (
+        <>
+          <div onClick={()=>setOpen(false)} style={{position:'fixed', inset:0, zIndex:9998}}/>
+          <div style={{position:'absolute', top:44, left:0, width:340, maxHeight:420, overflowY:'auto',
+            background:C.card, border:`1px solid ${C.border}`, borderRadius:12, boxShadow:'0 12px 32px rgba(0,0,0,0.35)',
+            zIndex:9999, direction:'rtl'}}>
+            <div style={{padding:'12px 16px', borderBottom:`1px solid ${C.border}`, fontWeight:700, color:C.text, fontSize:15}}>התראות</div>
+            {items.length===0 && <div style={{padding:24, textAlign:'center', color:C.sub, fontSize:14}}>אין התראות</div>}
+            {items.map(n=>(
+              <div key={n.id} onClick={()=>markRead(n)}
+                style={{padding:'12px 16px', borderBottom:`1px solid ${C.border}`, cursor:'pointer',
+                  background: n.read?'transparent':C.primary+'0d'}}>
+                <div style={{display:'flex', gap:8, alignItems:'flex-start'}}>
+                  <span style={{fontSize:16}}>{typeIcons[n.type]||'🔔'}</span>
+                  <div style={{flex:1, minWidth:0}}>
+                    <div style={{fontWeight:n.read?500:700, color:C.text, fontSize:14}}>{n.title}</div>
+                    {n.body && <div style={{color:C.sub, fontSize:13, marginTop:2}}>{n.body}</div>}
+                    <div style={{color:C.sub, fontSize:12, marginTop:4}}>{n.project_name} · {n.actor_name} · {fmtDate(n.created_at)}</div>
+                  </div>
+                  {!n.read && <div style={{width:8,height:8,borderRadius:4,background:C.primary,flexShrink:0,marginTop:4}}/>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── APP FOOTER ───────────────────────────────────────────────────────────────
 function AppFooter() {
   const [showLegal, setShowLegal] = React.useState(null);
@@ -1311,7 +1404,8 @@ function SystemDashboard({ data, user, officeId, onBack, onGoHome = onBack, onOp
     <div style={{ width:'100vw', height:'100vh', background:C.bg, direction:'rtl',
       display:'flex', flexDirection:'column' }}>
       {C.archBg && <ArchBackground />}
-      <AppNavBar onGoHome={onGoHome} title="ניהול מערכת" subtitle={OFFICE_PLAN.officeName} onBack={onBack}/>
+      <AppNavBar onGoHome={onGoHome} title="ניהול מערכת" subtitle={OFFICE_PLAN.officeName} onBack={onBack}
+        rightContent={<NotificationBell user={user} onOpenProject={onOpenProject}/>}/>
       <div style={{ flex:1, overflowY:'auto', padding: isMobile ? 16 : 28, paddingBottom:56, position:'relative', zIndex:1 }}>
         <div style={{ marginBottom:24 }}>
           <h1 style={{ color:C.text, fontSize: isMobile ? 22 : 29, fontWeight:800 }}>⚙️ לוח ניהול מערכת</h1>
@@ -2019,6 +2113,7 @@ function TasksTab({ project, setProject, user }) {
   const add = () => {
     if (!form.title) return;
     setProject(p=>({...p, tasks:[...tasks,{...form,id:'t'+uid(),status:'todo',createdBy:user.name,createdAt:today(),hoursLogged:[]}]}));
+    notifyProjectMembers(user.officeId, project, user, 'task', 'משימה חדשה: '+form.title, form.desc);
     setForm({title:'',desc:'',assignee:'',priority:'medium',dueDate:''}); setShowAdd(false);
   };
   const updateStatus = (id, s) => setProject(p=>({...p,tasks:tasks.map(t=>t.id===id?{...t,status:s}:t)}));
@@ -2818,6 +2913,7 @@ function ApprovalsTab({ project, setProject, user, officeId }) {
   const add = () => {
     if (!form.title) return;
     setProject(p=>({...p,approvals:[...approvals,{...form,id:'a'+uid(),date:today(),status:'pending',approvedBy:null,comment:''}]}));
+    notifyProjectMembers(officeId, project, user, 'approval_requested', 'בקשת אישור חדשה: '+form.title, null);
     setForm({title:'',requestedBy:'',attachmentName:null,attachmentPath:null}); setShowAdd(false);
   };
   const attachPDF = async (id, file) => {
@@ -2827,8 +2923,16 @@ function ApprovalsTab({ project, setProject, user, officeId }) {
       setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,attachmentName:name,attachmentPath:path}:a)})));
     setUploadingId(null);
   };
-  const approve = (id,comment='') => setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,status:'approved',approvedBy:user.name,comment}:a)}));
-  const reject  = (id,comment='') => setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,status:'rejected',approvedBy:user.name,comment}:a)}));
+  const approve = (id,comment='') => {
+    const a0 = approvals.find(a=>a.id===id);
+    setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,status:'approved',approvedBy:user.name,comment}:a)}));
+    if (a0) notifyProjectMembers(officeId, project, user, 'approval_decided', 'האישור אושר: '+a0.title, null);
+  };
+  const reject = (id,comment='') => {
+    const a0 = approvals.find(a=>a.id===id);
+    setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,status:'rejected',approvedBy:user.name,comment}:a)}));
+    if (a0) notifyProjectMembers(officeId, project, user, 'approval_decided', 'האישור נדחה: '+a0.title, null);
+  };
   const pending = approvals.filter(a=>a.status==='pending');
   const done    = approvals.filter(a=>a.status!=='pending');
   return (
@@ -2928,6 +3032,7 @@ function MessagesTab({ project, setProject, user }) {
     if (!msg.trim()) return;
     const m = {id:'m'+uid(),from:user.name,text:msg.trim(),time:new Date().toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'}),date:today(),role:user.role};
     setProject(p=>({...p,messages:[...messages,m]}));
+    notifyProjectMembers(user.officeId, project, user, 'message', 'הודעה חדשה מ'+user.name, msg.trim().slice(0,80));
     setMsg('');
     setTimeout(()=>chatRef.current?.scrollTo({top:9999,behavior:'smooth'}),50);
   };
@@ -3327,7 +3432,7 @@ function CustomBlocksTab({ project, setProject }) {
 }
 
 // ─── PROJECT VIEW (main container) ───────────────────────────────────────────
-function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack }) {
+function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack, onOpenProject }) {
   const project = (data.projects||[]).find(p=>p.id===projectId);
   const [activeTab, setActiveTab] = React.useState('dashboard');
   const [showShare, setShowShare] = React.useState(false);
@@ -3433,6 +3538,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
                 SHARE
               </button>
             )}
+            <NotificationBell user={user} onOpenProject={onOpenProject}/>
           </div>
         </div>
 
@@ -3579,6 +3685,7 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
                 textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.name}</span>
             </>
           )}
+          <NotificationBell user={user} onOpenProject={onOpenProject}/>
           <button onClick={onLogout}
             style={{background:'none',border:`1px solid ${C.border}`,
               padding: isMobile ? '5px 10px' : '5px 14px',
@@ -4136,7 +4243,8 @@ function App() {
       {screen==='backup' && <BackupPanel data={data} setData={updateData} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='project' && activeProject && (
         <ProjectView projectId={activeProject} data={data} setData={updateData}
-          user={user} onBack={goHome} onGoHome={handleLogout}/>
+          user={user} onBack={goHome} onGoHome={handleLogout}
+          onOpenProject={(id)=>{ setActiveProject(id); setScreen('project'); }}/>
       )}
       {(screen==='projects' || (!['systemdash','users','backup','project','platformadmin','suspended'].includes(screen))) && (
         <ProjectsList data={data} setData={updateData} user={user} onLogout={handleLogout}

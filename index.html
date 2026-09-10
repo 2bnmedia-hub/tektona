@@ -1286,6 +1286,34 @@ function buildAppUser(member, email) {
   };
 }
 
+// Notifies everyone with real, ID-based access to a project (its architect + clients,
+// plus every office admin) — sidesteps the free-text assignee/requestedBy fields
+// rather than trying to match them. Fire-and-forget; never blocks the caller's save.
+async function notifyProjectMembers(officeId, project, actor, type, title, body) {
+  try {
+    const {
+      data: admins
+    } = await sb.from('office_members').select('id').eq('office_id', officeId).eq('role', 'admin');
+    const recipientIds = new Set([project.architectId, ...(project.clientIds || []), ...(admins || []).map(a => a.id)]);
+    recipientIds.delete(actor.id);
+    recipientIds.delete(null);
+    recipientIds.delete(undefined);
+    if (recipientIds.size === 0) return;
+    await sb.from('notifications').insert([...recipientIds].map(recipient_id => ({
+      office_id: officeId,
+      recipient_id,
+      project_id: project.id,
+      project_name: project.name,
+      type,
+      title,
+      body,
+      actor_name: actor.name
+    })));
+  } catch (e) {
+    console.error('notifyProjectMembers failed:', e.message);
+  }
+}
+
 // Platform owner is a role above any single office — checked separately from office_members.
 async function fetchPlatformAdmin(authUserId) {
   const {
@@ -2710,6 +2738,184 @@ function AppNavBar({
   }, rightContent));
 }
 
+// ─── NOTIFICATION BELL ────────────────────────────────────────────────────────
+function NotificationBell({
+  user,
+  onOpenProject
+}) {
+  const [items, setItems] = React.useState([]);
+  const [open, setOpen] = React.useState(false);
+  const unread = items.filter(n => !n.read).length;
+  const load = async () => {
+    const {
+      data
+    } = await sb.from('notifications').select('*').eq('recipient_id', user.id).order('created_at', {
+      ascending: false
+    }).limit(30);
+    setItems(data || []);
+  };
+  React.useEffect(() => {
+    load();
+  }, [user.id]);
+  React.useEffect(() => {
+    const channel = sb.channel('notif-' + user.id).on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'notifications',
+      filter: 'recipient_id=eq.' + user.id
+    }, payload => setItems(cur => [payload.new, ...cur])).subscribe();
+    return () => sb.removeChannel(channel);
+  }, [user.id]);
+  const markRead = async n => {
+    if (!n.read) {
+      setItems(cur => cur.map(i => i.id === n.id ? {
+        ...i,
+        read: true
+      } : i));
+      await sb.from('notifications').update({
+        read: true
+      }).eq('id', n.id);
+    }
+    setOpen(false);
+    if (n.project_id && onOpenProject) onOpenProject(n.project_id);
+  };
+  const typeIcons = {
+    task: '✅',
+    approval_requested: '✍️',
+    approval_decided: '✓',
+    message: '💬',
+    rfi: '❓'
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'relative'
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setOpen(o => !o),
+    title: "\u05D4\u05EA\u05E8\u05D0\u05D5\u05EA",
+    style: {
+      position: 'relative',
+      background: 'none',
+      border: `1px solid ${C.border}`,
+      borderRadius: 8,
+      width: 36,
+      height: 36,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      color: C.sidebarText || C.text,
+      fontSize: 17,
+      flexShrink: 0
+    }
+  }, "\uD83D\uDD14", unread > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      position: 'absolute',
+      top: -4,
+      left: -4,
+      background: C.danger,
+      color: '#fff',
+      borderRadius: 10,
+      minWidth: 18,
+      height: 18,
+      fontSize: 11,
+      fontWeight: 700,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '0 4px'
+    }
+  }, unread > 9 ? '9+' : unread)), open && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    onClick: () => setOpen(false),
+    style: {
+      position: 'fixed',
+      inset: 0,
+      zIndex: 9998
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'absolute',
+      top: 44,
+      left: 0,
+      width: 340,
+      maxHeight: 420,
+      overflowY: 'auto',
+      background: C.card,
+      border: `1px solid ${C.border}`,
+      borderRadius: 12,
+      boxShadow: '0 12px 32px rgba(0,0,0,0.35)',
+      zIndex: 9999,
+      direction: 'rtl'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '12px 16px',
+      borderBottom: `1px solid ${C.border}`,
+      fontWeight: 700,
+      color: C.text,
+      fontSize: 15
+    }
+  }, "\u05D4\u05EA\u05E8\u05D0\u05D5\u05EA"), items.length === 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 24,
+      textAlign: 'center',
+      color: C.sub,
+      fontSize: 14
+    }
+  }, "\u05D0\u05D9\u05DF \u05D4\u05EA\u05E8\u05D0\u05D5\u05EA"), items.map(n => /*#__PURE__*/React.createElement("div", {
+    key: n.id,
+    onClick: () => markRead(n),
+    style: {
+      padding: '12px 16px',
+      borderBottom: `1px solid ${C.border}`,
+      cursor: 'pointer',
+      background: n.read ? 'transparent' : C.primary + '0d'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      alignItems: 'flex-start'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 16
+    }
+  }, typeIcons[n.type] || '🔔'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      minWidth: 0
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: n.read ? 500 : 700,
+      color: C.text,
+      fontSize: 14
+    }
+  }, n.title), n.body && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 13,
+      marginTop: 2
+    }
+  }, n.body), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 12,
+      marginTop: 4
+    }
+  }, n.project_name, " \xB7 ", n.actor_name, " \xB7 ", fmtDate(n.created_at))), !n.read && /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      background: C.primary,
+      flexShrink: 0,
+      marginTop: 4
+    }
+  })))))));
+}
+
 // ─── APP FOOTER ───────────────────────────────────────────────────────────────
 function AppFooter() {
   const [showLegal, setShowLegal] = React.useState(null);
@@ -3565,7 +3771,11 @@ function SystemDashboard({
     onGoHome: onGoHome,
     title: "\u05E0\u05D9\u05D4\u05D5\u05DC \u05DE\u05E2\u05E8\u05DB\u05EA",
     subtitle: OFFICE_PLAN.officeName,
-    onBack: onBack
+    onBack: onBack,
+    rightContent: /*#__PURE__*/React.createElement(NotificationBell, {
+      user: user,
+      onOpenProject: onOpenProject
+    })
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
@@ -5582,6 +5792,7 @@ function TasksTab({
         hoursLogged: []
       }]
     }));
+    notifyProjectMembers(user.officeId, project, user, 'task', 'משימה חדשה: ' + form.title, form.desc);
     setForm({
       title: '',
       desc: '',
@@ -7942,6 +8153,7 @@ function ApprovalsTab({
         comment: ''
       }]
     }));
+    notifyProjectMembers(officeId, project, user, 'approval_requested', 'בקשת אישור חדשה: ' + form.title, null);
     setForm({
       title: '',
       requestedBy: '',
@@ -7963,24 +8175,32 @@ function ApprovalsTab({
     })));
     setUploadingId(null);
   };
-  const approve = (id, comment = '') => setProject(p => ({
-    ...p,
-    approvals: approvals.map(a => a.id === id ? {
-      ...a,
-      status: 'approved',
-      approvedBy: user.name,
-      comment
-    } : a)
-  }));
-  const reject = (id, comment = '') => setProject(p => ({
-    ...p,
-    approvals: approvals.map(a => a.id === id ? {
-      ...a,
-      status: 'rejected',
-      approvedBy: user.name,
-      comment
-    } : a)
-  }));
+  const approve = (id, comment = '') => {
+    const a0 = approvals.find(a => a.id === id);
+    setProject(p => ({
+      ...p,
+      approvals: approvals.map(a => a.id === id ? {
+        ...a,
+        status: 'approved',
+        approvedBy: user.name,
+        comment
+      } : a)
+    }));
+    if (a0) notifyProjectMembers(officeId, project, user, 'approval_decided', 'האישור אושר: ' + a0.title, null);
+  };
+  const reject = (id, comment = '') => {
+    const a0 = approvals.find(a => a.id === id);
+    setProject(p => ({
+      ...p,
+      approvals: approvals.map(a => a.id === id ? {
+        ...a,
+        status: 'rejected',
+        approvedBy: user.name,
+        comment
+      } : a)
+    }));
+    if (a0) notifyProjectMembers(officeId, project, user, 'approval_decided', 'האישור נדחה: ' + a0.title, null);
+  };
   const pending = approvals.filter(a => a.status === 'pending');
   const done = approvals.filter(a => a.status !== 'pending');
   return /*#__PURE__*/React.createElement("div", {
@@ -8222,6 +8442,7 @@ function MessagesTab({
       ...p,
       messages: [...messages, m]
     }));
+    notifyProjectMembers(user.officeId, project, user, 'message', 'הודעה חדשה מ' + user.name, msg.trim().slice(0, 80));
     setMsg('');
     setTimeout(() => chatRef.current?.scrollTo({
       top: 9999,
@@ -9301,7 +9522,8 @@ function ProjectView({
   setData,
   user,
   onBack,
-  onGoHome = onBack
+  onGoHome = onBack,
+  onOpenProject
 }) {
   const project = (data.projects || []).find(p => p.id === projectId);
   const [activeTab, setActiveTab] = React.useState('dashboard');
@@ -9634,7 +9856,10 @@ function ProjectView({
       letterSpacing: '0.06em',
       borderRadius: 0
     }
-  }, "SHARE"))), /*#__PURE__*/React.createElement("div", {
+  }, "SHARE"), /*#__PURE__*/React.createElement(NotificationBell, {
+    user: user,
+    onOpenProject: onOpenProject
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       overflowX: 'auto',
@@ -9959,7 +10184,10 @@ function ProjectsList({
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap'
     }
-  }, user.name)), /*#__PURE__*/React.createElement("button", {
+  }, user.name)), /*#__PURE__*/React.createElement(NotificationBell, {
+    user: user,
+    onOpenProject: onOpenProject
+  }), /*#__PURE__*/React.createElement("button", {
     onClick: onLogout,
     style: {
       background: 'none',
@@ -11280,7 +11508,11 @@ function App() {
     setData: updateData,
     user: user,
     onBack: goHome,
-    onGoHome: handleLogout
+    onGoHome: handleLogout,
+    onOpenProject: id => {
+      setActiveProject(id);
+      setScreen('project');
+    }
   }), (screen === 'projects' || !['systemdash', 'users', 'backup', 'project', 'platformadmin', 'suspended'].includes(screen)) && /*#__PURE__*/React.createElement(ProjectsList, {
     data: data,
     setData: updateData,
