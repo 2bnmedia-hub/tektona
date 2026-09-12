@@ -2252,7 +2252,7 @@ function TimelineTab({ project, setProject }) {
                 const width = (1/totalSegs)*100;
                 return (
                   <div key={phase.id} style={{marginBottom:8,display:'flex',alignItems:'center',gap:10}}>
-                    <div style={{width:90,fontSize:12,color:C.sub,textAlign:'right',flexShrink:0}}>{phase.short}</div>
+                    <div style={{width:90,fontSize:12,color:C.sub,textAlign:'right',flexShrink:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={ph.name||phase.name}>{ph.name||phase.short}</div>
                     <div style={{flex:1,height:20,background:C.border,borderRadius:4,position:'relative',minWidth:200}}>
                       <div style={{position:'absolute',right:`${100-left-width}%`,width:width+'%',height:'100%',
                         background:color,borderRadius:4,transition:'width .8s ease',
@@ -2304,8 +2304,10 @@ function TimelineTab({ project, setProject }) {
                   {ph.status==='completed'?'✓':phase.id}
                 </div>
                 <div style={{flex:1,background:C.card,borderRadius:12,padding:16,border:`1px solid ${ph.status==='active'?C.primary:C.border}`}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-                    <div style={{fontWeight:700,color:C.text,fontSize:18}}>{phase.name}</div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,gap:8}}>
+                    <input value={ph.name||phase.name} onChange={e=>updatePhase(i,'name',e.target.value)}
+                      style={{flex:1,fontWeight:700,color:C.text,fontSize:18,background:'transparent',
+                        border:'none',outline:'none',fontFamily:'Heebo,Arial,sans-serif',padding:0}}/>
                     <Select value={ph.status} onChange={v=>updatePhase(i,'status',v)}
                       options={[{value:'pending',label:'ממתין'},{value:'active',label:'פעיל'},{value:'completed',label:'הושלם'}]}
                       style={{width:120}}/>

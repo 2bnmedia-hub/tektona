@@ -6263,9 +6263,13 @@ function TimelineTab({
           fontSize: 12,
           color: C.sub,
           textAlign: 'right',
-          flexShrink: 0
-        }
-      }, phase.short), /*#__PURE__*/React.createElement("div", {
+          flexShrink: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        },
+        title: ph.name || phase.name
+      }, ph.name || phase.short), /*#__PURE__*/React.createElement("div", {
         style: {
           flex: 1,
           height: 20,
@@ -6419,15 +6423,24 @@ function TimelineTab({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 8
+        marginBottom: 8,
+        gap: 8
       }
-    }, /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("input", {
+      value: ph.name || phase.name,
+      onChange: e => updatePhase(i, 'name', e.target.value),
       style: {
+        flex: 1,
         fontWeight: 700,
         color: C.text,
-        fontSize: 18
+        fontSize: 18,
+        background: 'transparent',
+        border: 'none',
+        outline: 'none',
+        fontFamily: 'Heebo,Arial,sans-serif',
+        padding: 0
       }
-    }, phase.name), /*#__PURE__*/React.createElement(Select, {
+    }), /*#__PURE__*/React.createElement(Select, {
       value: ph.status,
       onChange: v => updatePhase(i, 'status', v),
       options: [{
