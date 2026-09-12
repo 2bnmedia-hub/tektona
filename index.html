@@ -2808,14 +2808,14 @@ function AppNavBar({
     src: OFFICE_PLAN.logo,
     alt: "Office Logo",
     style: {
-      height: 112,
+      height: 78,
       width: 'auto',
       display: 'block',
       opacity: 0.9
     }
   }), OFFICE_PLAN.slogan && /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 40,
+      fontSize: 12,
       color: C.sub,
       letterSpacing: '0.02em',
       whiteSpace: 'nowrap'
@@ -5565,7 +5565,27 @@ function BriefTab({
   const [answers, setAnswers] = React.useState({
     ...brief.answers
   });
+  const [customQuestions, setCustomQuestions] = React.useState(brief.customQuestions || []);
+  const [newQuestion, setNewQuestion] = React.useState('');
   const [saved, setSaved] = React.useState(false);
+  const addQuestion = () => {
+    if (!newQuestion.trim()) return;
+    setCustomQuestions(cs => [...cs, {
+      key: 'c' + uid(),
+      q: newQuestion.trim()
+    }]);
+    setNewQuestion('');
+  };
+  const removeQuestion = key => {
+    setCustomQuestions(cs => cs.filter(c => c.key !== key));
+    setAnswers(a => {
+      const na = {
+        ...a
+      };
+      delete na[key];
+      return na;
+    });
+  };
   const questions = [{
     key: 'style',
     q: 'איזה סגנון עיצוב אתה מעדיף?',
@@ -5605,6 +5625,7 @@ function BriefTab({
       brief: {
         ...brief,
         answers,
+        customQuestions,
         savedAt: new Date().toISOString()
       }
     }));
@@ -5616,6 +5637,7 @@ function BriefTab({
     brief: {
       ...brief,
       answers,
+      customQuestions,
       submitted: true,
       savedAt: new Date().toISOString(),
       submittedBy: user.name
@@ -5701,7 +5723,100 @@ function BriefTab({
       outline: 'none',
       direction: 'rtl'
     }
-  })))), !readOnly && /*#__PURE__*/React.createElement("div", {
+  }))), customQuestions.map(q => /*#__PURE__*/React.createElement("div", {
+    key: q.key,
+    style: {
+      background: C.card,
+      borderRadius: 12,
+      padding: 16,
+      border: `1px solid ${C.border}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      gap: 8,
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      color: C.text,
+      fontSize: 17
+    }
+  }, q.q), !readOnly && /*#__PURE__*/React.createElement("button", {
+    onClick: () => removeQuestion(q.key),
+    style: {
+      background: 'none',
+      border: 'none',
+      color: C.sub,
+      cursor: 'pointer',
+      fontSize: 16,
+      padding: 0
+    },
+    title: "\u05D4\u05E1\u05E8 \u05E9\u05D0\u05DC\u05D4"
+  }, "\u2715")), readOnly ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.text,
+      fontSize: 16
+    }
+  }, answers[q.key] || '—') : /*#__PURE__*/React.createElement("textarea", {
+    value: answers[q.key] || '',
+    onChange: e => setAnswers(a => ({
+      ...a,
+      [q.key]: e.target.value
+    })),
+    rows: 2,
+    placeholder: "\u05D4\u05D6\u05DF \u05EA\u05E9\u05D5\u05D1\u05D4...",
+    style: {
+      width: '100%',
+      padding: '9px 12px',
+      borderRadius: 8,
+      border: `1px solid ${C.border}`,
+      background: C.inputBg,
+      color: C.text,
+      fontSize: 16,
+      resize: 'vertical',
+      fontFamily: 'Heebo,Arial,sans-serif',
+      outline: 'none',
+      direction: 'rtl'
+    }
+  }))), !readOnly && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      background: C.card,
+      borderRadius: 12,
+      padding: 16,
+      border: `1px dashed ${C.border}`
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    value: newQuestion,
+    onChange: e => setNewQuestion(e.target.value),
+    onKeyDown: e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addQuestion();
+      }
+    },
+    placeholder: "\u05D4\u05D5\u05E1\u05E3 \u05E9\u05D0\u05DC\u05D4 \u05DE\u05E9\u05DC\u05DA...",
+    style: {
+      flex: 1,
+      padding: '9px 12px',
+      borderRadius: 8,
+      border: `1px solid ${C.border}`,
+      background: C.inputBg,
+      color: C.text,
+      fontSize: 16,
+      outline: 'none',
+      direction: 'rtl',
+      fontFamily: 'Heebo,Arial,sans-serif'
+    }
+  }), /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    onClick: addQuestion
+  }, "+ \u05D4\u05D5\u05E1\u05E3 \u05E9\u05D0\u05DC\u05D4"))), !readOnly && /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 10,

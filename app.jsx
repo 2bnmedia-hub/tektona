@@ -959,9 +959,9 @@ function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent, onOpenThem
           {!isMobile && OFFICE_PLAN.logo && (
             <div style={{display:'flex', flexDirection:'column', alignItems:'flex-start', gap:6,
               borderRight:`1px solid ${C.border}`, paddingRight:16}}>
-              <img src={OFFICE_PLAN.logo} alt="Office Logo" style={{height:112, width:'auto', display:'block', opacity:0.9}}/>
+              <img src={OFFICE_PLAN.logo} alt="Office Logo" style={{height:78, width:'auto', display:'block', opacity:0.9}}/>
               {OFFICE_PLAN.slogan && (
-                <div style={{fontSize:40, color:C.sub, letterSpacing:'0.02em', whiteSpace:'nowrap'}}>{OFFICE_PLAN.slogan}</div>
+                <div style={{fontSize:12, color:C.sub, letterSpacing:'0.02em', whiteSpace:'nowrap'}}>{OFFICE_PLAN.slogan}</div>
               )}
             </div>
           )}
@@ -1981,7 +1981,18 @@ function DashboardTab({ project, setProject, user }) {
 function BriefTab({ project, setProject, user }) {
   const brief = project.brief || {answers:{},submitted:false};
   const [answers, setAnswers] = React.useState({...brief.answers});
+  const [customQuestions, setCustomQuestions] = React.useState(brief.customQuestions || []);
+  const [newQuestion, setNewQuestion] = React.useState('');
   const [saved, setSaved] = React.useState(false);
+  const addQuestion = () => {
+    if (!newQuestion.trim()) return;
+    setCustomQuestions(cs => [...cs, { key:'c'+uid(), q:newQuestion.trim() }]);
+    setNewQuestion('');
+  };
+  const removeQuestion = (key) => {
+    setCustomQuestions(cs => cs.filter(c=>c.key!==key));
+    setAnswers(a => { const na = {...a}; delete na[key]; return na; });
+  };
   const questions = [
     {key:'style',q:'איזה סגנון עיצוב אתה מעדיף?',hint:'מודרני, קלאסי, מינימליסטי, ים-תיכוני...'},
     {key:'rooms',q:'כמה חדרים נדרשים?',hint:'חדרי שינה, עבודה וכו\''},
@@ -1993,10 +2004,10 @@ function BriefTab({ project, setProject, user }) {
     {key:'outdoor',q:'מה רצוי בחוץ?',hint:'גינה, מרפסת, בריכה, גג...'}
   ];
   const save = () => {
-    setProject(p=>({...p,brief:{...brief,answers,savedAt:new Date().toISOString()}}));
+    setProject(p=>({...p,brief:{...brief,answers,customQuestions,savedAt:new Date().toISOString()}}));
     setSaved(true); setTimeout(()=>setSaved(false),2000);
   };
-  const submit = () => setProject(p=>({...p,brief:{...brief,answers,submitted:true,savedAt:new Date().toISOString(),submittedBy:user.name}}));
+  const submit = () => setProject(p=>({...p,brief:{...brief,answers,customQuestions,submitted:true,savedAt:new Date().toISOString(),submittedBy:user.name}}));
   const readOnly = brief.submitted && user.role==='client';
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
@@ -2021,6 +2032,36 @@ function BriefTab({ project, setProject, user }) {
             }
           </div>
         ))}
+        {customQuestions.map(q=>(
+          <div key={q.key} style={{background:C.card,borderRadius:12,padding:16,border:`1px solid ${C.border}`}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8,marginBottom:4}}>
+              <div style={{fontWeight:600,color:C.text,fontSize:17}}>{q.q}</div>
+              {!readOnly && (
+                <button onClick={()=>removeQuestion(q.key)}
+                  style={{background:'none',border:'none',color:C.sub,cursor:'pointer',fontSize:16,padding:0}}
+                  title="הסר שאלה">✕</button>
+              )}
+            </div>
+            {readOnly ? <div style={{color:C.text,fontSize:16}}>{answers[q.key]||'—'}</div>
+              : <textarea value={answers[q.key]||''} onChange={e=>setAnswers(a=>({...a,[q.key]:e.target.value}))}
+                  rows={2} placeholder="הזן תשובה..."
+                  style={{width:'100%',padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
+                    background:C.inputBg,color:C.text,fontSize:16,resize:'vertical',
+                    fontFamily:'Heebo,Arial,sans-serif',outline:'none',direction:'rtl'}}/>
+            }
+          </div>
+        ))}
+        {!readOnly && (
+          <div style={{display:'flex',gap:8,background:C.card,borderRadius:12,padding:16,border:`1px dashed ${C.border}`}}>
+            <input value={newQuestion} onChange={e=>setNewQuestion(e.target.value)}
+              onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addQuestion();}}}
+              placeholder="הוסף שאלה משלך..."
+              style={{flex:1,padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
+                background:C.inputBg,color:C.text,fontSize:16,outline:'none',direction:'rtl',
+                fontFamily:'Heebo,Arial,sans-serif'}}/>
+            <Btn size="sm" onClick={addQuestion}>+ הוסף שאלה</Btn>
+          </div>
+        )}
       </div>
       {!readOnly && (
         <div style={{display:'flex',gap:10,marginTop:20,justifyContent:'flex-end'}}>
