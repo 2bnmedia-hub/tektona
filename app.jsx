@@ -2594,7 +2594,7 @@ function TasksTab({ project, setProject, user, officeId }) {
   };
   const totalHours = visibleTasks.reduce((s,t)=>(t.hoursLogged||[]).reduce((a,l)=>a+l.hours,0)+s,0);
   const priColors = {high:C.danger,medium:C.warning,low:C.success};
-  const cols = [{k:'todo',l:'לביצוע'},{k:'in-progress',l:'בביצוע'},{k:'done',l:'בוצע'}];
+  const cols = [{k:'high',l:'דחוף'},{k:'medium',l:'בינוני'},{k:'low',l:'רגיל'}];
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
@@ -2616,11 +2616,13 @@ function TasksTab({ project, setProject, user, officeId }) {
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
         {cols.map(col=>(
           <div key={col.k}>
-            <div style={{fontWeight:700,color:C.sub,fontSize:14,marginBottom:10}}>
-              {col.l} ({visibleTasks.filter(t=>t.status===col.k).length})
+            <div style={{fontWeight:700,color:priColors[col.k],fontSize:14,marginBottom:10,
+              display:'flex',alignItems:'center',gap:6}}>
+              <span style={{width:8,height:8,borderRadius:'50%',background:priColors[col.k],display:'inline-block'}}/>
+              {col.l} ({visibleTasks.filter(t=>t.priority===col.k).length})
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:10,minHeight:80}}>
-              {visibleTasks.filter(t=>t.status===col.k).map(t=>(
+              {visibleTasks.filter(t=>t.priority===col.k).map(t=>(
                 <div key={t.id} style={{background:C.card,borderRadius:12,padding:14,
                   border:`1px solid ${C.border}`,borderRight:`3px solid ${priColors[t.priority]||C.border}`}}>
                   <div style={{fontWeight:600,color:C.text,fontSize:16,marginBottom:4}}>{t.title}</div>
