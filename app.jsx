@@ -2212,7 +2212,7 @@ function DashboardTab({ project, setProject, user, onDeleteProject }) {
         {project.coverImage
           ? <StorageImage path={project.coverImage} style={{width:'100%',height:'100%',objectFit:'cover',filter:'brightness(0.85)'}} alt="cover"/>
           : (
-            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',paddingBottom:70}}>
               {/* Architectural grid lines */}
               <svg style={{position:'absolute',inset:0,width:'100%',height:'100%',opacity:0.12}} viewBox="0 0 400 200" preserveAspectRatio="none">
                 {[...Array(8)].map((_,i)=><line key={'v'+i} x1={i*60} y1="0" x2={i*60} y2="200" stroke={C.text} strokeWidth="0.5"/>)}
