@@ -144,6 +144,19 @@ const fmtCurrency = (n) => '₪' + Number(n||0).toLocaleString('he-IL');
 const sanitize = (s) => String(s||'').replace(/[<>"'&]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c]));
 const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB client-side guard
 
+// Transliterates Hebrew project names into a readable ASCII slug for bookmarkable URLs
+// (e.g. "וילה כרמל" -> "vylh-krml") instead of the internal id ("p1").
+const HEBREW_TO_LATIN = {
+  'א':'a','ב':'b','ג':'g','ד':'d','ה':'h','ו':'v','ז':'z','ח':'ch','ט':'t','י':'y',
+  'כ':'k','ך':'k','ל':'l','מ':'m','ם':'m','נ':'n','ן':'n','ס':'s','ע':'a','פ':'p','ף':'f',
+  'צ':'tz','ץ':'tz','ק':'k','ר':'r','ש':'sh','ת':'t',
+};
+const slugifyProjectName = (name) => {
+  const translit = String(name||'').split('').map(ch => HEBREW_TO_LATIN[ch] ?? ch).join('');
+  const slug = translit.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  return slug || 'project';
+};
+
 // Small enough (office logo) that base64-in-DB is fine — not worth Storage complexity.
 const readFileAsDataURL = (file, cb) => {
   if (!file) return;
@@ -408,21 +421,25 @@ function SVGCircle({ value, max, color, label, sublabel, size=80 }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
       <div style={{ position:'relative', width:size, height:size }}>
+        {/* Soft color backdrop halo for a richer, less flat look */}
+        <div style={{ position:'absolute', inset:'8%', borderRadius:'50%',
+          background:`radial-gradient(circle, ${color}26 0%, transparent 72%)`, pointerEvents:'none' }}/>
         <svg width={size} height={size} viewBox="0 0 80 80">
           <defs>
             <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor={color} stopOpacity="1"/>
-              <stop offset="100%" stopColor={color} stopOpacity="0.55"/>
+              <stop offset="55%" stopColor={color} stopOpacity="0.85"/>
+              <stop offset="100%" stopColor={color} stopOpacity="0.4"/>
             </linearGradient>
             <filter id={'glow_'+gradId}>
-              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feGaussianBlur stdDeviation="2.2" result="blur"/>
               <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
           </defs>
           {/* Track */}
-          <circle cx="40" cy="40" r={R} fill="none" stroke={C.border} strokeWidth="5"/>
+          <circle cx="40" cy="40" r={R} fill="none" stroke={C.border} strokeWidth="6"/>
           {/* Value arc */}
-          <circle cx="40" cy="40" r={R} fill="none" stroke={`url(#${gradId})`} strokeWidth="5"
+          <circle cx="40" cy="40" r={R} fill="none" stroke={`url(#${gradId})`} strokeWidth="6"
             strokeDasharray={circ} strokeDashoffset={offset}
             strokeLinecap="round" transform="rotate(-90 40 40)"
             filter={`url(#glow_${gradId})`}
@@ -927,8 +944,13 @@ function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent }) {
             onMouseEnter={e=>e.currentTarget.style.opacity='0.7'}
             onMouseLeave={e=>e.currentTarget.style.opacity='1'}/>
           {!isMobile && OFFICE_PLAN.logo && (
-            <img src={OFFICE_PLAN.logo} alt="Office Logo"
-              style={{height:32, width:'auto', display:'block', opacity:0.85, borderRight:`1px solid ${C.border}`, paddingRight:10}}/>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'flex-start', gap:2,
+              borderRight:`1px solid ${C.border}`, paddingRight:10}}>
+              <img src={OFFICE_PLAN.logo} alt="Office Logo" style={{height:28, width:'auto', display:'block', opacity:0.9}}/>
+              {OFFICE_PLAN.slogan && (
+                <div style={{fontSize:10, color:C.sub, letterSpacing:'0.02em', whiteSpace:'nowrap'}}>{OFFICE_PLAN.slogan}</div>
+              )}
+            </div>
           )}
         </button>
         {(title || onBack) && <div style={{width:1, height:18, background:C.border}}/>}
@@ -1372,12 +1394,29 @@ function PricingScreen({ onBack }) {
 }
 
 // ─── SYSTEM DASHBOARD ─────────────────────────────────────────────────────────
-function SystemDashboard({ data, user, officeId, onBack, onGoHome = onBack, onOpenProject }) {
+function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onBack, onOpenProject }) {
   const isMobile = useIsMobile();
   const logoRef = React.useRef();
   const [officeLogo, setOfficeLogo] = React.useState(OFFICE_PLAN.logo);
   const [slogan, setSlogan] = React.useState(OFFICE_PLAN.slogan || '');
   const [sloganSaved, setSloganSaved] = React.useState(false);
+  const [showNewProject, setShowNewProject] = React.useState(false);
+  const [form, setForm] = React.useState({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
+  const addProject = () => {
+    if (!form.name) return;
+    const np = {
+      ...form, id:'p'+uid(), status:'planning', currentPhase:1, progress:0, createdAt:today(),
+      budget:Number(form.budget)||0, area:Number(form.area)||0, coverImage:null,
+      phases:PHASES.map((p,i)=>({phaseId:p.id,status:i===0?'active':'pending',completedDate:null,notes:''})),
+      documents:[], quotes:[], approvals:[], messages:[], gallery:[], payments:[],
+      punchList:[], rfis:[], brief:{answers:{},submitted:false,savedAt:null,submittedBy:null},
+      tasks:[], dailyReports:[], meetings:[], customTasks:[], changeRequests:[], decisionLog:[],
+      clientProfile:{healthScore:80,paymentReliability:80,approvalSpeed:80,changeFrequency:10,tags:[],notes:'',history:[]}
+    };
+    setData(d=>({...d,projects:[...(d.projects||[]),np]}));
+    setForm({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
+    setShowNewProject(false);
+  };
   const handleLogoUpload = (e) => {
     const file = e.target.files[0]; if (!file) return;
     readFileAsDataURL(file, async (dataUrl) => {
@@ -1406,62 +1445,68 @@ function SystemDashboard({ data, user, officeId, onBack, onGoHome = onBack, onOp
       {C.archBg && <ArchBackground />}
       <AppNavBar onGoHome={onGoHome} title="ניהול מערכת" subtitle={OFFICE_PLAN.officeName} onBack={onBack}
         rightContent={<NotificationBell user={user} onOpenProject={onOpenProject}/>}/>
-      <div style={{ flex:1, overflowY:'auto', padding: isMobile ? 16 : 28, paddingBottom:56, position:'relative', zIndex:1 }}>
-        <div style={{ marginBottom:24 }}>
-          <h1 style={{ color:C.text, fontSize: isMobile ? 22 : 29, fontWeight:800 }}>⚙️ לוח ניהול מערכת</h1>
-          <div style={{ color:C.sub, fontSize:16 }}>סקירה כללית — {OFFICE_PLAN.officeName}</div>
+      <div style={{ flex:1, overflowY:'auto', padding: isMobile ? 12 : 18, paddingBottom:32, position:'relative', zIndex:1 }}>
+        <div style={{ marginBottom:14 }}>
+          <h1 style={{ color:C.text, fontSize: isMobile ? 19 : 23, fontWeight:800 }}>⚙️ לוח ניהול מערכת</h1>
+          <div style={{ color:C.sub, fontSize:14 }}>סקירה כללית — {OFFICE_PLAN.officeName}</div>
         </div>
-        {/* Stats circles */}
-        <div style={{ display:'flex', gap:32, justifyContent:'center', flexWrap:'wrap', marginBottom:32,
-          background:C.card, padding:28, borderRadius:20, border:`1px solid ${C.border}`,
-          background:`linear-gradient(135deg,${C.card},${C.bg})` }}>
-          <SVGCircle value={projects.length} max={OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}
-            color={C.primary} label="סה״כ פרויקטים" sublabel={`/${OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}`} size={100}/>
-          <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" sublabel="active" size={100}/>
-          <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" sublabel="done" size={100}/>
-          <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={100}/>
+        {/* Stats + financials — one compact row */}
+        <div style={{ display:'flex', gap:isMobile?18:28, justifyContent:'space-between', alignItems:'center',
+          flexWrap:'wrap', marginBottom:14, background:`linear-gradient(135deg,${C.card},${C.bg})`,
+          padding:'18px', borderRadius:14, border:`1px solid ${C.border}` }}>
+          <div style={{ display:'flex', gap:isMobile?16:26, flexWrap:'wrap', flex:1, justifyContent:'center' }}>
+            <SVGCircle value={projects.length} max={OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}
+              color={C.primary} label="סה״כ פרויקטים" sublabel={`/${OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}`} size={88}/>
+            <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" sublabel="active" size={88}/>
+            <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" sublabel="done" size={88}/>
+            <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={88}/>
+          </div>
+          <div style={{ display:'flex', gap:isMobile?14:24, flexWrap:'wrap' }}>
+            <div>
+              <div style={{ color:C.sub, fontSize:13 }}>הכנסות שהתקבלו</div>
+              <div style={{ fontSize:22, fontWeight:800, color:C.success }}>{fmtCurrency(totalRevenue)}</div>
+            </div>
+            <div>
+              <div style={{ color:C.sub, fontSize:13 }}>תשלומים ממתינים</div>
+              <div style={{ fontSize:22, fontWeight:800, color:C.warning }}>{fmtCurrency(pendingPayments)}</div>
+            </div>
+          </div>
         </div>
-        {/* Financial */}
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:20 }}>
-          <div style={{ background:C.card, borderRadius:16, padding:20, border:`1px solid ${C.border}` }}>
-            <div style={{ color:C.sub, fontSize:16, marginBottom:6 }}>הכנסות שהתקבלו</div>
-            <div style={{ fontSize:34, fontWeight:800, color:C.success }}>{fmtCurrency(totalRevenue)}</div>
+        {/* Branding — logo + slogan side by side */}
+        <div style={{background:C.card,borderRadius:14,border:`1px solid ${C.border}`,marginBottom:14,
+          display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', overflow:'hidden'}}>
+          <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap',padding:14,
+            borderBottom: isMobile ? `1px solid ${C.border}` : 'none',
+            borderInlineEnd: isMobile ? 'none' : `1px solid ${C.border}`}}>
+            <div style={{minWidth:110}}>
+              <div style={{fontWeight:700,color:C.text,fontSize:14}}>🏢 לוגו (White Label)</div>
+            </div>
+            {officeLogo && <img src={officeLogo} alt="office logo" style={{height:28,width:'auto',borderRadius:5}}/>}
+            <input ref={logoRef} type="file" accept="image/*" onChange={handleLogoUpload} style={{display:'none'}}/>
+            <Btn size="sm" variant="ghost" onClick={()=>logoRef.current?.click()}>
+              {officeLogo ? '🔄 החלף' : '📤 העלה'}
+            </Btn>
+            {officeLogo && <Btn size="sm" variant="ghost" onClick={removeLogo}>הסר</Btn>}
           </div>
-          <div style={{ background:C.card, borderRadius:16, padding:20, border:`1px solid ${C.border}` }}>
-            <div style={{ color:C.sub, fontSize:16, marginBottom:6 }}>תשלומים ממתינים</div>
-            <div style={{ fontSize:34, fontWeight:800, color:C.warning }}>{fmtCurrency(pendingPayments)}</div>
+          <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap',padding:14}}>
+            <div style={{minWidth:90}}>
+              <div style={{fontWeight:700,color:C.text,fontSize:14}}>💬 סלוגן</div>
+            </div>
+            <input value={slogan} onChange={e=>setSlogan(e.target.value)} placeholder="הסלוגן שלכם..."
+              style={{flex:1,minWidth:120,padding:'6px 10px',borderRadius:7,border:`1px solid ${C.border}`,
+                background:C.inputBg,color:C.text,fontSize:14,outline:'none',direction:'rtl',fontFamily:'Heebo,Arial,sans-serif'}}/>
+            <Btn size="sm" onClick={saveSlogan}>{sloganSaved?'✓ נשמר':'שמור'}</Btn>
           </div>
-        </div>
-        {/* Office branding */}
-        <div style={{background:C.card,borderRadius:16,padding:20,border:`1px solid ${C.border}`,marginBottom:20,
-          display:'flex',alignItems:'center',gap:20,flexWrap:'wrap'}}>
-          <div>
-            <div style={{fontWeight:700,color:C.text,fontSize:17,marginBottom:4}}>🏢 לוגו משרד (White Label)</div>
-            <div style={{color:C.sub,fontSize:14}}>יוצג בסרגל הניווט לצד לוגו Tektona</div>
-          </div>
-          {officeLogo && <img src={officeLogo} alt="office logo" style={{height:40,width:'auto',borderRadius:6}}/>}
-          <input ref={logoRef} type="file" accept="image/*" onChange={handleLogoUpload} style={{display:'none'}}/>
-          <Btn size="sm" variant="ghost" onClick={()=>logoRef.current?.click()}>
-            {officeLogo ? '🔄 החלף לוגו' : '📤 העלה לוגו'}
-          </Btn>
-          {officeLogo && <Btn size="sm" variant="ghost" onClick={removeLogo}>הסר</Btn>}
-        </div>
-        {/* Office slogan */}
-        <div style={{background:C.card,borderRadius:16,padding:20,border:`1px solid ${C.border}`,marginBottom:20,
-          display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
-          <div style={{minWidth:160}}>
-            <div style={{fontWeight:700,color:C.text,fontSize:17,marginBottom:4}}>💬 סלוגן המשרד</div>
-            <div style={{color:C.sub,fontSize:14}}>יוצג לצד שם המשרד</div>
-          </div>
-          <input value={slogan} onChange={e=>setSlogan(e.target.value)} placeholder="הסלוגן שלכם..."
-            style={{flex:1,minWidth:200,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,
-              background:C.inputBg,color:C.text,fontSize:15,outline:'none',direction:'rtl',fontFamily:'Heebo,Arial,sans-serif'}}/>
-          <Btn size="sm" onClick={saveSlogan}>{sloganSaved?'✓ נשמר':'שמור'}</Btn>
         </div>
         {/* Projects list */}
-        <div style={{ background:C.card, borderRadius:16, border:`1px solid ${C.border}`, overflow:'hidden' }}>
-          <div style={{ padding:'16px 20px', borderBottom:`1px solid ${C.border}` }}>
-            <h3 style={{ color:C.text, fontSize:18, fontWeight:700 }}>כל הפרויקטים</h3>
+        <div style={{ background:C.card, borderRadius:14, border:`1px solid ${C.border}`, overflow:'hidden' }}>
+          <div style={{ padding:'12px 16px', borderBottom:`1px solid ${C.border}`,
+            display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, flexWrap:'wrap' }}>
+            <h3 style={{ color:C.text, fontSize:16, fontWeight:700 }}>כל הפרויקטים</h3>
+            <div style={{ display:'flex', gap:8 }}>
+              <Btn size="sm" variant="ghost" onClick={onBack}>📁 ניהול פרויקטים קיימים</Btn>
+              <Btn size="sm" onClick={()=>setShowNewProject(true)}>+ פרויקט חדש</Btn>
+            </div>
           </div>
           {projects.map(p => (
             <div key={p.id} onClick={()=>onOpenProject && onOpenProject(p.id)}
@@ -1473,6 +1518,10 @@ function SystemDashboard({ data, user, officeId, onBack, onGoHome = onBack, onOp
                 <div style={{ color:C.sub, fontSize:14 }}>{p.clientName} · {p.architectName}</div>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <div style={{ width:78, textAlign:'center' }}>
+                  <div style={{ fontSize:10, color:C.sub, opacity:0.7 }}>נוסף</div>
+                  <div style={{ fontSize:13, color:C.sub }}>{fmtDate(p.createdAt || p.startDate)}</div>
+                </div>
                 <div style={{ width:80, height:6, background:C.border, borderRadius:3, overflow:'hidden' }}>
                   <div style={{ width:p.progress+'%', height:'100%', background:C.primary, borderRadius:3 }}/>
                 </div>
@@ -1483,6 +1532,36 @@ function SystemDashboard({ data, user, officeId, onBack, onGoHome = onBack, onOp
           ))}
         </div>
       </div>
+      {showNewProject && (
+        <Modal title="פרויקט חדש" onClose={()=>setShowNewProject(false)} width={580}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+            <Input label="שם הפרויקט" value={form.name} onChange={v=>setForm(f=>({...f,name:v}))} required style={{gridColumn:'1/-1'}}/>
+            <Input label="כתובת" value={form.address} onChange={v=>setForm(f=>({...f,address:v}))} style={{gridColumn:'1/-1'}}/>
+            <div style={{gridColumn:'1/-1'}}>
+              <ProjectAccessEditor officeId={officeId} architectId={form.architectId} clientIds={form.clientIds}
+                onChange={patch=>setForm(f=>({...f,...patch}))}/>
+            </div>
+            <Input label="תקציב (₪)" type="number" value={form.budget} onChange={v=>setForm(f=>({...f,budget:v}))}/>
+            <Input label={'שטח (מ"ר)'} type="number" value={form.area} onChange={v=>setForm(f=>({...f,area:v}))}/>
+            <Input label="תחילת פרויקט" type="date" value={form.startDate} onChange={v=>setForm(f=>({...f,startDate:v}))}/>
+            <Input label="סיום צפוי" type="date" value={form.endDate} onChange={v=>setForm(f=>({...f,endDate:v}))}/>
+            <Select label="תבנית" value={form.template} onChange={v=>setForm(f=>({...f,template:v}))} style={{gridColumn:'1/-1'}}
+              options={[{value:'villa',label:'🏡 וילה / בית פרטי'},{value:'renovation',label:'🔧 שיפוץ'},{value:'commercial',label:'🏢 מסחרי'},{value:'addition',label:'➕ תוספת בנייה'}]}/>
+            <div style={{gridColumn:'1/-1'}}>
+              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:4}}>תיאור</label>
+              <textarea value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))}
+                rows={3} placeholder="תיאור קצר של הפרויקט..."
+                style={{width:'100%',padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
+                  background:C.inputBg,color:C.text,fontSize:16,resize:'vertical',
+                  fontFamily:'Heebo,Arial,sans-serif',outline:'none',direction:'rtl'}}/>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:16}}>
+            <Btn onClick={()=>setShowNewProject(false)} variant="ghost">ביטול</Btn>
+            <Btn onClick={addProject}>צור פרויקט</Btn>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -3600,7 +3679,7 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
   const addProject = () => {
     if (!form.name) return;
     const np = {
-      ...form, id:'p'+uid(), status:'planning', currentPhase:1, progress:0,
+      ...form, id:'p'+uid(), status:'planning', currentPhase:1, progress:0, createdAt:today(),
       budget:Number(form.budget)||0, area:Number(form.area)||0, coverImage:null,
       phases:PHASES.map((p,i)=>({phaseId:p.id,status:i===0?'active':'pending',completedDate:null,notes:''})),
       documents:[], quotes:[], approvals:[], messages:[], gallery:[], payments:[],
@@ -4165,17 +4244,23 @@ const SCREEN_PATHS = {
 };
 const PATH_SCREENS = Object.fromEntries(Object.entries(SCREEN_PATHS).map(([s,p])=>[p,s]));
 
-function buildPath(screen, projectId, tab) {
+function buildPath(screen, projectId, tab, projects) {
   if (screen === 'project' && projectId) {
-    return `/project/${projectId}${tab && tab !== 'dashboard' ? '/' + tab : ''}`;
+    const proj = (projects||[]).find(p=>p.id===projectId);
+    const slug = proj ? slugifyProjectName(proj.name) : projectId;
+    return `/project/${slug}${tab && tab !== 'dashboard' ? '/' + tab : ''}`;
   }
   return SCREEN_PATHS[screen] || '/projects';
 }
 
-function parsePath(pathname) {
+function parsePath(pathname, projects) {
   const parts = pathname.split('/').filter(Boolean);
   if (parts[0] === 'project' && parts[1]) {
-    return { screen: 'project', projectId: parts[1], tab: parts[2] || 'dashboard' };
+    // Resolve the slug back to a real project id; fall back to treating the
+    // segment as a raw id so old bookmarked /project/p1 links keep working.
+    const proj = (projects||[]).find(p=>slugifyProjectName(p.name)===parts[1])
+      || (projects||[]).find(p=>p.id===parts[1]);
+    return { screen: 'project', projectId: proj ? proj.id : parts[1], tab: parts[2] || 'dashboard' };
   }
   const screen = PATH_SCREENS['/' + parts.join('/')];
   return screen ? { screen, projectId: null, tab: null } : null;
@@ -4208,13 +4293,13 @@ function App() {
   const screenForUser = (u) => u.role==='owner'?'platformadmin':u.role==='admin'?'systemdash':'projects';
 
   const navigate = (targetScreen, opts={}) => {
-    const { projectId=null, tab=null, replace=false } = opts;
+    const { projectId=null, tab=null, replace=false, projects=data?.projects } = opts;
     setScreen(targetScreen);
     if (targetScreen === 'project') {
       setActiveProject(projectId);
       setActiveTab(tab || 'dashboard');
     }
-    const path = buildPath(targetScreen, projectId, tab);
+    const path = buildPath(targetScreen, projectId, tab, projects);
     if (window.location.pathname !== path) {
       window.history[replace ? 'replaceState' : 'pushState']({ screen: targetScreen, projectId, tab }, '', path);
     }
@@ -4236,12 +4321,12 @@ function App() {
     setData(officeData);
 
     // Restore a deep link from the current URL if it's valid for this user; otherwise land on the role's default screen.
-    const parsed = parsePath(window.location.pathname);
+    const parsed = parsePath(window.location.pathname, officeData.projects);
     const allowed = ROLE_SCREENS[u.role] || [];
     if (parsed && allowed.includes(parsed.screen)) {
       if (parsed.screen === 'project') {
         if ((officeData.projects||[]).some(p=>p.id===parsed.projectId)) {
-          navigate('project', { projectId: parsed.projectId, tab: parsed.tab, replace:true });
+          navigate('project', { projectId: parsed.projectId, tab: parsed.tab, replace:true, projects: officeData.projects });
           return;
         }
       } else {
@@ -4271,7 +4356,7 @@ function App() {
   React.useEffect(()=>{
     const onPopState = () => {
       if (!user) return;
-      const parsed = parsePath(window.location.pathname);
+      const parsed = parsePath(window.location.pathname, data?.projects);
       const allowed = ROLE_SCREENS[user.role] || [];
       if (parsed && allowed.includes(parsed.screen)) {
         if (parsed.screen === 'project') {
@@ -4287,7 +4372,7 @@ function App() {
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  },[user]);
+  },[user, data]);
 
   // Live sync: when any office member saves, everyone else's screen updates too.
   React.useEffect(()=>{
@@ -4335,7 +4420,7 @@ function App() {
   const openProject = (id, tab) => navigate('project', { projectId: id, tab });
   return (
     <>
-      {screen==='systemdash' && <SystemDashboard data={data} user={user} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}
+      {screen==='systemdash' && <SystemDashboard data={data} setData={updateData} user={user} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}
         onOpenProject={openProject}/>}
       {screen==='users' && <UsersScreen data={data} setData={updateData} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='backup' && <BackupPanel data={data} setData={updateData} onBack={goHome} onGoHome={handleLogout}/>}

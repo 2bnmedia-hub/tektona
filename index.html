@@ -683,6 +683,43 @@ const sanitize = s => String(s || '').replace(/[<>"'&]/g, c => ({
 })[c]);
 const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20MB client-side guard
 
+// Transliterates Hebrew project names into a readable ASCII slug for bookmarkable URLs
+// (e.g. "וילה כרמל" -> "vylh-krml") instead of the internal id ("p1").
+const HEBREW_TO_LATIN = {
+  'א': 'a',
+  'ב': 'b',
+  'ג': 'g',
+  'ד': 'd',
+  'ה': 'h',
+  'ו': 'v',
+  'ז': 'z',
+  'ח': 'ch',
+  'ט': 't',
+  'י': 'y',
+  'כ': 'k',
+  'ך': 'k',
+  'ל': 'l',
+  'מ': 'm',
+  'ם': 'm',
+  'נ': 'n',
+  'ן': 'n',
+  'ס': 's',
+  'ע': 'a',
+  'פ': 'p',
+  'ף': 'f',
+  'צ': 'tz',
+  'ץ': 'tz',
+  'ק': 'k',
+  'ר': 'r',
+  'ש': 'sh',
+  'ת': 't'
+};
+const slugifyProjectName = name => {
+  const translit = String(name || '').split('').map(ch => HEBREW_TO_LATIN[ch] ?? ch).join('');
+  const slug = translit.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return slug || 'project';
+};
+
 // Small enough (office logo) that base64-in-DB is fine — not worth Storage complexity.
 const readFileAsDataURL = (file, cb) => {
   if (!file) return;
@@ -1461,7 +1498,15 @@ function SVGCircle({
       width: size,
       height: size
     }
-  }, /*#__PURE__*/React.createElement("svg", {
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'absolute',
+      inset: '8%',
+      borderRadius: '50%',
+      background: `radial-gradient(circle, ${color}26 0%, transparent 72%)`,
+      pointerEvents: 'none'
+    }
+  }), /*#__PURE__*/React.createElement("svg", {
     width: size,
     height: size,
     viewBox: "0 0 80 80"
@@ -1476,13 +1521,17 @@ function SVGCircle({
     stopColor: color,
     stopOpacity: "1"
   }), /*#__PURE__*/React.createElement("stop", {
+    offset: "55%",
+    stopColor: color,
+    stopOpacity: "0.85"
+  }), /*#__PURE__*/React.createElement("stop", {
     offset: "100%",
     stopColor: color,
-    stopOpacity: "0.55"
+    stopOpacity: "0.4"
   })), /*#__PURE__*/React.createElement("filter", {
     id: 'glow_' + gradId
   }, /*#__PURE__*/React.createElement("feGaussianBlur", {
-    stdDeviation: "2",
+    stdDeviation: "2.2",
     result: "blur"
   }), /*#__PURE__*/React.createElement("feMerge", null, /*#__PURE__*/React.createElement("feMergeNode", {
     in: "blur"
@@ -1494,14 +1543,14 @@ function SVGCircle({
     r: R,
     fill: "none",
     stroke: C.border,
-    strokeWidth: "5"
+    strokeWidth: "6"
   }), /*#__PURE__*/React.createElement("circle", {
     cx: "40",
     cy: "40",
     r: R,
     fill: "none",
     stroke: `url(#${gradId})`,
-    strokeWidth: "5",
+    strokeWidth: "6",
     strokeDasharray: circ,
     strokeDashoffset: offset,
     strokeLinecap: "round",
@@ -2688,18 +2737,32 @@ function AppNavBar({
     },
     onMouseEnter: e => e.currentTarget.style.opacity = '0.7',
     onMouseLeave: e => e.currentTarget.style.opacity = '1'
-  }), !isMobile && OFFICE_PLAN.logo && /*#__PURE__*/React.createElement("img", {
-    src: OFFICE_PLAN.logo,
-    alt: "Office Logo",
+  }), !isMobile && OFFICE_PLAN.logo && /*#__PURE__*/React.createElement("div", {
     style: {
-      height: 32,
-      width: 'auto',
-      display: 'block',
-      opacity: 0.85,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      gap: 2,
       borderRight: `1px solid ${C.border}`,
       paddingRight: 10
     }
-  })), (title || onBack) && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("img", {
+    src: OFFICE_PLAN.logo,
+    alt: "Office Logo",
+    style: {
+      height: 28,
+      width: 'auto',
+      display: 'block',
+      opacity: 0.9
+    }
+  }), OFFICE_PLAN.slogan && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: C.sub,
+      letterSpacing: '0.02em',
+      whiteSpace: 'nowrap'
+    }
+  }, OFFICE_PLAN.slogan))), (title || onBack) && /*#__PURE__*/React.createElement("div", {
     style: {
       width: 1,
       height: 18,
@@ -3716,6 +3779,7 @@ function PricingScreen({
 // ─── SYSTEM DASHBOARD ─────────────────────────────────────────────────────────
 function SystemDashboard({
   data,
+  setData,
   user,
   officeId,
   onBack,
@@ -3727,6 +3791,89 @@ function SystemDashboard({
   const [officeLogo, setOfficeLogo] = React.useState(OFFICE_PLAN.logo);
   const [slogan, setSlogan] = React.useState(OFFICE_PLAN.slogan || '');
   const [sloganSaved, setSloganSaved] = React.useState(false);
+  const [showNewProject, setShowNewProject] = React.useState(false);
+  const [form, setForm] = React.useState({
+    name: '',
+    address: '',
+    clientName: '',
+    architectName: '',
+    architectId: null,
+    clientIds: [],
+    budget: '',
+    area: '',
+    startDate: '',
+    endDate: '',
+    description: '',
+    template: 'villa'
+  });
+  const addProject = () => {
+    if (!form.name) return;
+    const np = {
+      ...form,
+      id: 'p' + uid(),
+      status: 'planning',
+      currentPhase: 1,
+      progress: 0,
+      createdAt: today(),
+      budget: Number(form.budget) || 0,
+      area: Number(form.area) || 0,
+      coverImage: null,
+      phases: PHASES.map((p, i) => ({
+        phaseId: p.id,
+        status: i === 0 ? 'active' : 'pending',
+        completedDate: null,
+        notes: ''
+      })),
+      documents: [],
+      quotes: [],
+      approvals: [],
+      messages: [],
+      gallery: [],
+      payments: [],
+      punchList: [],
+      rfis: [],
+      brief: {
+        answers: {},
+        submitted: false,
+        savedAt: null,
+        submittedBy: null
+      },
+      tasks: [],
+      dailyReports: [],
+      meetings: [],
+      customTasks: [],
+      changeRequests: [],
+      decisionLog: [],
+      clientProfile: {
+        healthScore: 80,
+        paymentReliability: 80,
+        approvalSpeed: 80,
+        changeFrequency: 10,
+        tags: [],
+        notes: '',
+        history: []
+      }
+    };
+    setData(d => ({
+      ...d,
+      projects: [...(d.projects || []), np]
+    }));
+    setForm({
+      name: '',
+      address: '',
+      clientName: '',
+      architectName: '',
+      architectId: null,
+      clientIds: [],
+      budget: '',
+      area: '',
+      startDate: '',
+      endDate: '',
+      description: '',
+      template: 'villa'
+    });
+    setShowNewProject(false);
+  };
   const handleLogoUpload = e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -3780,38 +3927,46 @@ function SystemDashboard({
     style: {
       flex: 1,
       overflowY: 'auto',
-      padding: isMobile ? 16 : 28,
-      paddingBottom: 56,
+      padding: isMobile ? 12 : 18,
+      paddingBottom: 32,
       position: 'relative',
       zIndex: 1
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      marginBottom: 24
+      marginBottom: 14
     }
   }, /*#__PURE__*/React.createElement("h1", {
     style: {
       color: C.text,
-      fontSize: isMobile ? 22 : 29,
+      fontSize: isMobile ? 19 : 23,
       fontWeight: 800
     }
   }, "\u2699\uFE0F \u05DC\u05D5\u05D7 \u05E0\u05D9\u05D4\u05D5\u05DC \u05DE\u05E2\u05E8\u05DB\u05EA"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: C.sub,
-      fontSize: 16
+      fontSize: 14
     }
   }, "\u05E1\u05E7\u05D9\u05E8\u05D4 \u05DB\u05DC\u05DC\u05D9\u05EA \u2014 ", OFFICE_PLAN.officeName)), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      gap: 32,
-      justifyContent: 'center',
+      gap: isMobile ? 18 : 28,
+      justifyContent: 'space-between',
+      alignItems: 'center',
       flexWrap: 'wrap',
-      marginBottom: 32,
-      background: C.card,
-      padding: 28,
-      borderRadius: 20,
-      border: `1px solid ${C.border}`,
-      background: `linear-gradient(135deg,${C.card},${C.bg})`
+      marginBottom: 14,
+      background: `linear-gradient(135deg,${C.card},${C.bg})`,
+      padding: '18px',
+      borderRadius: 14,
+      border: `1px solid ${C.border}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: isMobile ? 16 : 26,
+      flexWrap: 'wrap',
+      flex: 1,
+      justifyContent: 'center'
     }
   }, /*#__PURE__*/React.createElement(SVGCircle, {
     value: projects.length,
@@ -3819,104 +3974,93 @@ function SystemDashboard({
     color: C.primary,
     label: "\u05E1\u05D4\u05F4\u05DB \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD",
     sublabel: `/${OFFICE_PLAN.plan === 'studio' ? 30 : OFFICE_PLAN.plan === 'pro' ? 15 : 5}`,
-    size: 100
+    size: 88
   }), /*#__PURE__*/React.createElement(SVGCircle, {
     value: active,
     max: projects.length || 1,
     color: C.success,
     label: "\u05E4\u05E2\u05D9\u05DC\u05D9\u05DD",
     sublabel: "active",
-    size: 100
+    size: 88
   }), /*#__PURE__*/React.createElement(SVGCircle, {
     value: completed,
     max: projects.length || 1,
     color: C.info,
     label: "\u05D4\u05D5\u05E9\u05DC\u05DE\u05D5",
     sublabel: "done",
-    size: 100
+    size: 88
   }), /*#__PURE__*/React.createElement(SVGCircle, {
     value: (data.users || MOCK_USERS).length,
     max: 20,
     color: C.ai,
     label: "\u05DE\u05E9\u05EA\u05DE\u05E9\u05D9\u05DD",
     sublabel: "users",
-    size: 100
+    size: 88
   })), /*#__PURE__*/React.createElement("div", {
     style: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: 16,
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.card,
-      borderRadius: 16,
-      padding: 20,
-      border: `1px solid ${C.border}`
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: C.sub,
-      fontSize: 16,
-      marginBottom: 6
-    }
-  }, "\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA \u05E9\u05D4\u05EA\u05E7\u05D1\u05DC\u05D5"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 34,
-      fontWeight: 800,
-      color: C.success
-    }
-  }, fmtCurrency(totalRevenue))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.card,
-      borderRadius: 16,
-      padding: 20,
-      border: `1px solid ${C.border}`
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: C.sub,
-      fontSize: 16,
-      marginBottom: 6
-    }
-  }, "\u05EA\u05E9\u05DC\u05D5\u05DE\u05D9\u05DD \u05DE\u05DE\u05EA\u05D9\u05E0\u05D9\u05DD"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 34,
-      fontWeight: 800,
-      color: C.warning
-    }
-  }, fmtCurrency(pendingPayments)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.card,
-      borderRadius: 16,
-      padding: 20,
-      border: `1px solid ${C.border}`,
-      marginBottom: 20,
       display: 'flex',
-      alignItems: 'center',
-      gap: 20,
+      gap: isMobile ? 14 : 24,
       flexWrap: 'wrap'
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontWeight: 700,
-      color: C.text,
-      fontSize: 17,
-      marginBottom: 4
+      color: C.sub,
+      fontSize: 13
     }
-  }, "\uD83C\uDFE2 \u05DC\u05D5\u05D2\u05D5 \u05DE\u05E9\u05E8\u05D3 (White Label)"), /*#__PURE__*/React.createElement("div", {
+  }, "\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA \u05E9\u05D4\u05EA\u05E7\u05D1\u05DC\u05D5"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 800,
+      color: C.success
+    }
+  }, fmtCurrency(totalRevenue))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       color: C.sub,
+      fontSize: 13
+    }
+  }, "\u05EA\u05E9\u05DC\u05D5\u05DE\u05D9\u05DD \u05DE\u05DE\u05EA\u05D9\u05E0\u05D9\u05DD"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 800,
+      color: C.warning
+    }
+  }, fmtCurrency(pendingPayments))))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.card,
+      borderRadius: 14,
+      border: `1px solid ${C.border}`,
+      marginBottom: 14,
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      flexWrap: 'wrap',
+      padding: 14,
+      borderBottom: isMobile ? `1px solid ${C.border}` : 'none',
+      borderInlineEnd: isMobile ? 'none' : `1px solid ${C.border}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      minWidth: 110
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      color: C.text,
       fontSize: 14
     }
-  }, "\u05D9\u05D5\u05E6\u05D2 \u05D1\u05E1\u05E8\u05D2\u05DC \u05D4\u05E0\u05D9\u05D5\u05D5\u05D8 \u05DC\u05E6\u05D3 \u05DC\u05D5\u05D2\u05D5 Tektona")), officeLogo && /*#__PURE__*/React.createElement("img", {
+  }, "\uD83C\uDFE2 \u05DC\u05D5\u05D2\u05D5 (White Label)")), officeLogo && /*#__PURE__*/React.createElement("img", {
     src: officeLogo,
     alt: "office logo",
     style: {
-      height: 40,
+      height: 28,
       width: 'auto',
-      borderRadius: 6
+      borderRadius: 5
     }
   }), /*#__PURE__*/React.createElement("input", {
     ref: logoRef,
@@ -3930,51 +4074,41 @@ function SystemDashboard({
     size: "sm",
     variant: "ghost",
     onClick: () => logoRef.current?.click()
-  }, officeLogo ? '🔄 החלף לוגו' : '📤 העלה לוגו'), officeLogo && /*#__PURE__*/React.createElement(Btn, {
+  }, officeLogo ? '🔄 החלף' : '📤 העלה'), officeLogo && /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
     onClick: removeLogo
   }, "\u05D4\u05E1\u05E8")), /*#__PURE__*/React.createElement("div", {
     style: {
-      background: C.card,
-      borderRadius: 16,
-      padding: 20,
-      border: `1px solid ${C.border}`,
-      marginBottom: 20,
       display: 'flex',
       alignItems: 'center',
-      gap: 12,
-      flexWrap: 'wrap'
+      gap: 10,
+      flexWrap: 'wrap',
+      padding: 14
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      minWidth: 160
+      minWidth: 90
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       color: C.text,
-      fontSize: 17,
-      marginBottom: 4
-    }
-  }, "\uD83D\uDCAC \u05E1\u05DC\u05D5\u05D2\u05DF \u05D4\u05DE\u05E9\u05E8\u05D3"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: C.sub,
       fontSize: 14
     }
-  }, "\u05D9\u05D5\u05E6\u05D2 \u05DC\u05E6\u05D3 \u05E9\u05DD \u05D4\u05DE\u05E9\u05E8\u05D3")), /*#__PURE__*/React.createElement("input", {
+  }, "\uD83D\uDCAC \u05E1\u05DC\u05D5\u05D2\u05DF")), /*#__PURE__*/React.createElement("input", {
     value: slogan,
     onChange: e => setSlogan(e.target.value),
     placeholder: "\u05D4\u05E1\u05DC\u05D5\u05D2\u05DF \u05E9\u05DC\u05DB\u05DD...",
     style: {
       flex: 1,
-      minWidth: 200,
-      padding: '8px 12px',
-      borderRadius: 8,
+      minWidth: 120,
+      padding: '6px 10px',
+      borderRadius: 7,
       border: `1px solid ${C.border}`,
       background: C.inputBg,
       color: C.text,
-      fontSize: 15,
+      fontSize: 14,
       outline: 'none',
       direction: 'rtl',
       fontFamily: 'Heebo,Arial,sans-serif'
@@ -3982,25 +4116,42 @@ function SystemDashboard({
   }), /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     onClick: saveSlogan
-  }, sloganSaved ? '✓ נשמר' : 'שמור')), /*#__PURE__*/React.createElement("div", {
+  }, sloganSaved ? '✓ נשמר' : 'שמור'))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.card,
-      borderRadius: 16,
+      borderRadius: 14,
       border: `1px solid ${C.border}`,
       overflow: 'hidden'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: '16px 20px',
-      borderBottom: `1px solid ${C.border}`
+      padding: '12px 16px',
+      borderBottom: `1px solid ${C.border}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 10,
+      flexWrap: 'wrap'
     }
   }, /*#__PURE__*/React.createElement("h3", {
     style: {
       color: C.text,
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: 700
     }
-  }, "\u05DB\u05DC \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD")), projects.map(p => /*#__PURE__*/React.createElement("div", {
+  }, "\u05DB\u05DC \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    variant: "ghost",
+    onClick: onBack
+  }, "\uD83D\uDCC1 \u05E0\u05D9\u05D4\u05D5\u05DC \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05E7\u05D9\u05D9\u05DE\u05D9\u05DD"), /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    onClick: () => setShowNewProject(true)
+  }, "+ \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u05D7\u05D3\u05E9"))), projects.map(p => /*#__PURE__*/React.createElement("div", {
     key: p.id,
     onClick: () => onOpenProject && onOpenProject(p.id),
     style: {
@@ -4030,6 +4181,22 @@ function SystemDashboard({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
+      width: 78,
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 10,
+      color: C.sub,
+      opacity: 0.7
+    }
+  }, "\u05E0\u05D5\u05E1\u05E3"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: C.sub
+    }
+  }, fmtDate(p.createdAt || p.startDate))), /*#__PURE__*/React.createElement("div", {
+    style: {
       width: 80,
       height: 6,
       background: C.border,
@@ -4051,7 +4218,150 @@ function SystemDashboard({
     }
   }, p.progress, "%"), /*#__PURE__*/React.createElement(StatusBadge, {
     status: p.status
-  })))))));
+  })))))), showNewProject && /*#__PURE__*/React.createElement(Modal, {
+    title: "\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u05D7\u05D3\u05E9",
+    onClose: () => setShowNewProject(false),
+    width: 580
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement(Input, {
+    label: "\u05E9\u05DD \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8",
+    value: form.name,
+    onChange: v => setForm(f => ({
+      ...f,
+      name: v
+    })),
+    required: true,
+    style: {
+      gridColumn: '1/-1'
+    }
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05DB\u05EA\u05D5\u05D1\u05EA",
+    value: form.address,
+    onChange: v => setForm(f => ({
+      ...f,
+      address: v
+    })),
+    style: {
+      gridColumn: '1/-1'
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      gridColumn: '1/-1'
+    }
+  }, /*#__PURE__*/React.createElement(ProjectAccessEditor, {
+    officeId: officeId,
+    architectId: form.architectId,
+    clientIds: form.clientIds,
+    onChange: patch => setForm(f => ({
+      ...f,
+      ...patch
+    }))
+  })), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05EA\u05E7\u05E6\u05D9\u05D1 (\u20AA)",
+    type: "number",
+    value: form.budget,
+    onChange: v => setForm(f => ({
+      ...f,
+      budget: v
+    }))
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: 'שטח (מ"ר)',
+    type: "number",
+    value: form.area,
+    onChange: v => setForm(f => ({
+      ...f,
+      area: v
+    }))
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05EA\u05D7\u05D9\u05DC\u05EA \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8",
+    type: "date",
+    value: form.startDate,
+    onChange: v => setForm(f => ({
+      ...f,
+      startDate: v
+    }))
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05E1\u05D9\u05D5\u05DD \u05E6\u05E4\u05D5\u05D9",
+    type: "date",
+    value: form.endDate,
+    onChange: v => setForm(f => ({
+      ...f,
+      endDate: v
+    }))
+  }), /*#__PURE__*/React.createElement(Select, {
+    label: "\u05EA\u05D1\u05E0\u05D9\u05EA",
+    value: form.template,
+    onChange: v => setForm(f => ({
+      ...f,
+      template: v
+    })),
+    style: {
+      gridColumn: '1/-1'
+    },
+    options: [{
+      value: 'villa',
+      label: '🏡 וילה / בית פרטי'
+    }, {
+      value: 'renovation',
+      label: '🔧 שיפוץ'
+    }, {
+      value: 'commercial',
+      label: '🏢 מסחרי'
+    }, {
+      value: 'addition',
+      label: '➕ תוספת בנייה'
+    }]
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      gridColumn: '1/-1'
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 14,
+      fontWeight: 600,
+      color: C.sub,
+      display: 'block',
+      marginBottom: 4
+    }
+  }, "\u05EA\u05D9\u05D0\u05D5\u05E8"), /*#__PURE__*/React.createElement("textarea", {
+    value: form.description,
+    onChange: e => setForm(f => ({
+      ...f,
+      description: e.target.value
+    })),
+    rows: 3,
+    placeholder: "\u05EA\u05D9\u05D0\u05D5\u05E8 \u05E7\u05E6\u05E8 \u05E9\u05DC \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8...",
+    style: {
+      width: '100%',
+      padding: '9px 12px',
+      borderRadius: 8,
+      border: `1px solid ${C.border}`,
+      background: C.inputBg,
+      color: C.text,
+      fontSize: 16,
+      resize: 'vertical',
+      fontFamily: 'Heebo,Arial,sans-serif',
+      outline: 'none',
+      direction: 'rtl'
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10,
+      justifyContent: 'flex-end',
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    onClick: () => setShowNewProject(false),
+    variant: "ghost"
+  }, "\u05D1\u05D9\u05D8\u05D5\u05DC"), /*#__PURE__*/React.createElement(Btn, {
+    onClick: addProject
+  }, "\u05E6\u05D5\u05E8 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8"))));
 }
 
 // ─── USERS SCREEN ─────────────────────────────────────────────────────────────
@@ -9961,6 +10271,7 @@ function ProjectsList({
       status: 'planning',
       currentPhase: 1,
       progress: 0,
+      createdAt: today(),
       budget: Number(form.budget) || 0,
       area: Number(form.area) || 0,
       coverImage: null,
@@ -11346,18 +11657,23 @@ const SCREEN_PATHS = {
   suspended: '/suspended'
 };
 const PATH_SCREENS = Object.fromEntries(Object.entries(SCREEN_PATHS).map(([s, p]) => [p, s]));
-function buildPath(screen, projectId, tab) {
+function buildPath(screen, projectId, tab, projects) {
   if (screen === 'project' && projectId) {
-    return `/project/${projectId}${tab && tab !== 'dashboard' ? '/' + tab : ''}`;
+    const proj = (projects || []).find(p => p.id === projectId);
+    const slug = proj ? slugifyProjectName(proj.name) : projectId;
+    return `/project/${slug}${tab && tab !== 'dashboard' ? '/' + tab : ''}`;
   }
   return SCREEN_PATHS[screen] || '/projects';
 }
-function parsePath(pathname) {
+function parsePath(pathname, projects) {
   const parts = pathname.split('/').filter(Boolean);
   if (parts[0] === 'project' && parts[1]) {
+    // Resolve the slug back to a real project id; fall back to treating the
+    // segment as a raw id so old bookmarked /project/p1 links keep working.
+    const proj = (projects || []).find(p => slugifyProjectName(p.name) === parts[1]) || (projects || []).find(p => p.id === parts[1]);
     return {
       screen: 'project',
-      projectId: parts[1],
+      projectId: proj ? proj.id : parts[1],
       tab: parts[2] || 'dashboard'
     };
   }
@@ -11394,14 +11710,15 @@ function App() {
     const {
       projectId = null,
       tab = null,
-      replace = false
+      replace = false,
+      projects = data?.projects
     } = opts;
     setScreen(targetScreen);
     if (targetScreen === 'project') {
       setActiveProject(projectId);
       setActiveTab(tab || 'dashboard');
     }
-    const path = buildPath(targetScreen, projectId, tab);
+    const path = buildPath(targetScreen, projectId, tab, projects);
     if (window.location.pathname !== path) {
       window.history[replace ? 'replaceState' : 'pushState']({
         screen: targetScreen,
@@ -11440,7 +11757,7 @@ function App() {
     setData(officeData);
 
     // Restore a deep link from the current URL if it's valid for this user; otherwise land on the role's default screen.
-    const parsed = parsePath(window.location.pathname);
+    const parsed = parsePath(window.location.pathname, officeData.projects);
     const allowed = ROLE_SCREENS[u.role] || [];
     if (parsed && allowed.includes(parsed.screen)) {
       if (parsed.screen === 'project') {
@@ -11448,7 +11765,8 @@ function App() {
           navigate('project', {
             projectId: parsed.projectId,
             tab: parsed.tab,
-            replace: true
+            replace: true,
+            projects: officeData.projects
           });
           return;
         }
@@ -11494,7 +11812,7 @@ function App() {
   React.useEffect(() => {
     const onPopState = () => {
       if (!user) return;
-      const parsed = parsePath(window.location.pathname);
+      const parsed = parsePath(window.location.pathname, data?.projects);
       const allowed = ROLE_SCREENS[user.role] || [];
       if (parsed && allowed.includes(parsed.screen)) {
         if (parsed.screen === 'project') {
@@ -11510,7 +11828,7 @@ function App() {
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [user]);
+  }, [user, data]);
 
   // Live sync: when any office member saves, everyone else's screen updates too.
   React.useEffect(() => {
@@ -11611,6 +11929,7 @@ function App() {
   });
   return /*#__PURE__*/React.createElement(React.Fragment, null, screen === 'systemdash' && /*#__PURE__*/React.createElement(SystemDashboard, {
     data: data,
+    setData: updateData,
     user: user,
     officeId: user.officeId,
     onBack: goHome,
