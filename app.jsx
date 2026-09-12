@@ -2396,13 +2396,13 @@ function TasksTab({ project, setProject, user }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [logHoursId, setLogHoursId] = React.useState(null);
   const [hoursInput, setHoursInput] = React.useState('');
-  const [form, setForm] = React.useState({title:'',desc:'',assignee:'',priority:'medium',dueDate:''});
+  const [form, setForm] = React.useState({title:'',desc:'',assignee:'',priority:'medium',dueDate:'',notes:''});
   const tasks = project.tasks || [];
   const add = () => {
     if (!form.title) return;
     setProject(p=>({...p, tasks:[...tasks,{...form,id:'t'+uid(),status:'todo',createdBy:user.name,createdAt:today(),hoursLogged:[]}]}));
     notifyProjectMembers(user.officeId, project, user, 'task', 'משימה חדשה: '+form.title, form.desc);
-    setForm({title:'',desc:'',assignee:'',priority:'medium',dueDate:''}); setShowAdd(false);
+    setForm({title:'',desc:'',assignee:'',priority:'medium',dueDate:'',notes:''}); setShowAdd(false);
   };
   const updateStatus = (id, s) => setProject(p=>({...p,tasks:tasks.map(t=>t.id===id?{...t,status:s}:t)}));
   const logHours = (id) => {
@@ -2443,6 +2443,7 @@ function TasksTab({ project, setProject, user }) {
                   border:`1px solid ${C.border}`,borderRight:`3px solid ${priColors[t.priority]||C.border}`}}>
                   <div style={{fontWeight:600,color:C.text,fontSize:16,marginBottom:4}}>{t.title}</div>
                   {t.desc && <div style={{color:C.sub,fontSize:14,marginBottom:6}}>{t.desc}</div>}
+                  {t.notes && <div style={{color:C.sub,fontSize:13,marginBottom:6,fontStyle:'italic'}}>📝 {t.notes}</div>}
                   {(t.hoursLogged||[]).length>0 && (
                     <div style={{fontSize:12,color:C.ai,marginBottom:6}}>
                       ⏱️ {(t.hoursLogged||[]).reduce((s,l)=>s+l.hours,0).toFixed(1)}h מדווח
@@ -2495,6 +2496,14 @@ function TasksTab({ project, setProject, user }) {
             <Select label="עדיפות" value={form.priority} onChange={v=>setForm(f=>({...f,priority:v}))}
               options={[{value:'high',label:'גבוהה'},{value:'medium',label:'בינונית'},{value:'low',label:'נמוכה'}]}/>
             <Input label="תאריך יעד" type="date" value={form.dueDate} onChange={v=>setForm(f=>({...f,dueDate:v}))}/>
+            <div>
+              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>הערות</label>
+              <textarea value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}
+                rows={3} placeholder="הערות נוספות..."
+                style={{width:'100%',padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
+                  background:C.inputBg,color:C.text,fontSize:16,resize:'vertical',
+                  fontFamily:'Heebo,Arial,sans-serif',outline:'none',direction:'rtl'}}/>
+            </div>
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
               <Btn onClick={()=>setShowAdd(false)} variant="ghost">ביטול</Btn>
               <Btn onClick={add}>הוסף משימה</Btn>
