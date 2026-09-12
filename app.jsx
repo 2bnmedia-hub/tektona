@@ -952,7 +952,7 @@ function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent, onOpenThem
         <button onClick={onGoHome}
           style={{background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', gap:10}}
           title="דף הבית">
-          <img src={isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+          <img src={isLightColor(C.sidebar) ? '/logo-dark.png' : '/logo-white.png'} alt="TEKTONA"
             style={{width: isMobile ? 80 : 'clamp(90px,12vw,180px)', height:'auto', display:'block', transition:'opacity .15s'}}
             onMouseEnter={e=>e.currentTarget.style.opacity='0.7'}
             onMouseLeave={e=>e.currentTarget.style.opacity='1'}/>
@@ -1226,7 +1226,7 @@ function LoginScreen({ onLogin }) {
       <div style={{ position:'absolute', top:0, left:0, right:0, zIndex:10,
         display:'flex', justifyContent:'space-between', alignItems:'center',
         padding: isMobile ? '16px 20px' : '24px 40px', borderBottom:`1px solid ${C.border}` }}>
-        <img src={isLightColor(C.bg) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+        <img src={isLightColor(C.bg) ? '/logo-dark.png' : '/logo-white.png'} alt="TEKTONA"
           style={{ width: isMobile ? 90 : 'clamp(110px,16vw,240px)', height:'auto', display:'block' }}/>
         {!isMobile && (
           <div style={{ display:'flex', gap:28, alignItems:'center' }}>
@@ -1265,7 +1265,7 @@ function LoginScreen({ onLogin }) {
 
         {/* Logo heading */}
         <div style={{ textAlign:'center', marginBottom:60 }}>
-          <img src={isLightColor(C.bg) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+          <img src={isLightColor(C.bg) ? '/logo-dark.png' : '/logo-white.png'} alt="TEKTONA"
             style={{ width:'clamp(220px,32vw,480px)', height:'auto', display:'block',
               margin:'0 auto 16px' }}/>
           <div style={{ width:40, height:1, background:C.sub, margin:'0 auto 20px' }}/>
@@ -2213,6 +2213,10 @@ function TimelineTab({ project, setProject }) {
     const updated = phases.map((p,i)=>i===idx?{...p,[field]:val}:p);
     setProject(pr=>({...pr,phases:updated}));
   };
+  // Standard phases stay in place (other features index into project.currentPhase),
+  // so "deleting" one just hides it instead of splicing the array.
+  const removePhase = (idx) => updatePhase(idx, 'hidden', true);
+  const restorePhase = (idx) => updatePhase(idx, 'hidden', false);
   const updateCustomPhase = (id, field, val) => {
     setProject(pr=>({...pr, customPhases:(pr.customPhases||[]).map(c=>c.id===id?{...c,[field]:val}:c)}));
   };
@@ -2249,35 +2253,21 @@ function TimelineTab({ project, setProject }) {
             <span>{project.startDate||'—'}</span><span>{project.endDate||'—'}</span>
           </div>
           {(() => {
-            const totalSegs = PHASES.length + customPhases.length;
+            const segs = [
+              ...PHASES.map((phase,i)=>({ key:phase.id, name:ph=>ph.name||phase.short, ph:phases[i]||{status:'pending'} }))
+                .filter(s=>!s.ph.hidden),
+              ...customPhases.map(ph=>({ key:ph.id, name:()=>ph.name, ph })),
+            ];
+            const totalSegs = segs.length || 1;
             return <>
-              {PHASES.map((phase,i)=>{
-                const ph = phases[i]||{status:'pending'};
+              {segs.map((seg,i)=>{
+                const ph = seg.ph;
                 const color = ph.status==='completed'?C.success:ph.status==='active'?C.primary:C.border;
                 const left  = (i/totalSegs)*100;
                 const width = (1/totalSegs)*100;
                 return (
-                  <div key={phase.id} style={{marginBottom:8,display:'flex',alignItems:'center',gap:10}}>
-                    <div style={{width:90,fontSize:12,color:C.sub,textAlign:'right',flexShrink:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={ph.name||phase.name}>{ph.name||phase.short}</div>
-                    <div style={{flex:1,height:20,background:C.border,borderRadius:4,position:'relative',minWidth:200}}>
-                      <div style={{position:'absolute',right:`${100-left-width}%`,width:width+'%',height:'100%',
-                        background:color,borderRadius:4,transition:'width .8s ease',
-                        display:'flex',alignItems:'center',justifyContent:'center'}}>
-                        {ph.status==='completed'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>✓</span>}
-                        {ph.status==='active'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>▶</span>}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              {customPhases.map((ph,ci)=>{
-                const i = PHASES.length + ci;
-                const color = ph.status==='completed'?C.success:ph.status==='active'?C.primary:C.border;
-                const left  = (i/totalSegs)*100;
-                const width = (1/totalSegs)*100;
-                return (
-                  <div key={ph.id} style={{marginBottom:8,display:'flex',alignItems:'center',gap:10}}>
-                    <div style={{width:90,fontSize:12,color:C.sub,textAlign:'right',flexShrink:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ph.name}</div>
+                  <div key={seg.key} style={{marginBottom:8,display:'flex',alignItems:'center',gap:10}}>
+                    <div style={{width:90,fontSize:12,color:C.sub,textAlign:'right',flexShrink:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={seg.name(ph)}>{seg.name(ph)}</div>
                     <div style={{flex:1,height:20,background:C.border,borderRadius:4,position:'relative',minWidth:200}}>
                       <div style={{position:'absolute',right:`${100-left-width}%`,width:width+'%',height:'100%',
                         background:color,borderRadius:4,transition:'width .8s ease',
@@ -2299,6 +2289,7 @@ function TimelineTab({ project, setProject }) {
           <div style={{position:'absolute',right:19,top:32,bottom:32,width:2,background:C.border,zIndex:0}}/>
           {PHASES.map((phase,i)=>{
             const ph = phases[i] || {status:'pending',completedDate:null,notes:''};
+            if (ph.hidden) return null;
             const color = statusColors[ph.status] || C.border;
             return (
               <div key={phase.id} style={{display:'flex',gap:20,marginBottom:20,position:'relative'}}>
@@ -2317,6 +2308,9 @@ function TimelineTab({ project, setProject }) {
                     <Select value={ph.status} onChange={v=>updatePhase(i,'status',v)}
                       options={[{value:'pending',label:'ממתין'},{value:'active',label:'פעיל'},{value:'completed',label:'הושלם'}]}
                       style={{width:120}}/>
+                    <button onClick={()=>removePhase(i)}
+                      style={{background:'none',border:'none',color:C.sub,cursor:'pointer',fontSize:16}}
+                      title="הסר שלב">✕</button>
                   </div>
                   {ph.status==='completed' && (
                     <div style={{marginBottom:8}}>
@@ -2385,6 +2379,19 @@ function TimelineTab({ project, setProject }) {
               <Btn size="sm" onClick={addCustomPhase}>+ הוסף שלב</Btn>
             </div>
           </div>
+          {PHASES.some((p,i)=>(phases[i]||{}).hidden) && (
+            <div style={{display:'flex',gap:20,position:'relative',marginTop:16}}>
+              <div style={{width:40,flexShrink:0}}/>
+              <div style={{flex:1,display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+                <span style={{fontSize:13,color:C.sub}}>שלבים מוסתרים:</span>
+                {PHASES.map((phase,i)=>(phases[i]||{}).hidden && (
+                  <Btn key={phase.id} size="sm" variant="ghost" onClick={()=>restorePhase(i)}>
+                    ↩️ {(phases[i]||{}).name||phase.name}
+                  </Btn>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -2397,6 +2404,8 @@ function TasksTab({ project, setProject, user }) {
   const [logHoursId, setLogHoursId] = React.useState(null);
   const [hoursInput, setHoursInput] = React.useState('');
   const [form, setForm] = React.useState({title:'',desc:'',assignee:'',priority:'medium',dueDate:'',notes:''});
+  const [editingId, setEditingId] = React.useState(null);
+  const [editForm, setEditForm] = React.useState(null);
   const tasks = project.tasks || [];
   const add = () => {
     if (!form.title) return;
@@ -2405,6 +2414,15 @@ function TasksTab({ project, setProject, user }) {
     setForm({title:'',desc:'',assignee:'',priority:'medium',dueDate:'',notes:''}); setShowAdd(false);
   };
   const updateStatus = (id, s) => setProject(p=>({...p,tasks:tasks.map(t=>t.id===id?{...t,status:s}:t)}));
+  const startEdit = (t) => {
+    setEditForm({title:t.title||'',desc:t.desc||'',assignee:t.assignee||'',priority:t.priority||'medium',dueDate:t.dueDate||'',notes:t.notes||''});
+    setEditingId(t.id);
+  };
+  const saveEdit = () => {
+    setProject(p=>({...p,tasks:(p.tasks||tasks).map(t=>t.id===editingId?{...t,...editForm}:t)}));
+    setEditingId(null); setEditForm(null);
+  };
+  const removeTask = (id) => setProject(p=>({...p,tasks:(p.tasks||tasks).filter(t=>t.id!==id)}));
   const logHours = (id) => {
     const h = parseFloat(hoursInput); if (!h||h<=0) return;
     setProject(p=>({...p,tasks:tasks.map(t=>t.id===id?{...t,hoursLogged:[...(t.hoursLogged||[]),{hours:h,by:user.name,date:today()}]}:t)}));
@@ -2477,7 +2495,11 @@ function TasksTab({ project, setProject, user }) {
                           <Btn size="sm" variant="ghost" onClick={()=>setLogHoursId(null)}>✕</Btn>
                         </div>
                       ) : (
-                        <Btn size="sm" variant="ghost" onClick={()=>{setLogHoursId(t.id);setHoursInput('');}}>⏱️ דווח שעות</Btn>
+                        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                          <Btn size="sm" variant="ghost" onClick={()=>{setLogHoursId(t.id);setHoursInput('');}}>⏱️ דווח שעות</Btn>
+                          <Btn size="sm" variant="ghost" onClick={()=>startEdit(t)}>✏️ ערוך</Btn>
+                          <Btn size="sm" variant="ghost" onClick={()=>removeTask(t.id)}>🗑️ מחק</Btn>
+                        </div>
                       )}
                     </div>
                   )}
@@ -2507,6 +2529,30 @@ function TasksTab({ project, setProject, user }) {
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
               <Btn onClick={()=>setShowAdd(false)} variant="ghost">ביטול</Btn>
               <Btn onClick={add}>הוסף משימה</Btn>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {editingId && (
+        <Modal title="ערוך משימה" onClose={()=>{setEditingId(null);setEditForm(null);}} width={480}>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <Input label="כותרת" value={editForm.title} onChange={v=>setEditForm(f=>({...f,title:v}))} required/>
+            <Input label="תיאור" value={editForm.desc} onChange={v=>setEditForm(f=>({...f,desc:v}))}/>
+            <Input label="מוקצה ל" value={editForm.assignee} onChange={v=>setEditForm(f=>({...f,assignee:v}))}/>
+            <Select label="עדיפות" value={editForm.priority} onChange={v=>setEditForm(f=>({...f,priority:v}))}
+              options={[{value:'high',label:'גבוהה'},{value:'medium',label:'בינונית'},{value:'low',label:'נמוכה'}]}/>
+            <Input label="תאריך יעד" type="date" value={editForm.dueDate} onChange={v=>setEditForm(f=>({...f,dueDate:v}))}/>
+            <div>
+              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>הערות</label>
+              <textarea value={editForm.notes} onChange={e=>setEditForm(f=>({...f,notes:e.target.value}))}
+                rows={3} placeholder="הערות נוספות..."
+                style={{width:'100%',padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
+                  background:C.inputBg,color:C.text,fontSize:16,resize:'vertical',
+                  fontFamily:'Heebo,Arial,sans-serif',outline:'none',direction:'rtl'}}/>
+            </div>
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <Btn onClick={()=>{setEditingId(null);setEditForm(null);}} variant="ghost">ביטול</Btn>
+              <Btn onClick={saveEdit}>שמור</Btn>
             </div>
           </div>
         </Modal>
@@ -3882,7 +3928,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
             <button onClick={onGoHome}
               style={{background:'none',border:'none',cursor:'pointer',padding:0,
                 display:'flex',alignItems:'center',flexShrink:0}}>
-              <img src={isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+              <img src={isLightColor(C.sidebar) ? '/logo-dark.png' : '/logo-white.png'} alt="TEKTONA"
                 style={{width: isMobile ? 72 : 'clamp(90px,12vw,180px)', height:'auto', display:'block', transition:'opacity .15s'}}
                 onMouseEnter={e=>e.currentTarget.style.opacity='0.7'}
                 onMouseLeave={e=>e.currentTarget.style.opacity='1'}/>
@@ -4019,7 +4065,7 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
         {isMobile && (
           <div style={{position:'absolute',left:0,right:0,top:0,bottom:0,
             display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'none',zIndex:0}}>
-            <img src={isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+            <img src={isLightColor(C.sidebar) ? '/logo-dark.png' : '/logo-white.png'} alt="TEKTONA"
               style={{width:87, height:'auto', display:'block'}}/>
           </div>
         )}
@@ -4041,7 +4087,7 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
               <button onClick={onLogout} style={{background:'none',border:'none',padding:0,cursor:'pointer',display:'flex',alignItems:'center'}}
                 onMouseEnter={e=>e.currentTarget.querySelector('img').style.opacity='0.7'}
                 onMouseLeave={e=>e.currentTarget.querySelector('img').style.opacity='1'}>
-                <img src={isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png'} alt="TEKTONA"
+                <img src={isLightColor(C.sidebar) ? '/logo-dark.png' : '/logo-white.png'} alt="TEKTONA"
                   style={{width:'clamp(110px,16vw,240px)', height:'auto', display:'block', transition:'opacity .15s'}}/>
               </button>
               <div style={{width:1,height:20,background:C.border}}/>

@@ -2785,7 +2785,7 @@ function AppNavBar({
     },
     title: "\u05D3\u05E3 \u05D4\u05D1\u05D9\u05EA"
   }, /*#__PURE__*/React.createElement("img", {
-    src: isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png',
+    src: isLightColor(C.sidebar) ? '/logo-dark.png' : '/logo-white.png',
     alt: "TEKTONA",
     style: {
       width: isMobile ? 80 : 'clamp(90px,12vw,180px)',
@@ -3368,7 +3368,7 @@ function LoginScreen({
       borderBottom: `1px solid ${C.border}`
     }
   }, /*#__PURE__*/React.createElement("img", {
-    src: isLightColor(C.bg) ? 'logo-dark.png' : 'logo-white.png',
+    src: isLightColor(C.bg) ? '/logo-dark.png' : '/logo-white.png',
     alt: "TEKTONA",
     style: {
       width: isMobile ? 90 : 'clamp(110px,16vw,240px)',
@@ -3437,7 +3437,7 @@ function LoginScreen({
       marginBottom: 60
     }
   }, /*#__PURE__*/React.createElement("img", {
-    src: isLightColor(C.bg) ? 'logo-dark.png' : 'logo-white.png',
+    src: isLightColor(C.bg) ? '/logo-dark.png' : '/logo-white.png',
     alt: "TEKTONA",
     style: {
       width: 'clamp(220px,32vw,480px)',
@@ -6176,6 +6176,10 @@ function TimelineTab({
       phases: updated
     }));
   };
+  // Standard phases stay in place (other features index into project.currentPhase),
+  // so "deleting" one just hides it instead of splicing the array.
+  const removePhase = idx => updatePhase(idx, 'hidden', true);
+  const restorePhase = idx => updatePhase(idx, 'hidden', false);
   const updateCustomPhase = (id, field, val) => {
     setProject(pr => ({
       ...pr,
@@ -6261,16 +6265,25 @@ function TimelineTab({
       justifyContent: 'space-between'
     }
   }, /*#__PURE__*/React.createElement("span", null, project.startDate || '—'), /*#__PURE__*/React.createElement("span", null, project.endDate || '—')), (() => {
-    const totalSegs = PHASES.length + customPhases.length;
-    return /*#__PURE__*/React.createElement(React.Fragment, null, PHASES.map((phase, i) => {
-      const ph = phases[i] || {
+    const segs = [...PHASES.map((phase, i) => ({
+      key: phase.id,
+      name: ph => ph.name || phase.short,
+      ph: phases[i] || {
         status: 'pending'
-      };
+      }
+    })).filter(s => !s.ph.hidden), ...customPhases.map(ph => ({
+      key: ph.id,
+      name: () => ph.name,
+      ph
+    }))];
+    const totalSegs = segs.length || 1;
+    return /*#__PURE__*/React.createElement(React.Fragment, null, segs.map((seg, i) => {
+      const ph = seg.ph;
       const color = ph.status === 'completed' ? C.success : ph.status === 'active' ? C.primary : C.border;
       const left = i / totalSegs * 100;
       const width = 1 / totalSegs * 100;
       return /*#__PURE__*/React.createElement("div", {
-        key: phase.id,
+        key: seg.key,
         style: {
           marginBottom: 8,
           display: 'flex',
@@ -6288,67 +6301,8 @@ function TimelineTab({
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap'
         },
-        title: ph.name || phase.name
-      }, ph.name || phase.short), /*#__PURE__*/React.createElement("div", {
-        style: {
-          flex: 1,
-          height: 20,
-          background: C.border,
-          borderRadius: 4,
-          position: 'relative',
-          minWidth: 200
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          position: 'absolute',
-          right: `${100 - left - width}%`,
-          width: width + '%',
-          height: '100%',
-          background: color,
-          borderRadius: 4,
-          transition: 'width .8s ease',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }
-      }, ph.status === 'completed' && /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 10,
-          color: '#fff',
-          fontWeight: 700
-        }
-      }, "\u2713"), ph.status === 'active' && /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: 10,
-          color: '#fff',
-          fontWeight: 700
-        }
-      }, "\u25B6"))));
-    }), customPhases.map((ph, ci) => {
-      const i = PHASES.length + ci;
-      const color = ph.status === 'completed' ? C.success : ph.status === 'active' ? C.primary : C.border;
-      const left = i / totalSegs * 100;
-      const width = 1 / totalSegs * 100;
-      return /*#__PURE__*/React.createElement("div", {
-        key: ph.id,
-        style: {
-          marginBottom: 8,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          width: 90,
-          fontSize: 12,
-          color: C.sub,
-          textAlign: 'right',
-          flexShrink: 0,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap'
-        }
-      }, ph.name), /*#__PURE__*/React.createElement("div", {
+        title: seg.name(ph)
+      }, seg.name(ph)), /*#__PURE__*/React.createElement("div", {
         style: {
           flex: 1,
           height: 20,
@@ -6404,6 +6358,7 @@ function TimelineTab({
       completedDate: null,
       notes: ''
     };
+    if (ph.hidden) return null;
     const color = statusColors[ph.status] || C.border;
     return /*#__PURE__*/React.createElement("div", {
       key: phase.id,
@@ -6476,7 +6431,17 @@ function TimelineTab({
       style: {
         width: 120
       }
-    })), ph.status === 'completed' && /*#__PURE__*/React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("button", {
+      onClick: () => removePhase(i),
+      style: {
+        background: 'none',
+        border: 'none',
+        color: C.sub,
+        cursor: 'pointer',
+        fontSize: 16
+      },
+      title: "\u05D4\u05E1\u05E8 \u05E9\u05DC\u05D1"
+    }, "\u2715")), ph.status === 'completed' && /*#__PURE__*/React.createElement("div", {
       style: {
         marginBottom: 8
       }
@@ -6673,7 +6638,37 @@ function TimelineTab({
   }), /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     onClick: addCustomPhase
-  }, "+ \u05D4\u05D5\u05E1\u05E3 \u05E9\u05DC\u05D1")))));
+  }, "+ \u05D4\u05D5\u05E1\u05E3 \u05E9\u05DC\u05D1"))), PHASES.some((p, i) => (phases[i] || {}).hidden) && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 20,
+      position: 'relative',
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: 40,
+      flexShrink: 0
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: 1,
+      display: 'flex',
+      gap: 8,
+      flexWrap: 'wrap',
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      color: C.sub
+    }
+  }, "\u05E9\u05DC\u05D1\u05D9\u05DD \u05DE\u05D5\u05E1\u05EA\u05E8\u05D9\u05DD:"), PHASES.map((phase, i) => (phases[i] || {}).hidden && /*#__PURE__*/React.createElement(Btn, {
+    key: phase.id,
+    size: "sm",
+    variant: "ghost",
+    onClick: () => restorePhase(i)
+  }, "\u21A9\uFE0F ", (phases[i] || {}).name || phase.name))))));
 }
 
 // ─── TASKS TAB ────────────────────────────────────────────────────────────────
@@ -6693,6 +6688,8 @@ function TasksTab({
     dueDate: '',
     notes: ''
   });
+  const [editingId, setEditingId] = React.useState(null);
+  const [editForm, setEditForm] = React.useState(null);
   const tasks = project.tasks || [];
   const add = () => {
     if (!form.title) return;
@@ -6724,6 +6721,32 @@ function TasksTab({
       ...t,
       status: s
     } : t)
+  }));
+  const startEdit = t => {
+    setEditForm({
+      title: t.title || '',
+      desc: t.desc || '',
+      assignee: t.assignee || '',
+      priority: t.priority || 'medium',
+      dueDate: t.dueDate || '',
+      notes: t.notes || ''
+    });
+    setEditingId(t.id);
+  };
+  const saveEdit = () => {
+    setProject(p => ({
+      ...p,
+      tasks: (p.tasks || tasks).map(t => t.id === editingId ? {
+        ...t,
+        ...editForm
+      } : t)
+    }));
+    setEditingId(null);
+    setEditForm(null);
+  };
+  const removeTask = id => setProject(p => ({
+    ...p,
+    tasks: (p.tasks || tasks).filter(t => t.id !== id)
   }));
   const logHours = id => {
     const h = parseFloat(hoursInput);
@@ -6938,14 +6961,28 @@ function TasksTab({
     size: "sm",
     variant: "ghost",
     onClick: () => setLogHoursId(null)
-  }, "\u2715")) : /*#__PURE__*/React.createElement(Btn, {
+  }, "\u2715")) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
     onClick: () => {
       setLogHoursId(t.id);
       setHoursInput('');
     }
-  }, "\u23F1\uFE0F \u05D3\u05D5\u05D5\u05D7 \u05E9\u05E2\u05D5\u05EA")))))))), showAdd && /*#__PURE__*/React.createElement(Modal, {
+  }, "\u23F1\uFE0F \u05D3\u05D5\u05D5\u05D7 \u05E9\u05E2\u05D5\u05EA"), /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    variant: "ghost",
+    onClick: () => startEdit(t)
+  }, "\u270F\uFE0F \u05E2\u05E8\u05D5\u05DA"), /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    variant: "ghost",
+    onClick: () => removeTask(t.id)
+  }, "\uD83D\uDDD1\uFE0F \u05DE\u05D7\u05E7"))))))))), showAdd && /*#__PURE__*/React.createElement(Modal, {
     title: "\u05DE\u05E9\u05D9\u05DE\u05D4 \u05D7\u05D3\u05E9\u05D4",
     onClose: () => setShowAdd(false),
     width: 480
@@ -7043,7 +7080,111 @@ function TasksTab({
     variant: "ghost"
   }, "\u05D1\u05D9\u05D8\u05D5\u05DC"), /*#__PURE__*/React.createElement(Btn, {
     onClick: add
-  }, "\u05D4\u05D5\u05E1\u05E3 \u05DE\u05E9\u05D9\u05DE\u05D4")))));
+  }, "\u05D4\u05D5\u05E1\u05E3 \u05DE\u05E9\u05D9\u05DE\u05D4")))), editingId && /*#__PURE__*/React.createElement(Modal, {
+    title: "\u05E2\u05E8\u05D5\u05DA \u05DE\u05E9\u05D9\u05DE\u05D4",
+    onClose: () => {
+      setEditingId(null);
+      setEditForm(null);
+    },
+    width: 480
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement(Input, {
+    label: "\u05DB\u05D5\u05EA\u05E8\u05EA",
+    value: editForm.title,
+    onChange: v => setEditForm(f => ({
+      ...f,
+      title: v
+    })),
+    required: true
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05EA\u05D9\u05D0\u05D5\u05E8",
+    value: editForm.desc,
+    onChange: v => setEditForm(f => ({
+      ...f,
+      desc: v
+    }))
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05DE\u05D5\u05E7\u05E6\u05D4 \u05DC",
+    value: editForm.assignee,
+    onChange: v => setEditForm(f => ({
+      ...f,
+      assignee: v
+    }))
+  }), /*#__PURE__*/React.createElement(Select, {
+    label: "\u05E2\u05D3\u05D9\u05E4\u05D5\u05EA",
+    value: editForm.priority,
+    onChange: v => setEditForm(f => ({
+      ...f,
+      priority: v
+    })),
+    options: [{
+      value: 'high',
+      label: 'גבוהה'
+    }, {
+      value: 'medium',
+      label: 'בינונית'
+    }, {
+      value: 'low',
+      label: 'נמוכה'
+    }]
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05EA\u05D0\u05E8\u05D9\u05DA \u05D9\u05E2\u05D3",
+    type: "date",
+    value: editForm.dueDate,
+    onChange: v => setEditForm(f => ({
+      ...f,
+      dueDate: v
+    }))
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 14,
+      fontWeight: 600,
+      color: C.sub,
+      display: 'block',
+      marginBottom: 6
+    }
+  }, "\u05D4\u05E2\u05E8\u05D5\u05EA"), /*#__PURE__*/React.createElement("textarea", {
+    value: editForm.notes,
+    onChange: e => setEditForm(f => ({
+      ...f,
+      notes: e.target.value
+    })),
+    rows: 3,
+    placeholder: "\u05D4\u05E2\u05E8\u05D5\u05EA \u05E0\u05D5\u05E1\u05E4\u05D5\u05EA...",
+    style: {
+      width: '100%',
+      padding: '9px 12px',
+      borderRadius: 8,
+      border: `1px solid ${C.border}`,
+      background: C.inputBg,
+      color: C.text,
+      fontSize: 16,
+      resize: 'vertical',
+      fontFamily: 'Heebo,Arial,sans-serif',
+      outline: 'none',
+      direction: 'rtl'
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10,
+      justifyContent: 'flex-end',
+      marginTop: 8
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    onClick: () => {
+      setEditingId(null);
+      setEditForm(null);
+    },
+    variant: "ghost"
+  }, "\u05D1\u05D9\u05D8\u05D5\u05DC"), /*#__PURE__*/React.createElement(Btn, {
+    onClick: saveEdit
+  }, "\u05E9\u05DE\u05D5\u05E8")))));
 }
 
 // ─── MEETINGS TAB ─────────────────────────────────────────────────────────────
@@ -10956,7 +11097,7 @@ function ProjectView({
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("img", {
-    src: isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png',
+    src: isLightColor(C.sidebar) ? '/logo-dark.png' : '/logo-white.png',
     alt: "TEKTONA",
     style: {
       width: isMobile ? 72 : 'clamp(90px,12vw,180px)',
@@ -11289,7 +11430,7 @@ function ProjectsList({
       zIndex: 0
     }
   }, /*#__PURE__*/React.createElement("img", {
-    src: isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png',
+    src: isLightColor(C.sidebar) ? '/logo-dark.png' : '/logo-white.png',
     alt: "TEKTONA",
     style: {
       width: 87,
@@ -11335,7 +11476,7 @@ function ProjectsList({
     onMouseEnter: e => e.currentTarget.querySelector('img').style.opacity = '0.7',
     onMouseLeave: e => e.currentTarget.querySelector('img').style.opacity = '1'
   }, /*#__PURE__*/React.createElement("img", {
-    src: isLightColor(C.sidebar) ? 'logo-dark.png' : 'logo-white.png',
+    src: isLightColor(C.sidebar) ? '/logo-dark.png' : '/logo-white.png',
     alt: "TEKTONA",
     style: {
       width: 'clamp(110px,16vw,240px)',
