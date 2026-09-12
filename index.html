@@ -3885,8 +3885,8 @@ function SignupScreen({
     });
   };
   const handleSubmit = async () => {
-    if (!officeName || !contactName) {
-      setError('נא למלא שם משרד ושם איש קשר');
+    if (!officeName || !contactName || !phone) {
+      setError('נא למלא שם משרד, שם איש קשר וטלפון');
       return;
     }
     setLoading(true);
@@ -3977,14 +3977,14 @@ function SignupScreen({
       color: C.text,
       marginBottom: 8
     }
-  }, "\u05D4\u05E6\u05D8\u05E8\u05E4\u05D5\u05EA \u05DB\u05D6\u05DB\u05D9\u05D9\u05DF \u05DC\u05DE\u05E2\u05E8\u05DB\u05EA Tektona"), /*#__PURE__*/React.createElement("div", {
+  }, "\u05D4\u05E6\u05D8\u05E8\u05E4\u05D5\u05EA \u05DC\u05DE\u05E2\u05E8\u05DB\u05EA Tektona"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: C.sub,
       fontSize: 16,
       marginBottom: 28,
       lineHeight: 1.6
     }
-  }, "\u05DE\u05E9\u05E8\u05D3 \u05D0\u05D3\u05E8\u05D9\u05DB\u05DC\u05D9\u05DD? \u05D4\u05D9\u05E8\u05E9\u05DE\u05D5 \u05E2\u05DD \u05D7\u05E9\u05D1\u05D5\u05DF Google, \u05DE\u05DC\u05D0\u05D5 \u05E4\u05E8\u05D8\u05D9 \u05DE\u05E9\u05E8\u05D3, \u05D5\u05DC\u05D0\u05D7\u05E8 \u05D0\u05D9\u05E9\u05D5\u05E8 \u05D1\u05E2\u05DC \u05D4\u05DE\u05E2\u05E8\u05DB\u05EA \u05EA\u05E7\u05D1\u05DC\u05D5 \u05D2\u05D9\u05E9\u05EA \u05DE\u05E0\u05D4\u05DC \u05DE\u05E9\u05E8\u05D3 \u05DE\u05DC\u05D0\u05D4."), /*#__PURE__*/React.createElement("button", {
+  }, "\u05DE\u05E9\u05E8\u05D3 \u05D0\u05D3\u05E8\u05D9\u05DB\u05DC\u05D9\u05DD? \u05D4\u05D9\u05E8\u05E9\u05DE\u05D5 \u05D5\u05DE\u05DC\u05D0\u05D5 \u05E4\u05E8\u05D8\u05D9 \u05DE\u05E9\u05E8\u05D3, \u05D5\u05D0\u05E0\u05D5 \u05E0\u05D3\u05D0\u05D2 \u05DC\u05D7\u05D6\u05D5\u05E8 \u05D0\u05DC\u05D9\u05DB\u05DD \u05D1\u05D4\u05E7\u05D3\u05DD."), /*#__PURE__*/React.createElement("button", {
     onClick: handleGoogleSignup,
     style: {
       width: '100%',
@@ -4044,9 +4044,10 @@ function SignupScreen({
     onChange: setContactName,
     required: true
   }), /*#__PURE__*/React.createElement(Input, {
-    label: "\u05D8\u05DC\u05E4\u05D5\u05DF (\u05DC\u05D0 \u05D7\u05D5\u05D1\u05D4)",
+    label: "\u05D8\u05DC\u05E4\u05D5\u05DF",
     value: phone,
-    onChange: setPhone
+    onChange: setPhone,
+    required: true
   }), error && /*#__PURE__*/React.createElement("div", {
     style: {
       color: C.danger,

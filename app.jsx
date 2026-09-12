@@ -1479,7 +1479,7 @@ function SignupScreen({ googleUser, onSubmitted, onCancel }) {
   };
 
   const handleSubmit = async () => {
-    if (!officeName || !contactName) { setError('נא למלא שם משרד ושם איש קשר'); return; }
+    if (!officeName || !contactName || !phone) { setError('נא למלא שם משרד, שם איש קשר וטלפון'); return; }
     setLoading(true); setError('');
     try {
       const { data:{ session } } = await sb.auth.getSession();
@@ -1513,9 +1513,9 @@ function SignupScreen({ googleUser, onSubmitted, onCancel }) {
         </div>
       ) : !googleUser ? (
         <div style={{ textAlign:'center', maxWidth:420, width:'100%' }}>
-          <div style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:8 }}>הצטרפות כזכיין למערכת Tektona</div>
+          <div style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:8 }}>הצטרפות למערכת Tektona</div>
           <div style={{ color:C.sub, fontSize:16, marginBottom:28, lineHeight:1.6 }}>
-            משרד אדריכלים? הירשמו עם חשבון Google, מלאו פרטי משרד, ולאחר אישור בעל המערכת תקבלו גישת מנהל משרד מלאה.
+            משרד אדריכלים? הירשמו ומלאו פרטי משרד, ואנו נדאג לחזור אליכם בהקדם.
           </div>
           <button onClick={handleGoogleSignup}
             style={{ width:'100%', padding:'14px 20px', background:C.text, color:C.bg, border:'none',
@@ -1534,7 +1534,7 @@ function SignupScreen({ googleUser, onSubmitted, onCancel }) {
           <div style={{ color:C.sub, fontSize:14, marginBottom:10, textAlign:'center' }}>מחוברים כ-{googleUser.email}</div>
           <Input label="שם המשרד" value={officeName} onChange={setOfficeName} required/>
           <Input label="שם איש קשר" value={contactName} onChange={setContactName} required/>
-          <Input label="טלפון (לא חובה)" value={phone} onChange={setPhone}/>
+          <Input label="טלפון" value={phone} onChange={setPhone} required/>
           {error && <div style={{ color:C.danger, fontSize:14, textAlign:'center' }}>{error}</div>}
           <button onClick={handleSubmit} disabled={loading}
             style={{ padding:'14px 20px', background:C.text, color:C.bg, border:'none',

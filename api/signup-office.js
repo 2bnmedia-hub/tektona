@@ -8,8 +8,8 @@ export default async function handler(req, res) {
   if (!token) return res.status(401).json({ error: 'Missing authorization token' });
 
   const { name, contactName, phone } = req.body || {};
-  if (!name || !contactName) {
-    return res.status(400).json({ error: 'name and contactName are required' });
+  if (!name || !contactName || !phone) {
+    return res.status(400).json({ error: 'name, contactName and phone are required' });
   }
 
   const admin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
