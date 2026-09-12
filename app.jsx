@@ -1161,7 +1161,7 @@ function AppFooter() {
         ))}
         <span style={{color:C.sub, fontSize: isMobile ? 10 : 12, opacity:0.4}}>·</span>
         <span style={{color:C.sub, fontSize: isMobile ? 10 : 12, opacity:0.4}}>
-          © {new Date().getFullYear()} Tektona
+          © {new Date().getFullYear()} 2BN Media
         </span>
       </div>
       {showLegal && <LegalModal tab={showLegal} onClose={()=>setShowLegal(null)} />}
@@ -1299,9 +1299,10 @@ function SpaceDotsBackground() {
   React.useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    const DOT = '175,150,110';
     const LINE_DIST = 140;
+    const MOUSE_DIST = 160;
     let raf, particles = [], w = 0, h = 0;
+    const mouse = { x:-9999, y:-9999 };
 
     const resize = () => {
       w = canvas.width = canvas.offsetWidth;
@@ -1310,14 +1311,32 @@ function SpaceDotsBackground() {
       particles = Array.from({length:count}, () => ({
         x: Math.random()*w, y: Math.random()*h,
         vx: (Math.random()-0.5)*0.25, vy: (Math.random()-0.5)*0.25,
+        gray: 90 + Math.random()*110,
       }));
     };
     resize();
     window.addEventListener('resize', resize);
 
+    const onMouseMove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    };
+    const onMouseLeave = () => { mouse.x = -9999; mouse.y = -9999; };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseleave', onMouseLeave);
+
     const draw = () => {
       ctx.clearRect(0,0,w,h);
       particles.forEach(p => {
+        // Gently pushed away from the cursor, then drifts back to its own slow motion.
+        const dx = p.x-mouse.x, dy = p.y-mouse.y;
+        const distToMouse = Math.sqrt(dx*dx+dy*dy);
+        if (distToMouse < MOUSE_DIST) {
+          const force = (1 - distToMouse/MOUSE_DIST) * 0.6;
+          p.x += (dx/(distToMouse||1)) * force;
+          p.y += (dy/(distToMouse||1)) * force;
+        }
         p.x += p.vx; p.y += p.vy;
         if (p.x<0||p.x>w) p.vx*=-1;
         if (p.y<0||p.y>h) p.vy*=-1;
@@ -1326,17 +1345,18 @@ function SpaceDotsBackground() {
         const a = particles[i];
         ctx.beginPath();
         ctx.arc(a.x, a.y, 1.5, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(${DOT},0.75)`;
+        ctx.fillStyle = `rgba(${a.gray},${a.gray},${a.gray},0.8)`;
         ctx.fill();
         for (let j=i+1;j<particles.length;j++) {
           const b = particles[j];
           const dx=a.x-b.x, dy=a.y-b.y;
           const dist = Math.sqrt(dx*dx+dy*dy);
           if (dist < LINE_DIST) {
+            const g = (a.gray+b.gray)/2;
             ctx.beginPath();
             ctx.moveTo(a.x,a.y);
             ctx.lineTo(b.x,b.y);
-            ctx.strokeStyle = `rgba(${DOT},${(1-dist/LINE_DIST)*0.3})`;
+            ctx.strokeStyle = `rgba(${g},${g},${g},${(1-dist/LINE_DIST)*0.35})`;
             ctx.lineWidth = 1;
             ctx.stroke();
           }
@@ -1345,7 +1365,12 @@ function SpaceDotsBackground() {
       raf = requestAnimationFrame(draw);
     };
     draw();
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); };
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseleave', onMouseLeave);
+    };
   }, []);
   return <canvas ref={canvasRef} style={{ position:'absolute', inset:0, width:'100%', height:'100%', zIndex:0, pointerEvents:'none' }}/>;
 }
@@ -1511,7 +1536,7 @@ function LoginScreen({ onLogin, onSignup }) {
           </button>
         ))}
         <span style={{ color:C.sub, fontSize:11, opacity:0.4 }}>•</span>
-        <span style={{ color:C.sub, fontSize:11, opacity:0.4 }}>© {new Date().getFullYear()} Tektona</span>
+        <span style={{ color:C.sub, fontSize:11, opacity:0.4 }}>© {new Date().getFullYear()} 2BN Media</span>
       </div>
 
       {showLegal && <LegalModal tab={showLegal} onClose={() => setShowLegal(null)} />}
