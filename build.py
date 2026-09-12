@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import hashlib
 import json
 import os
 import sys
 
 with open('app.compiled.js', 'r', encoding='utf-8') as f:
     compiled_js = f.read()
+
+# Cache-busting version for /app.compiled.js — changes automatically whenever the
+# compiled output changes, so it's safe to cache that file aggressively (see vercel.json).
+compiled_js_version = hashlib.sha256(compiled_js.encode('utf-8')).hexdigest()[:12]
 
 supabase_url = os.environ.get('SUPABASE_URL', '')
 supabase_anon_key = os.environ.get('SUPABASE_ANON_KEY', '')
@@ -24,9 +29,9 @@ html = '''<!DOCTYPE html>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script crossorigin src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script defer crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script defer crossorigin src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
   <script>''' + config_script + '''</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -382,9 +387,7 @@ html = '''<!DOCTYPE html>
 </head>
 <body>
   <div id="root"></div>
-  <script>
-''' + compiled_js + '''
-  </script>
+  <script defer src="/app.compiled.js?v=''' + compiled_js_version + '''"></script>
 </body>
 </html>'''
 
