@@ -6724,10 +6724,16 @@ function AIAgentTab({
     setChat(newChat);
     setLoading(true);
     try {
+      const {
+        data: {
+          session
+        }
+      } = await sb.auth.getSession();
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
         },
         body: JSON.stringify({
           model: 'gpt-4.1',
