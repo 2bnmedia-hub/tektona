@@ -807,6 +807,7 @@ function CustomThemeEditor({ prevThemeId, onApply, onCancel, onSave }) {
 
 // ─── THEME SELECTOR ──────────────────────────────────────────────────────────
 function ThemeSelector({ currentId, onSelect, onClose }) {
+  const isMobile = useIsMobile();
   const [showCustomEditor, setShowCustomEditor] = React.useState(false);
 
   if (showCustomEditor) {
@@ -834,7 +835,7 @@ function ThemeSelector({ currentId, onSelect, onClose }) {
           <h3 style={{ color:C.text, fontSize:22, fontWeight:700 }}>בחר ערכת נושא</h3>
           <button onClick={onClose} style={{ background:'none', border:'none', color:C.sub, fontSize:26, cursor:'pointer' }}>×</button>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
+        <div style={{ display:'grid', gridTemplateColumns:isMobile?'repeat(2,1fr)':'repeat(3,1fr)', gap:10 }}>
           {Object.entries(THEMES).filter(([id])=>id!=='customTheme').map(([id, th]) => (
             <button key={id} onClick={() => { onSelect(id); onClose(); }}
               style={{ border: id===currentId ? `2px solid ${C.primary}` : `2px solid ${C.border}`,
@@ -2164,6 +2165,7 @@ function ProjectAccessEditor({ officeId, architectId, clientIds, employeeIds, on
 
 // ─── DASHBOARD TAB ────────────────────────────────────────────────────────────
 function DashboardTab({ project, setProject, user, onDeleteProject }) {
+  const isMobile = useIsMobile();
   const [editingInfo, setEditingInfo] = React.useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [infoForm, setInfoForm] = React.useState(null);
@@ -2267,7 +2269,7 @@ function DashboardTab({ project, setProject, user, onDeleteProject }) {
       </div>
 
       {/* Info grid */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+      <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:16,marginBottom:16}}>
         <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
             <h4 style={{color:C.sub,fontSize:13,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase'}}>פרטי פרויקט</h4>
@@ -2769,6 +2771,7 @@ function TimelineTab({ project, setProject }) {
 
 // ─── TASKS TAB ────────────────────────────────────────────────────────────────
 function TasksTab({ project, setProject, user, officeId }) {
+  const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = React.useState(false);
   const [logHoursId, setLogHoursId] = React.useState(null);
   const [hoursInput, setHoursInput] = React.useState('');
@@ -2848,7 +2851,7 @@ function TasksTab({ project, setProject, user, officeId }) {
           ))}
         </div>
       )}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16}}>
+      <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr 1fr',gap:16}}>
         {cols.map(col=>(
           <div key={col.k}>
             <div style={{fontWeight:700,color:priColors[col.k],fontSize:14,marginBottom:10,
@@ -3086,6 +3089,7 @@ function MeetingsTab({ project, setProject, user }) {
 
 // ─── PAYMENTS TAB ─────────────────────────────────────────────────────────────
 function PaymentsTab({ project, setProject }) {
+  const isMobile = useIsMobile();
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({title:'',amount:'',dueDate:'',notes:''});
   const payments = project.payments || [];
@@ -3104,7 +3108,7 @@ function PaymentsTab({ project, setProject }) {
         <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>תשלומים</h3>
         <Btn onClick={()=>setShowAdd(true)}>+ תשלום חדש</Btn>
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,marginBottom:24}}>
+      <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'repeat(3,1fr)',gap:16,marginBottom:24}}>
         {[['סה"כ',totalAll,C.text],['שולם',totalPaid,C.success],['ממתין',totalPending,C.warning]].map(([l,v,c])=>(
           <div key={l} style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`,
             textAlign:'center',borderTop:`2px solid ${c}`}}>
@@ -3929,6 +3933,7 @@ function MessagesTab({ project, setProject, user }) {
 
 // ─── BI REPORTS TAB (Studio only) ────────────────────────────────────────────
 function BIReportsTab({ project, data }) {
+  const isMobile = useIsMobile();
   const allProjects = data?.projects || [project];
   const totalRevenue = allProjects.reduce((s,p)=>(p.payments||[]).filter(py=>py.status==='paid').reduce((a,py)=>a+py.amount,0)+s,0);
   const totalPending = allProjects.reduce((s,p)=>(p.payments||[]).filter(py=>py.status==='pending').reduce((a,py)=>a+py.amount,0)+s,0);
@@ -3970,7 +3975,7 @@ function BIReportsTab({ project, data }) {
       </div>
 
       {/* Top KPIs */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+      <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr 1fr':'repeat(4,1fr)',gap:12,marginBottom:20}}>
         {[
           {label:'הכנסות שהתקבלו', value:fmtCurrency(totalRevenue), color:C.success, sub:'שולם'},
           {label:'תשלומים ממתינים', value:fmtCurrency(totalPending), color:C.warning, sub:'ממתין'},
@@ -3986,7 +3991,7 @@ function BIReportsTab({ project, data }) {
         ))}
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+      <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:16,marginBottom:16}}>
         {/* Phase distribution bar chart */}
         <div style={{background:C.card,borderRadius:14,padding:20,border:`1px solid ${C.border}`}}>
           <h4 style={{color:C.text,fontSize:16,fontWeight:700,marginBottom:4,letterSpacing:'-0.01em'}}>פיזור לפי שלב</h4>
@@ -4074,6 +4079,7 @@ function BIReportsTab({ project, data }) {
 
 // ─── CLIENT SUCCESS TAB (Feature 23) ─────────────────────────────────────────
 function ClientSuccessTab({ project, setProject }) {
+  const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = React.useState('profile');
   const [showCRForm, setShowCRForm] = React.useState(false);
   const [crForm, setCrForm] = React.useState({title:'',type:'scope',reason:'',impact:''});
@@ -4103,7 +4109,7 @@ function ClientSuccessTab({ project, setProject }) {
         <SVGCircle value={health} max={100} color={healthColor} label="Health Score" size={72}/>
       </div>
       {/* Section tabs */}
-      <div style={{display:'flex',gap:8,marginBottom:20,borderBottom:`1px solid ${C.border}`,paddingBottom:12}}>
+      <div style={{display:'flex',gap:8,marginBottom:20,borderBottom:`1px solid ${C.border}`,paddingBottom:12,flexWrap:'wrap'}}>
         {sections.map(s=>(
           <button key={s.k} onClick={()=>setActiveSection(s.k)}
             style={{padding:'7px 16px',borderRadius:20,border:'none',cursor:'pointer',fontSize:16,fontWeight:600,
@@ -4115,7 +4121,7 @@ function ClientSuccessTab({ project, setProject }) {
       </div>
 
       {activeSection==='profile' && (
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:16}}>
           <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
             <h4 style={{color:C.text,fontSize:17,fontWeight:700,marginBottom:12}}>פרטי תקשורת מועדפת</h4>
             {[
