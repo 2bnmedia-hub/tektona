@@ -796,45 +796,54 @@ function ThemeSelector({ currentId, onSelect, onClose }) {
   const themeNames = { lightStone:'Light Stone', warmSand:'Warm Sand', softOlive:'Soft Olive',
     architectDark:'Architect Dark', zahaHadid:'Dubai Concrete', bigBjarke:'Copenhagen Blue',
     tadaoAndo:'Osaka Brutalism', fosterGlass:'London Glass', snohettaNordic:'Oslo Nordic',
-    calqNoir:'Calq Noir', snowWhite:'Snow White' };
+    calqNoir:'Calq Noir', snowWhite:'Snow White', customTheme:'ערכה אישית' };
+
+  // 12 themes → 12 clock positions, one per hour. A rotating hand points at the active theme;
+  // clicking any hour position selects that theme (the 12 o'clock "custom" spot opens the editor).
+  const order = ['lightStone','warmSand','softOlive','architectDark','zahaHadid','bigBjarke',
+    'tadaoAndo','fosterGlass','snohettaNordic','calqNoir','snowWhite','customTheme'];
+  const activeIndex = Math.max(0, order.indexOf(currentId));
+  const size = 260, center = size/2, R = 100;
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex',
       alignItems:'center', justifyContent:'center', zIndex:9000 }} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{ background:C.card, borderRadius:20, padding:28,
-        width:560, maxWidth:'95vw', boxShadow:'0 20px 60px rgba(0,0,0,0.4)', direction:'rtl' }}>
+        width:360, maxWidth:'95vw', boxShadow:'0 20px 60px rgba(0,0,0,0.4)', direction:'rtl' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
           <h3 style={{ color:C.text, fontSize:22, fontWeight:700 }}>בחר ערכת נושא</h3>
           <button onClick={onClose} style={{ background:'none', border:'none', color:C.sub, fontSize:26, cursor:'pointer' }}>×</button>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
-          {Object.entries(THEMES).filter(([id])=>id!=='customTheme').map(([id, th]) => (
-            <button key={id} onClick={() => { onSelect(id); onClose(); }}
-              style={{ border: id===currentId ? `2px solid ${C.primary}` : `2px solid ${C.border}`,
-                borderRadius:0, padding:12, background: th.card, cursor:'pointer',
-                textAlign:'center', transition:'all .2s' }}>
-              <div style={{ display:'flex', gap:4, justifyContent:'center', marginBottom:8 }}>
-                {[th.primary, th.accent, th.bg, th.sidebar].map((col,i) => (
-                  <div key={i} style={{ width:14, height:14, borderRadius:0, background:col, border:`1px solid ${th.border}` }}/>
-                ))}
-              </div>
-              <div style={{ fontSize:13, fontWeight:600, color:th.text }}>{themeNames[id]}</div>
-            </button>
-          ))}
-          {/* Custom theme card */}
-          <button onClick={() => { onSelect('customTheme'); setShowCustomEditor(true); }}
-            style={{ border: currentId==='customTheme' ? `2px solid ${C.primary}` : `2px dashed ${C.border}`,
-              borderRadius:0, padding:12, background:C.bg, cursor:'pointer',
-              textAlign:'center', transition:'all .2s', position:'relative' }}>
-            <div style={{ display:'flex', gap:4, justifyContent:'center', marginBottom:8 }}>
-              {[THEMES.customTheme.primary, THEMES.customTheme.accent,
-                THEMES.customTheme.bg, THEMES.customTheme.sidebar].map((col,i) => (
-                <div key={i} style={{ width:14, height:14, borderRadius:0, background:col, border:`1px solid ${C.border}` }}/>
-              ))}
-            </div>
-            <div style={{ fontSize:13, fontWeight:600, color:C.text }}>✏️ ערכה אישית</div>
-            <div style={{ fontSize:11, color:C.sub, marginTop:3 }}>ערוך צבעים</div>
-          </button>
+        <div style={{ position:'relative', width:size, height:size, margin:'0 auto 20px', borderRadius:'50%',
+          background:`conic-gradient(from -2deg, ${C.card}, ${C.bg}, ${C.card}, ${C.bg}, ${C.card})`,
+          border:`4px solid ${C.border}`, boxShadow:'inset 0 2px 8px rgba(0,0,0,0.3)' }}>
+          {/* Rotating hand pointing at the active theme */}
+          <div style={{ position:'absolute', top:center, left:center, width:R-15, height:3,
+            background:C.primary, borderRadius:2, transformOrigin:'0 50%',
+            transform:`rotate(${activeIndex*30-90}deg)`, transition:'transform .35s cubic-bezier(.4,0,.2,1)',
+            boxShadow:`0 0 6px ${C.primary}80` }}/>
+          <div style={{ position:'absolute', top:center-6, left:center-6, width:12, height:12,
+            borderRadius:'50%', background:C.primary }}/>
+          {order.map((id,i) => {
+            const angle = i*30 - 90;
+            const isActive = id===currentId;
+            return (
+              <button key={id}
+                onClick={() => { if (id==='customTheme') { onSelect('customTheme'); setShowCustomEditor(true); }
+                  else { onSelect(id); onClose(); } }}
+                title={themeNames[id]}
+                style={{ position:'absolute', top:'50%', left:'50%', width:36, height:36, borderRadius:'50%',
+                  transform:`translate(-50%,-50%) rotate(${angle}deg) translate(${R}px) rotate(${-angle}deg)`,
+                  background: THEMES[id].primary, border: isActive ? `3px solid ${C.text}` : `2px solid ${C.border}`,
+                  cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
+                  fontSize:15, boxShadow: isActive ? `0 0 10px ${C.primary}90` : 'none', transition:'border .2s' }}>
+                {id==='customTheme' && '✏️'}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ textAlign:'center', color:C.text, fontWeight:700, fontSize:17 }}>
+          {themeNames[currentId] || 'בחר ערכה'}
         </div>
       </div>
     </div>
@@ -1844,6 +1853,19 @@ function ProjectAccessEditor({ officeId, architectId, clientIds, onChange }) {
 
 // ─── DASHBOARD TAB ────────────────────────────────────────────────────────────
 function DashboardTab({ project, setProject, user }) {
+  const [editingInfo, setEditingInfo] = React.useState(false);
+  const [infoForm, setInfoForm] = React.useState(null);
+  const startEditInfo = () => {
+    setInfoForm({ architectName:project.architectName||'', clientName:project.clientName||'',
+      area:project.area||'', budget:project.budget||'', startDate:project.startDate||'', endDate:project.endDate||'' });
+    setEditingInfo(true);
+  };
+  const saveInfo = () => {
+    setProject(p=>({ ...p, architectName:infoForm.architectName, clientName:infoForm.clientName,
+      area:Number(infoForm.area)||0, budget:Number(infoForm.budget)||0,
+      startDate:infoForm.startDate, endDate:infoForm.endDate }));
+    setEditingInfo(false);
+  };
   const paid = (project.payments||[]).filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
   const total = (project.payments||[]).reduce((s,p)=>s+p.amount,0);
   const pendingApprovals = (project.approvals||[]).filter(a=>a.status==='pending').length;
@@ -1930,17 +1952,39 @@ function DashboardTab({ project, setProject, user }) {
       {/* Info grid */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
         <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
-          <h4 style={{color:C.sub,fontSize:13,fontWeight:700,marginBottom:12,letterSpacing:'0.1em',textTransform:'uppercase'}}>פרטי פרויקט</h4>
-          {[['אדריכל',project.architectName],['לקוח',project.clientName],
-            ['שטח',project.area?project.area+' מ"ר':'—'],['תקציב',fmtCurrency(project.budget)],
-            ['תחילה',fmtDate(project.startDate)],['סיום',fmtDate(project.endDate)]
-          ].map(([k,v])=>(
-            <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',
-              borderBottom:`1px solid ${C.border}`}}>
-              <span style={{color:C.sub,fontSize:14}}>{k}</span>
-              <span style={{color:C.text,fontSize:14,fontWeight:600}}>{v||'—'}</span>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <h4 style={{color:C.sub,fontSize:13,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase'}}>פרטי פרויקט</h4>
+            {user.role==='admin' && !editingInfo && (
+              <button onClick={startEditInfo}
+                style={{background:'none',border:'none',color:C.sub,cursor:'pointer',fontSize:14}}
+                title="ערוך פרטים">✏️ ערוך</button>
+            )}
+          </div>
+          {editingInfo ? (
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              <Input label="אדריכל" value={infoForm.architectName} onChange={v=>setInfoForm(f=>({...f,architectName:v}))}/>
+              <Input label="לקוח" value={infoForm.clientName} onChange={v=>setInfoForm(f=>({...f,clientName:v}))}/>
+              <Input label={'שטח (מ"ר)'} type="number" value={infoForm.area} onChange={v=>setInfoForm(f=>({...f,area:v}))}/>
+              <Input label="תקציב (₪)" type="number" value={infoForm.budget} onChange={v=>setInfoForm(f=>({...f,budget:v}))}/>
+              <Input label="תחילה" type="date" value={infoForm.startDate} onChange={v=>setInfoForm(f=>({...f,startDate:v}))}/>
+              <Input label="סיום" type="date" value={infoForm.endDate} onChange={v=>setInfoForm(f=>({...f,endDate:v}))}/>
+              <div style={{display:'flex',gap:8,justifyContent:'flex-end',marginTop:6}}>
+                <Btn size="sm" variant="ghost" onClick={()=>setEditingInfo(false)}>ביטול</Btn>
+                <Btn size="sm" onClick={saveInfo}>שמור</Btn>
+              </div>
             </div>
-          ))}
+          ) : (
+            [['אדריכל',project.architectName],['לקוח',project.clientName],
+              ['שטח',project.area?project.area+' מ"ר':'—'],['תקציב',fmtCurrency(project.budget)],
+              ['תחילה',fmtDate(project.startDate)],['סיום',fmtDate(project.endDate)]
+            ].map(([k,v])=>(
+              <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',
+                borderBottom:`1px solid ${C.border}`}}>
+                <span style={{color:C.sub,fontSize:14}}>{k}</span>
+                <span style={{color:C.text,fontSize:14,fontWeight:600}}>{v||'—'}</span>
+              </div>
+            ))
+          )}
         </div>
         <div style={{display:'flex',flexDirection:'column',gap:12}}>
           <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`,flex:1}}>
@@ -3598,6 +3642,8 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
   const [themeId, setThemeId] = React.useState('lightStone');
   const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
   const isMobile = useIsMobile();
+  const tabRefs = React.useRef({});
+  const [glider, setGlider] = React.useState({left:0, width:0});
 
   if (!project) return <div style={{padding:40,color:C.text}}>פרויקט לא נמצא</div>;
 
@@ -3634,6 +3680,12 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
   React.useEffect(()=>{
     if (!visibleTabs.some(t=>t.id===activeTab)) setActiveTab('dashboard');
   },[activeTab]);
+
+  // Glider: slide the active-tab highlight to the active button's measured position.
+  React.useLayoutEffect(()=>{
+    const el = tabRefs.current[activeTab];
+    if (el) setGlider({ left: el.offsetLeft, width: el.offsetWidth });
+  },[activeTab, isMobile, visibleTabs.length]);
 
   const renderTab = () => {
     switch(activeTab) {
@@ -3722,14 +3774,13 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
           </div>
         </div>
 
-        {/* Horizontal tab nav — calq style */}
-        <div style={{display:'flex',overflowX:'auto',gap:0,
+        {/* Horizontal tab nav — calq style, with a sliding glider under the active tab */}
+        <div style={{display:'flex',overflowX:'auto',gap:0,position:'relative',
           scrollbarWidth:'none',msOverflowStyle:'none'}}>
           {visibleTabs.map(tab=>(
-            <button key={tab.id} onClick={()=>setActiveTab(tab.id)}
+            <button key={tab.id} ref={el=>{tabRefs.current[tab.id]=el;}} onClick={()=>setActiveTab(tab.id)}
               className="tab-btn"
               style={{padding: isMobile ? '10px 12px' : '14px 20px',background:'transparent',border:'none',
-                borderBottom:activeTab===tab.id?`2px solid ${C.text}`:'2px solid transparent',
                 color:activeTab===tab.id?C.text:C.sub,
                 cursor:'pointer',fontSize: isMobile ? 12 : 14,fontWeight:activeTab===tab.id?700:400,
                 letterSpacing:'0.04em',whiteSpace:'nowrap',flexShrink:0,
@@ -3737,6 +3788,12 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
               {isMobile ? tab.icon : tab.label}
             </button>
           ))}
+          <div style={{position:'absolute',bottom:0,height:3,borderRadius:2,
+            background:`linear-gradient(90deg, transparent, ${C.text}, transparent)`,
+            boxShadow:`0 0 8px 2px ${C.text}80`,
+            transform:`translateX(${glider.left}px)`, width:glider.width,
+            transition:'transform .5s cubic-bezier(.37,1.95,.66,.56), width .5s cubic-bezier(.37,1.95,.66,.56)',
+            pointerEvents:'none'}}/>
         </div>
       </div>
 

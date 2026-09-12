@@ -2339,8 +2339,17 @@ function ThemeSelector({
     fosterGlass: 'London Glass',
     snohettaNordic: 'Oslo Nordic',
     calqNoir: 'Calq Noir',
-    snowWhite: 'Snow White'
+    snowWhite: 'Snow White',
+    customTheme: 'ערכה אישית'
   };
+
+  // 12 themes → 12 clock positions, one per hour. A rotating hand points at the active theme;
+  // clicking any hour position selects that theme (the 12 o'clock "custom" spot opens the editor).
+  const order = ['lightStone', 'warmSand', 'softOlive', 'architectDark', 'zahaHadid', 'bigBjarke', 'tadaoAndo', 'fosterGlass', 'snohettaNordic', 'calqNoir', 'snowWhite', 'customTheme'];
+  const activeIndex = Math.max(0, order.indexOf(currentId));
+  const size = 260,
+    center = size / 2,
+    R = 100;
   return /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'fixed',
@@ -2358,7 +2367,7 @@ function ThemeSelector({
       background: C.card,
       borderRadius: 20,
       padding: 28,
-      width: 560,
+      width: 360,
       maxWidth: '95vw',
       boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
       direction: 'rtl'
@@ -2387,91 +2396,81 @@ function ThemeSelector({
     }
   }, "\xD7")), /*#__PURE__*/React.createElement("div", {
     style: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3,1fr)',
-      gap: 10
-    }
-  }, Object.entries(THEMES).filter(([id]) => id !== 'customTheme').map(([id, th]) => /*#__PURE__*/React.createElement("button", {
-    key: id,
-    onClick: () => {
-      onSelect(id);
-      onClose();
-    },
-    style: {
-      border: id === currentId ? `2px solid ${C.primary}` : `2px solid ${C.border}`,
-      borderRadius: 0,
-      padding: 12,
-      background: th.card,
-      cursor: 'pointer',
-      textAlign: 'center',
-      transition: 'all .2s'
+      position: 'relative',
+      width: size,
+      height: size,
+      margin: '0 auto 20px',
+      borderRadius: '50%',
+      background: `conic-gradient(from -2deg, ${C.card}, ${C.bg}, ${C.card}, ${C.bg}, ${C.card})`,
+      border: `4px solid ${C.border}`,
+      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.3)'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      display: 'flex',
-      gap: 4,
-      justifyContent: 'center',
-      marginBottom: 8
+      position: 'absolute',
+      top: center,
+      left: center,
+      width: R - 15,
+      height: 3,
+      background: C.primary,
+      borderRadius: 2,
+      transformOrigin: '0 50%',
+      transform: `rotate(${activeIndex * 30 - 90}deg)`,
+      transition: 'transform .35s cubic-bezier(.4,0,.2,1)',
+      boxShadow: `0 0 6px ${C.primary}80`
     }
-  }, [th.primary, th.accent, th.bg, th.sidebar].map((col, i) => /*#__PURE__*/React.createElement("div", {
-    key: i,
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
-      width: 14,
-      height: 14,
-      borderRadius: 0,
-      background: col,
-      border: `1px solid ${th.border}`
+      position: 'absolute',
+      top: center - 6,
+      left: center - 6,
+      width: 12,
+      height: 12,
+      borderRadius: '50%',
+      background: C.primary
     }
-  }))), /*#__PURE__*/React.createElement("div", {
+  }), order.map((id, i) => {
+    const angle = i * 30 - 90;
+    const isActive = id === currentId;
+    return /*#__PURE__*/React.createElement("button", {
+      key: id,
+      onClick: () => {
+        if (id === 'customTheme') {
+          onSelect('customTheme');
+          setShowCustomEditor(true);
+        } else {
+          onSelect(id);
+          onClose();
+        }
+      },
+      title: themeNames[id],
+      style: {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: 36,
+        height: 36,
+        borderRadius: '50%',
+        transform: `translate(-50%,-50%) rotate(${angle}deg) translate(${R}px) rotate(${-angle}deg)`,
+        background: THEMES[id].primary,
+        border: isActive ? `3px solid ${C.text}` : `2px solid ${C.border}`,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 15,
+        boxShadow: isActive ? `0 0 10px ${C.primary}90` : 'none',
+        transition: 'border .2s'
+      }
+    }, id === 'customTheme' && '✏️');
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 13,
-      fontWeight: 600,
-      color: th.text
-    }
-  }, themeNames[id]))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      onSelect('customTheme');
-      setShowCustomEditor(true);
-    },
-    style: {
-      border: currentId === 'customTheme' ? `2px solid ${C.primary}` : `2px dashed ${C.border}`,
-      borderRadius: 0,
-      padding: 12,
-      background: C.bg,
-      cursor: 'pointer',
       textAlign: 'center',
-      transition: 'all .2s',
-      position: 'relative'
+      color: C.text,
+      fontWeight: 700,
+      fontSize: 17
     }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 4,
-      justifyContent: 'center',
-      marginBottom: 8
-    }
-  }, [THEMES.customTheme.primary, THEMES.customTheme.accent, THEMES.customTheme.bg, THEMES.customTheme.sidebar].map((col, i) => /*#__PURE__*/React.createElement("div", {
-    key: i,
-    style: {
-      width: 14,
-      height: 14,
-      borderRadius: 0,
-      background: col,
-      border: `1px solid ${C.border}`
-    }
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 600,
-      color: C.text
-    }
-  }, "\u270F\uFE0F \u05E2\u05E8\u05DB\u05D4 \u05D0\u05D9\u05E9\u05D9\u05EA"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: C.sub,
-      marginTop: 3
-    }
-  }, "\u05E2\u05E8\u05D5\u05DA \u05E6\u05D1\u05E2\u05D9\u05DD")))));
+  }, themeNames[currentId] || 'בחר ערכה')));
 }
 
 // ─── MODAL WRAPPER ───────────────────────────────────────────────────────────
@@ -5141,6 +5140,31 @@ function DashboardTab({
   setProject,
   user
 }) {
+  const [editingInfo, setEditingInfo] = React.useState(false);
+  const [infoForm, setInfoForm] = React.useState(null);
+  const startEditInfo = () => {
+    setInfoForm({
+      architectName: project.architectName || '',
+      clientName: project.clientName || '',
+      area: project.area || '',
+      budget: project.budget || '',
+      startDate: project.startDate || '',
+      endDate: project.endDate || ''
+    });
+    setEditingInfo(true);
+  };
+  const saveInfo = () => {
+    setProject(p => ({
+      ...p,
+      architectName: infoForm.architectName,
+      clientName: infoForm.clientName,
+      area: Number(infoForm.area) || 0,
+      budget: Number(infoForm.budget) || 0,
+      startDate: infoForm.startDate,
+      endDate: infoForm.endDate
+    }));
+    setEditingInfo(false);
+  };
   const paid = (project.payments || []).filter(p => p.status === 'paid').reduce((s, p) => s + p.amount, 0);
   const total = (project.payments || []).reduce((s, p) => s + p.amount, 0);
   const pendingApprovals = (project.approvals || []).filter(a => a.status === 'pending').length;
@@ -5411,16 +5435,98 @@ function DashboardTab({
       padding: 18,
       border: `1px solid ${C.border}`
     }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12
+    }
   }, /*#__PURE__*/React.createElement("h4", {
     style: {
       color: C.sub,
       fontSize: 13,
       fontWeight: 700,
-      marginBottom: 12,
       letterSpacing: '0.1em',
       textTransform: 'uppercase'
     }
-  }, "\u05E4\u05E8\u05D8\u05D9 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8"), [['אדריכל', project.architectName], ['לקוח', project.clientName], ['שטח', project.area ? project.area + ' מ"ר' : '—'], ['תקציב', fmtCurrency(project.budget)], ['תחילה', fmtDate(project.startDate)], ['סיום', fmtDate(project.endDate)]].map(([k, v]) => /*#__PURE__*/React.createElement("div", {
+  }, "\u05E4\u05E8\u05D8\u05D9 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8"), user.role === 'admin' && !editingInfo && /*#__PURE__*/React.createElement("button", {
+    onClick: startEditInfo,
+    style: {
+      background: 'none',
+      border: 'none',
+      color: C.sub,
+      cursor: 'pointer',
+      fontSize: 14
+    },
+    title: "\u05E2\u05E8\u05D5\u05DA \u05E4\u05E8\u05D8\u05D9\u05DD"
+  }, "\u270F\uFE0F \u05E2\u05E8\u05D5\u05DA")), editingInfo ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement(Input, {
+    label: "\u05D0\u05D3\u05E8\u05D9\u05DB\u05DC",
+    value: infoForm.architectName,
+    onChange: v => setInfoForm(f => ({
+      ...f,
+      architectName: v
+    }))
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05DC\u05E7\u05D5\u05D7",
+    value: infoForm.clientName,
+    onChange: v => setInfoForm(f => ({
+      ...f,
+      clientName: v
+    }))
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: 'שטח (מ"ר)',
+    type: "number",
+    value: infoForm.area,
+    onChange: v => setInfoForm(f => ({
+      ...f,
+      area: v
+    }))
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05EA\u05E7\u05E6\u05D9\u05D1 (\u20AA)",
+    type: "number",
+    value: infoForm.budget,
+    onChange: v => setInfoForm(f => ({
+      ...f,
+      budget: v
+    }))
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05EA\u05D7\u05D9\u05DC\u05D4",
+    type: "date",
+    value: infoForm.startDate,
+    onChange: v => setInfoForm(f => ({
+      ...f,
+      startDate: v
+    }))
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05E1\u05D9\u05D5\u05DD",
+    type: "date",
+    value: infoForm.endDate,
+    onChange: v => setInfoForm(f => ({
+      ...f,
+      endDate: v
+    }))
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8,
+      justifyContent: 'flex-end',
+      marginTop: 6
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    variant: "ghost",
+    onClick: () => setEditingInfo(false)
+  }, "\u05D1\u05D9\u05D8\u05D5\u05DC"), /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    onClick: saveInfo
+  }, "\u05E9\u05DE\u05D5\u05E8"))) : [['אדריכל', project.architectName], ['לקוח', project.clientName], ['שטח', project.area ? project.area + ' מ"ר' : '—'], ['תקציב', fmtCurrency(project.budget)], ['תחילה', fmtDate(project.startDate)], ['סיום', fmtDate(project.endDate)]].map(([k, v]) => /*#__PURE__*/React.createElement("div", {
     key: k,
     style: {
       display: 'flex',
@@ -10057,6 +10163,11 @@ function ProjectView({
     setThemeId(id);
   };
   const isMobile = useIsMobile();
+  const tabRefs = React.useRef({});
+  const [glider, setGlider] = React.useState({
+    left: 0,
+    width: 0
+  });
   if (!project) return /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 40,
@@ -10159,6 +10270,15 @@ function ProjectView({
   React.useEffect(() => {
     if (!visibleTabs.some(t => t.id === activeTab)) setActiveTab('dashboard');
   }, [activeTab]);
+
+  // Glider: slide the active-tab highlight to the active button's measured position.
+  React.useLayoutEffect(() => {
+    const el = tabRefs.current[activeTab];
+    if (el) setGlider({
+      left: el.offsetLeft,
+      width: el.offsetWidth
+    });
+  }, [activeTab, isMobile, visibleTabs.length]);
   const renderTab = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -10420,18 +10540,21 @@ function ProjectView({
       display: 'flex',
       overflowX: 'auto',
       gap: 0,
+      position: 'relative',
       scrollbarWidth: 'none',
       msOverflowStyle: 'none'
     }
   }, visibleTabs.map(tab => /*#__PURE__*/React.createElement("button", {
     key: tab.id,
+    ref: el => {
+      tabRefs.current[tab.id] = el;
+    },
     onClick: () => setActiveTab(tab.id),
     className: "tab-btn",
     style: {
       padding: isMobile ? '10px 12px' : '14px 20px',
       background: 'transparent',
       border: 'none',
-      borderBottom: activeTab === tab.id ? `2px solid ${C.text}` : '2px solid transparent',
       color: activeTab === tab.id ? C.text : C.sub,
       cursor: 'pointer',
       fontSize: isMobile ? 12 : 14,
@@ -10442,7 +10565,20 @@ function ProjectView({
       fontFamily: "'Space Grotesk',sans-serif",
       transition: 'color .15s'
     }
-  }, isMobile ? tab.icon : tab.label)))), /*#__PURE__*/React.createElement("div", {
+  }, isMobile ? tab.icon : tab.label)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'absolute',
+      bottom: 0,
+      height: 3,
+      borderRadius: 2,
+      background: `linear-gradient(90deg, transparent, ${C.text}, transparent)`,
+      boxShadow: `0 0 8px 2px ${C.text}80`,
+      transform: `translateX(${glider.left}px)`,
+      width: glider.width,
+      transition: 'transform .5s cubic-bezier(.37,1.95,.66,.56), width .5s cubic-bezier(.37,1.95,.66,.56)',
+      pointerEvents: 'none'
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
       overflowY: 'auto',
