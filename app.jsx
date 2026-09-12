@@ -966,11 +966,11 @@ function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent, onOpenThem
             onMouseEnter={e=>e.currentTarget.style.opacity='0.7'}
             onMouseLeave={e=>e.currentTarget.style.opacity='1'}/>
           {!isMobile && OFFICE_PLAN.logo && (
-            <div style={{display:'flex', flexDirection:'column', alignItems:'flex-start', gap:6,
+            <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:6,
               borderRight:`1px solid ${C.border}`, paddingRight:16}}>
               <img src={OFFICE_PLAN.logo} alt="Office Logo" style={{height:78, width:'auto', display:'block', opacity:0.9}}/>
               {OFFICE_PLAN.slogan && (
-                <div style={{fontSize:12, color:C.sub, letterSpacing:'0.02em', whiteSpace:'nowrap'}}>{OFFICE_PLAN.slogan}</div>
+                <div style={{fontSize:12, color:C.sub, letterSpacing:'0.02em', whiteSpace:'nowrap', textAlign:'center'}}>{OFFICE_PLAN.slogan}</div>
               )}
             </div>
           )}
