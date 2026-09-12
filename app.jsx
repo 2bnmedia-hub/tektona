@@ -942,6 +942,21 @@ function StatusBadge({ status }) {
 
 // ─── LEGAL MODAL ─────────────────────────────────────────────────────────────
 // ─── SHARED NAVBAR ────────────────────────────────────────────────────────────
+// Office white-label logo + slogan — must appear next to the TEKTONA wordmark on
+// every screen for the same logged-in office, not just the AppNavBar-based ones.
+function OfficeLogoBadge({ isMobile }) {
+  if (isMobile || !OFFICE_PLAN.logo) return null;
+  return (
+    <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:6,
+      borderRight:`1px solid ${C.border}`, paddingRight:16}}>
+      <img src={OFFICE_PLAN.logo} alt="Office Logo" style={{height:78, width:'auto', display:'block', opacity:0.9}}/>
+      {OFFICE_PLAN.slogan && (
+        <div style={{fontSize:12, color:C.sub, letterSpacing:'0.02em', whiteSpace:'nowrap', textAlign:'center'}}>{OFFICE_PLAN.slogan}</div>
+      )}
+    </div>
+  );
+}
+
 function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent, onOpenTheme }) {
   const isMobile = useIsMobile();
   return (
@@ -956,15 +971,7 @@ function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent, onOpenThem
             style={{width: isMobile ? 80 : 'clamp(90px,12vw,180px)', height:'auto', display:'block', transition:'opacity .15s'}}
             onMouseEnter={e=>e.currentTarget.style.opacity='0.7'}
             onMouseLeave={e=>e.currentTarget.style.opacity='1'}/>
-          {!isMobile && OFFICE_PLAN.logo && (
-            <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:6,
-              borderRight:`1px solid ${C.border}`, paddingRight:16}}>
-              <img src={OFFICE_PLAN.logo} alt="Office Logo" style={{height:78, width:'auto', display:'block', opacity:0.9}}/>
-              {OFFICE_PLAN.slogan && (
-                <div style={{fontSize:12, color:C.sub, letterSpacing:'0.02em', whiteSpace:'nowrap', textAlign:'center'}}>{OFFICE_PLAN.slogan}</div>
-              )}
-            </div>
-          )}
+          <OfficeLogoBadge isMobile={isMobile}/>
         </button>
         {(title || onBack) && <div style={{width:1, height:18, background:C.border}}/>}
         {onBack && !isMobile && (
@@ -3923,7 +3930,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
         padding: isMobile ? '0 12px' : '0 40px',flexShrink:0,zIndex:10,position:'relative'}}>
         {/* Project identity row */}
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
-          height:56,borderBottom:`1px solid ${C.border}`}}>
+          minHeight:56,padding:'6px 0',borderBottom:`1px solid ${C.border}`}}>
           <div style={{display:'flex',alignItems:'center',gap: isMobile ? 10 : 20, minWidth:0}}>
             <button onClick={onGoHome}
               style={{background:'none',border:'none',cursor:'pointer',padding:0,
@@ -3932,6 +3939,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
                 style={{width: isMobile ? 72 : 'clamp(90px,12vw,180px)', height:'auto', display:'block', transition:'opacity .15s'}}
                 onMouseEnter={e=>e.currentTarget.style.opacity='0.7'}
                 onMouseLeave={e=>e.currentTarget.style.opacity='1'}/>
+              <OfficeLogoBadge isMobile={isMobile}/>
             </button>
             <div style={{width:1,height:16,background:C.border,flexShrink:0}}/>
             <span style={{color:C.text,fontWeight:700,fontSize: isMobile ? 15 : 18,letterSpacing:'-0.01em',
@@ -4058,8 +4066,8 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
     <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column',position:'relative'}}>
       <div className="scanline-overlay"/>
       {/* Calq-style top nav */}
-      <div style={{background:C.sidebar,padding: isMobile ? '0 16px' : '0 40px',display:'flex',alignItems:'center',
-        justifyContent:'space-between',height:56,flexShrink:0,position:'relative',zIndex:10,
+      <div style={{background:C.sidebar,padding: isMobile ? '8px 16px' : '8px 40px',display:'flex',alignItems:'center',
+        justifyContent:'space-between',minHeight:56,flexShrink:0,position:'relative',zIndex:10,
         borderBottom:`1px solid ${C.border}`}}>
         {/* Mobile center logo (absolute) */}
         {isMobile && (
@@ -4084,11 +4092,12 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
           ) : (
             /* Desktop: logo first (= far right), then divider + admin links */
             <>
-              <button onClick={onLogout} style={{background:'none',border:'none',padding:0,cursor:'pointer',display:'flex',alignItems:'center'}}
+              <button onClick={onLogout} style={{background:'none',border:'none',padding:0,cursor:'pointer',display:'flex',alignItems:'center',gap:10}}
                 onMouseEnter={e=>e.currentTarget.querySelector('img').style.opacity='0.7'}
                 onMouseLeave={e=>e.currentTarget.querySelector('img').style.opacity='1'}>
                 <img src={isLightColor(C.sidebar) ? '/logo-dark.png' : '/logo-white.png'} alt="TEKTONA"
                   style={{width:'clamp(110px,16vw,240px)', height:'auto', display:'block', transition:'opacity .15s'}}/>
+                <OfficeLogoBadge isMobile={isMobile}/>
               </button>
               <div style={{width:1,height:20,background:C.border}}/>
               {user.role==='admin' && (

@@ -2744,6 +2744,40 @@ function StatusBadge({
 
 // ─── LEGAL MODAL ─────────────────────────────────────────────────────────────
 // ─── SHARED NAVBAR ────────────────────────────────────────────────────────────
+// Office white-label logo + slogan — must appear next to the TEKTONA wordmark on
+// every screen for the same logged-in office, not just the AppNavBar-based ones.
+function OfficeLogoBadge({
+  isMobile
+}) {
+  if (isMobile || !OFFICE_PLAN.logo) return null;
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 6,
+      borderRight: `1px solid ${C.border}`,
+      paddingRight: 16
+    }
+  }, /*#__PURE__*/React.createElement("img", {
+    src: OFFICE_PLAN.logo,
+    alt: "Office Logo",
+    style: {
+      height: 78,
+      width: 'auto',
+      display: 'block',
+      opacity: 0.9
+    }
+  }), OFFICE_PLAN.slogan && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 12,
+      color: C.sub,
+      letterSpacing: '0.02em',
+      whiteSpace: 'nowrap',
+      textAlign: 'center'
+    }
+  }, OFFICE_PLAN.slogan));
+}
 function AppNavBar({
   onGoHome,
   title,
@@ -2795,33 +2829,9 @@ function AppNavBar({
     },
     onMouseEnter: e => e.currentTarget.style.opacity = '0.7',
     onMouseLeave: e => e.currentTarget.style.opacity = '1'
-  }), !isMobile && OFFICE_PLAN.logo && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: 6,
-      borderRight: `1px solid ${C.border}`,
-      paddingRight: 16
-    }
-  }, /*#__PURE__*/React.createElement("img", {
-    src: OFFICE_PLAN.logo,
-    alt: "Office Logo",
-    style: {
-      height: 78,
-      width: 'auto',
-      display: 'block',
-      opacity: 0.9
-    }
-  }), OFFICE_PLAN.slogan && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: C.sub,
-      letterSpacing: '0.02em',
-      whiteSpace: 'nowrap',
-      textAlign: 'center'
-    }
-  }, OFFICE_PLAN.slogan))), (title || onBack) && /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement(OfficeLogoBadge, {
+    isMobile: isMobile
+  })), (title || onBack) && /*#__PURE__*/React.createElement("div", {
     style: {
       width: 1,
       height: 18,
@@ -11075,7 +11085,8 @@ function ProjectView({
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      height: 56,
+      minHeight: 56,
+      padding: '6px 0',
       borderBottom: `1px solid ${C.border}`
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -11107,6 +11118,8 @@ function ProjectView({
     },
     onMouseEnter: e => e.currentTarget.style.opacity = '0.7',
     onMouseLeave: e => e.currentTarget.style.opacity = '1'
+  }), /*#__PURE__*/React.createElement(OfficeLogoBadge, {
+    isMobile: isMobile
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       width: 1,
@@ -11406,11 +11419,11 @@ function ProjectsList({
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.sidebar,
-      padding: isMobile ? '0 16px' : '0 40px',
+      padding: isMobile ? '8px 16px' : '8px 40px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      height: 56,
+      minHeight: 56,
       flexShrink: 0,
       position: 'relative',
       zIndex: 10,
@@ -11471,7 +11484,8 @@ function ProjectsList({
       padding: 0,
       cursor: 'pointer',
       display: 'flex',
-      alignItems: 'center'
+      alignItems: 'center',
+      gap: 10
     },
     onMouseEnter: e => e.currentTarget.querySelector('img').style.opacity = '0.7',
     onMouseLeave: e => e.currentTarget.querySelector('img').style.opacity = '1'
@@ -11484,6 +11498,8 @@ function ProjectsList({
       display: 'block',
       transition: 'opacity .15s'
     }
+  }), /*#__PURE__*/React.createElement(OfficeLogoBadge, {
+    isMobile: isMobile
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       width: 1,
