@@ -2702,9 +2702,11 @@ function PaymentsTab({ project, setProject }) {
 }
 
 // ─── PUNCH LIST TAB ───────────────────────────────────────────────────────────
-function PunchListTab({ project, setProject, officeId }) {
+function PunchListTab({ project, setProject, officeId, user }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({title:'',desc:'',location:'',responsible:'',priority:'medium',img:null});
+  const [editingId, setEditingId] = React.useState(null);
+  const [editForm, setEditForm] = React.useState(null);
   const [uploadingId, setUploadingId] = React.useState(null);
   const [uploadingForm, setUploadingForm] = React.useState(false);
   const imgRefs = React.useRef({});
@@ -2714,6 +2716,14 @@ function PunchListTab({ project, setProject, officeId }) {
     if (!form.title) return;
     setProject(p=>({...p,punchList:[...list,{...form,id:'pl'+uid(),number:list.length+1,status:'open',fixedAt:null}]}));
     setForm({title:'',desc:'',location:'',responsible:'',priority:'medium',img:null}); setShowAdd(false);
+  };
+  const startEdit = (item) => {
+    setEditForm({title:item.title||'',desc:item.desc||'',location:item.location||'',responsible:item.responsible||'',priority:item.priority||'medium'});
+    setEditingId(item.id);
+  };
+  const saveEdit = () => {
+    setProject(p=>({...p,punchList:list.map(i=>i.id===editingId?{...i,...editForm}:i)}));
+    setEditingId(null); setEditForm(null);
   };
   const updateStatus = (id,s) => setProject(p=>({...p,punchList:list.map(i=>i.id===id?{...i,status:s,fixedAt:s==='closed'?today():null}:i)}));
   const uploadImg = async (id, file) => {
@@ -2766,6 +2776,9 @@ function PunchListTab({ project, setProject, officeId }) {
               <Btn size="sm" variant="ghost" onClick={()=>imgRefs.current[item.id]?.click()} disabled={uploadingId===item.id}>
                 📷 {uploadingId===item.id?'מעלה...':item.img?'החלף תמונה':'הוסף תמונה'}
               </Btn>
+              {user?.role==='admin' && (
+                <Btn size="sm" variant="ghost" onClick={()=>startEdit(item)}>✏️ ערוך</Btn>
+              )}
             </div>
           </div>
         ))}
@@ -2795,6 +2808,22 @@ function PunchListTab({ project, setProject, officeId }) {
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
               <Btn onClick={()=>setShowAdd(false)} variant="ghost">ביטול</Btn>
               <Btn onClick={add}>הוסף ממצא</Btn>
+            </div>
+          </div>
+        </Modal>
+      )}
+      {editingId && (
+        <Modal title="ערוך ממצא" onClose={()=>{setEditingId(null);setEditForm(null);}} width={480}>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <Input label="כותרת" value={editForm.title} onChange={v=>setEditForm(f=>({...f,title:v}))} required/>
+            <Input label="תיאור" value={editForm.desc} onChange={v=>setEditForm(f=>({...f,desc:v}))}/>
+            <Input label="מיקום" value={editForm.location} onChange={v=>setEditForm(f=>({...f,location:v}))} placeholder="חדר, קומה..."/>
+            <Input label="אחראי" value={editForm.responsible} onChange={v=>setEditForm(f=>({...f,responsible:v}))}/>
+            <Select label="עדיפות" value={editForm.priority} onChange={v=>setEditForm(f=>({...f,priority:v}))}
+              options={[{value:'high',label:'גבוהה'},{value:'medium',label:'בינונית'},{value:'low',label:'נמוכה'}]}/>
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <Btn onClick={()=>{setEditingId(null);setEditForm(null);}} variant="ghost">ביטול</Btn>
+              <Btn onClick={saveEdit}>שמור</Btn>
             </div>
           </div>
         </Modal>
@@ -3785,7 +3814,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
       case 'tasks':        return <TasksTab project={project} setProject={setProject} user={user}/>;
       case 'meetings':     return <MeetingsTab project={project} setProject={setProject} user={user}/>;
       case 'payments':     return <PaymentsTab project={project} setProject={setProject}/>;
-      case 'punchlist':    return <PunchListTab project={project} setProject={setProject} officeId={user.officeId}/>;
+      case 'punchlist':    return <PunchListTab project={project} setProject={setProject} officeId={user.officeId} user={user}/>;
       case 'rfi':          return <RFITab project={project} setProject={setProject}/>;
       case 'gallery':      return <GalleryTab project={project} setProject={setProject} officeId={user.officeId}/>;
       case 'documents':    return <DocumentsTab project={project} setProject={setProject} officeId={user.officeId}/>;

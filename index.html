@@ -7552,7 +7552,8 @@ function PaymentsTab({
 function PunchListTab({
   project,
   setProject,
-  officeId
+  officeId,
+  user
 }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({
@@ -7563,6 +7564,8 @@ function PunchListTab({
     priority: 'medium',
     img: null
   });
+  const [editingId, setEditingId] = React.useState(null);
+  const [editForm, setEditForm] = React.useState(null);
   const [uploadingId, setUploadingId] = React.useState(null);
   const [uploadingForm, setUploadingForm] = React.useState(false);
   const imgRefs = React.useRef({});
@@ -7589,6 +7592,27 @@ function PunchListTab({
       img: null
     });
     setShowAdd(false);
+  };
+  const startEdit = item => {
+    setEditForm({
+      title: item.title || '',
+      desc: item.desc || '',
+      location: item.location || '',
+      responsible: item.responsible || '',
+      priority: item.priority || 'medium'
+    });
+    setEditingId(item.id);
+  };
+  const saveEdit = () => {
+    setProject(p => ({
+      ...p,
+      punchList: list.map(i => i.id === editingId ? {
+        ...i,
+        ...editForm
+      } : i)
+    }));
+    setEditingId(null);
+    setEditForm(null);
   };
   const updateStatus = (id, s) => setProject(p => ({
     ...p,
@@ -7750,7 +7774,11 @@ function PunchListTab({
     variant: "ghost",
     onClick: () => imgRefs.current[item.id]?.click(),
     disabled: uploadingId === item.id
-  }, "\uD83D\uDCF7 ", uploadingId === item.id ? 'מעלה...' : item.img ? 'החלף תמונה' : 'הוסף תמונה'))))), showAdd && /*#__PURE__*/React.createElement(Modal, {
+  }, "\uD83D\uDCF7 ", uploadingId === item.id ? 'מעלה...' : item.img ? 'החלף תמונה' : 'הוסף תמונה'), user?.role === 'admin' && /*#__PURE__*/React.createElement(Btn, {
+    size: "sm",
+    variant: "ghost",
+    onClick: () => startEdit(item)
+  }, "\u270F\uFE0F \u05E2\u05E8\u05D5\u05DA"))))), showAdd && /*#__PURE__*/React.createElement(Modal, {
     title: "\u05DE\u05DE\u05E6\u05D0 \u05D7\u05D3\u05E9",
     onClose: () => setShowAdd(false),
     width: 480
@@ -7860,7 +7888,82 @@ function PunchListTab({
     variant: "ghost"
   }, "\u05D1\u05D9\u05D8\u05D5\u05DC"), /*#__PURE__*/React.createElement(Btn, {
     onClick: add
-  }, "\u05D4\u05D5\u05E1\u05E3 \u05DE\u05DE\u05E6\u05D0")))));
+  }, "\u05D4\u05D5\u05E1\u05E3 \u05DE\u05DE\u05E6\u05D0")))), editingId && /*#__PURE__*/React.createElement(Modal, {
+    title: "\u05E2\u05E8\u05D5\u05DA \u05DE\u05DE\u05E6\u05D0",
+    onClose: () => {
+      setEditingId(null);
+      setEditForm(null);
+    },
+    width: 480
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement(Input, {
+    label: "\u05DB\u05D5\u05EA\u05E8\u05EA",
+    value: editForm.title,
+    onChange: v => setEditForm(f => ({
+      ...f,
+      title: v
+    })),
+    required: true
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05EA\u05D9\u05D0\u05D5\u05E8",
+    value: editForm.desc,
+    onChange: v => setEditForm(f => ({
+      ...f,
+      desc: v
+    }))
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05DE\u05D9\u05E7\u05D5\u05DD",
+    value: editForm.location,
+    onChange: v => setEditForm(f => ({
+      ...f,
+      location: v
+    })),
+    placeholder: "\u05D7\u05D3\u05E8, \u05E7\u05D5\u05DE\u05D4..."
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05D0\u05D7\u05E8\u05D0\u05D9",
+    value: editForm.responsible,
+    onChange: v => setEditForm(f => ({
+      ...f,
+      responsible: v
+    }))
+  }), /*#__PURE__*/React.createElement(Select, {
+    label: "\u05E2\u05D3\u05D9\u05E4\u05D5\u05EA",
+    value: editForm.priority,
+    onChange: v => setEditForm(f => ({
+      ...f,
+      priority: v
+    })),
+    options: [{
+      value: 'high',
+      label: 'גבוהה'
+    }, {
+      value: 'medium',
+      label: 'בינונית'
+    }, {
+      value: 'low',
+      label: 'נמוכה'
+    }]
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10,
+      justifyContent: 'flex-end',
+      marginTop: 8
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    onClick: () => {
+      setEditingId(null);
+      setEditForm(null);
+    },
+    variant: "ghost"
+  }, "\u05D1\u05D9\u05D8\u05D5\u05DC"), /*#__PURE__*/React.createElement(Btn, {
+    onClick: saveEdit
+  }, "\u05E9\u05DE\u05D5\u05E8")))));
 }
 
 // ─── RFI TAB ─────────────────────────────────────────────────────────────────
@@ -10580,7 +10683,8 @@ function ProjectView({
         return /*#__PURE__*/React.createElement(PunchListTab, {
           project: project,
           setProject: setProject,
-          officeId: user.officeId
+          officeId: user.officeId,
+          user: user
         });
       case 'rfi':
         return /*#__PURE__*/React.createElement(RFITab, {
