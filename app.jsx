@@ -384,7 +384,7 @@ async function saveD(officeId, data) {
 
 async function loadOffice(officeId) {
   const { data, error } = await sb.from('offices')
-    .select('data, name, logo, slogan, plan, active').eq('id', officeId).single();
+    .select('data, name, logo, slogan, plan, active, status').eq('id', officeId).single();
   if (error || !data) return null;
   return data;
 }
@@ -1242,7 +1242,7 @@ function LegalModal({ tab='terms', onClose }) {
 }
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
-function LoginScreen({ onLogin }) {
+function LoginScreen({ onLogin, onSignup }) {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [loginError, setLoginError] = React.useState('');
@@ -1384,6 +1384,12 @@ function LoginScreen({ onLogin }) {
         <div style={{ marginTop:24, color:C.sub, fontSize:13, letterSpacing:'0.08em' }}>
           DEMO ENVIRONMENT
         </div>
+
+        <button onClick={onSignup} style={{ marginTop:20, background:'none', border:'none',
+          color:C.sub, cursor:'pointer', fontSize:14, textDecoration:'underline',
+          fontFamily:"'Space Grotesk',sans-serif" }}>
+          משרד אדריכלים? הצטרפו כזכיינים ←
+        </button>
       </div>
 
       {/* Footer */}
@@ -1405,6 +1411,96 @@ function LoginScreen({ onLogin }) {
       {showLegal && <LegalModal tab={showLegal} onClose={() => setShowLegal(null)} />}
       {showPricing && <PricingScreen onBack={() => setShowPricing(false)} />}
       {showTheme && <ThemeSelector currentId={themeId} onSelect={handleTheme} onClose={() => setShowTheme(false)} />}
+    </div>
+  );
+}
+
+// ─── FRANCHISE SIGNUP SCREEN ────────────────────────────────────────────────────
+// Public entry point for architecture offices joining as franchisees: sign in with
+// Google, fill in office details, then wait for the platform owner's approval.
+function SignupScreen({ googleUser, onSubmitted, onCancel }) {
+  const [officeName, setOfficeName] = React.useState('');
+  const [contactName, setContactName] = React.useState(googleUser?.name || '');
+  const [phone, setPhone] = React.useState('');
+  const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [submitted, setSubmitted] = React.useState(false);
+  const isMobile = useIsMobile();
+
+  const handleGoogleSignup = async () => {
+    await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: window.location.origin + '/signup' } });
+  };
+
+  const handleSubmit = async () => {
+    if (!officeName || !contactName) { setError('נא למלא שם משרד ושם איש קשר'); return; }
+    setLoading(true); setError('');
+    try {
+      const { data:{ session } } = await sb.auth.getSession();
+      const res = await fetch('/api/signup-office', {
+        method:'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+session.access_token },
+        body: JSON.stringify({ name:officeName, contactName, phone })
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'שגיאה בשליחת ההרשמה');
+      setSubmitted(true);
+    } catch(e) { setError(e.message); }
+    setLoading(false);
+  };
+
+  return (
+    <div style={{ width:'100vw', height:'100vh', background:C.bg, direction:'rtl',
+      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+      padding:'0 20px', position:'relative' }}>
+      <img src={isLightColor(C.bg) ? '/logo-dark.png' : '/logo-white.png'} alt="TEKTONA"
+        style={{ width:'clamp(160px,22vw,300px)', height:'auto', display:'block', margin:'0 auto 32px' }}/>
+
+      {submitted ? (
+        <div style={{ textAlign:'center', maxWidth:420 }}>
+          <div style={{ fontSize:44, marginBottom:16 }}>⏳</div>
+          <div style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:8 }}>הבקשה נשלחה בהצלחה</div>
+          <div style={{ color:C.sub, fontSize:16, marginBottom:24 }}>
+            נבדוק את הבקשה ונאשר אותה לאחר סגירת התשלום. תקבלו גישה מלאה עם האישור.
+          </div>
+          <Btn onClick={onSubmitted}>המשך</Btn>
+        </div>
+      ) : !googleUser ? (
+        <div style={{ textAlign:'center', maxWidth:420, width:'100%' }}>
+          <div style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:8 }}>הצטרפות כזכיין למערכת Tektona</div>
+          <div style={{ color:C.sub, fontSize:16, marginBottom:28, lineHeight:1.6 }}>
+            משרד אדריכלים? הירשמו עם חשבון Google, מלאו פרטי משרד, ולאחר אישור בעל המערכת תקבלו גישת מנהל משרד מלאה.
+          </div>
+          <button onClick={handleGoogleSignup}
+            style={{ width:'100%', padding:'14px 20px', background:C.text, color:C.bg, border:'none',
+              cursor:'pointer', fontSize:16, fontWeight:700, letterSpacing:'0.04em',
+              fontFamily:"'Space Grotesk',sans-serif", borderRadius:0, marginBottom:14 }}>
+            הרשמה עם Google
+          </button>
+          <button onClick={onCancel}
+            style={{ background:'none', border:'none', color:C.sub, cursor:'pointer', fontSize:14, textDecoration:'underline' }}>
+            חזרה למסך כניסה
+          </button>
+        </div>
+      ) : (
+        <div style={{ width:'100%', maxWidth:380, display:'flex', flexDirection:'column', gap:12 }}>
+          <div style={{ fontSize:20, fontWeight:700, color:C.text, marginBottom:4, textAlign:'center' }}>פרטי המשרד</div>
+          <div style={{ color:C.sub, fontSize:14, marginBottom:10, textAlign:'center' }}>מחוברים כ-{googleUser.email}</div>
+          <Input label="שם המשרד" value={officeName} onChange={setOfficeName} required/>
+          <Input label="שם איש קשר" value={contactName} onChange={setContactName} required/>
+          <Input label="טלפון (לא חובה)" value={phone} onChange={setPhone}/>
+          {error && <div style={{ color:C.danger, fontSize:14, textAlign:'center' }}>{error}</div>}
+          <button onClick={handleSubmit} disabled={loading}
+            style={{ padding:'14px 20px', background:C.text, color:C.bg, border:'none',
+              cursor: loading?'wait':'pointer', fontSize:16, fontWeight:700, letterSpacing:'0.04em',
+              fontFamily:"'Space Grotesk',sans-serif", borderRadius:0, opacity:loading?0.7:1, marginTop:8 }}>
+            {loading ? '...' : 'שליחת בקשת הצטרפות'}
+          </button>
+          <button onClick={onCancel}
+            style={{ background:'none', border:'none', color:C.sub, cursor:'pointer', fontSize:14, textDecoration:'underline', marginTop:4 }}>
+            ביטול
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -4772,17 +4868,24 @@ function PlatformAdminDashboard({ onLogout }) {
   const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
 
   const load = async () => {
-    const { data: offs } = await sb.from('offices').select('id, name, plan, active, created_at, data');
-    const { data: members } = await sb.from('office_members').select('office_id');
-    const counts = {};
-    (members||[]).forEach(m => { counts[m.office_id] = (counts[m.office_id]||0)+1; });
-    setOffices((offs||[]).map(o => ({ ...o, userCount: counts[o.id]||0, projectCount: (o.data?.projects||[]).length }))
+    const { data: offs } = await sb.from('offices')
+      .select('id, name, plan, active, status, contact_email, contact_phone, created_at, data');
+    const { data: members } = await sb.from('office_members').select('office_id, role, display_name');
+    const counts = {}; const adminNames = {};
+    (members||[]).forEach(m => {
+      counts[m.office_id] = (counts[m.office_id]||0)+1;
+      if (m.role==='admin' && !adminNames[m.office_id]) adminNames[m.office_id] = m.display_name;
+    });
+    setOffices((offs||[]).map(o => ({ ...o, userCount: counts[o.id]||0,
+      projectCount: (o.data?.projects||[]).length, adminName: adminNames[o.id]||'' }))
       .sort((a,b)=>a.name.localeCompare(b.name)));
   };
   React.useEffect(()=>{ load(); },[]);
 
   const updatePlan = async (id, plan) => { await sb.from('offices').update({plan}).eq('id',id); load(); };
   const toggleActive = async (id, active) => { await sb.from('offices').update({active:!active}).eq('id',id); load(); };
+  const approveOffice = async (id) => { await sb.from('offices').update({status:'active'}).eq('id',id); load(); };
+  const rejectOffice = async (id) => { await sb.from('offices').update({status:'rejected'}).eq('id',id); load(); };
 
   const createOffice = async () => {
     if (!form.name || !form.adminName || !form.adminEmail) return;
@@ -4801,6 +4904,10 @@ function PlatformAdminDashboard({ onLogout }) {
     setCreating(false);
   };
 
+  const approvedOffices = (offices||[]).filter(o=>o.status==='active');
+  const requestOffices = (offices||[]).filter(o=>o.status!=='active');
+  const pendingCount = (offices||[]).filter(o=>o.status==='pending').length;
+
   return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
       <AppNavBar onGoHome={onLogout} title="Platform Owner" subtitle="כל המשרדים" onBack={onLogout} onOpenTheme={()=>setShowTheme(true)}/>
@@ -4810,18 +4917,73 @@ function PlatformAdminDashboard({ onLogout }) {
           <h1 style={{color:C.text,fontSize:isMobile?22:29,fontWeight:800}}>⚡ Platform Owner</h1>
           {section==='offices' && <Btn onClick={()=>setShowNew(true)}>+ משרד חדש</Btn>}
         </div>
-        <div style={{display:'flex',gap:8,marginBottom:20}}>
-          {[['offices','משרדים'],['legal','מסמכים משפטיים'],['archive','ארכיון מחיקות']].map(([key,label])=>(
+        <div style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
+          {[['offices','משרדים'],['requests','בקשות הרשמה'],['legal','מסמכים משפטיים'],['archive','ארכיון מחיקות']].map(([key,label])=>(
             <button key={key} onClick={()=>setSection(key)}
               style={{padding:'7px 18px',borderRadius:20,border:`1px solid ${C.border}`,cursor:'pointer',fontSize:14,fontWeight:600,
-                background:section===key?C.primary:'transparent',color:section===key?'#fff':C.text}}>
+                background:section===key?C.primary:'transparent',color:section===key?'#fff':C.text,
+                display:'flex',alignItems:'center',gap:6}}>
               {label}
+              {key==='requests' && pendingCount>0 && (
+                <span style={{background:section===key?'#fff':C.danger,color:section===key?C.primary:'#fff',
+                  borderRadius:10,fontSize:11,fontWeight:700,padding:'1px 7px'}}>{pendingCount}</span>
+              )}
             </button>
           ))}
         </div>
         {section==='legal' && <LegalDocsAdmin/>}
         {section==='archive' && <DeletedProjectsArchive/>}
-        {section==='offices' && offices===null && <div style={{display:'flex',alignItems:'center',gap:10,color:C.sub,fontSize:16}}><Honeycomb/> טוען...</div>}
+        {(section==='offices' || section==='requests') && offices===null && <div style={{display:'flex',alignItems:'center',gap:10,color:C.sub,fontSize:16}}><Honeycomb/> טוען...</div>}
+        {section==='requests' && offices && (
+          <div style={{background:C.card,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden'}}>
+            {requestOffices.length===0 ? (
+              <div style={{padding:28,textAlign:'center',color:C.sub,fontSize:16}}>אין בקשות הרשמה כרגע</div>
+            ) : (
+              <div style={{overflowX:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse'}}>
+                  <thead>
+                    <tr style={{background:C.bg}}>
+                      {['משרד','איש קשר','אימייל','טלפון','סטטוס','נשלח','פעולות'].map(h=>(
+                        <th key={h} style={{padding:'10px 16px',textAlign:'right',fontSize:14,color:C.sub,fontWeight:600,borderBottom:`1px solid ${C.border}`}}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {requestOffices.map(o=>(
+                      <tr key={o.id} style={{borderBottom:`1px solid ${C.border}`}}>
+                        <td style={{padding:'12px 16px',fontSize:16,fontWeight:600,color:C.text}}>{o.name}</td>
+                        <td style={{padding:'12px 16px',fontSize:15,color:C.text}}>{o.adminName||'—'}</td>
+                        <td style={{padding:'12px 16px',fontSize:14,color:C.sub,direction:'ltr',textAlign:'right'}}>{o.contact_email||'—'}</td>
+                        <td style={{padding:'12px 16px',fontSize:14,color:C.sub,direction:'ltr',textAlign:'right'}}>{o.contact_phone||'—'}</td>
+                        <td style={{padding:'12px 16px'}}>
+                          <span style={{padding:'4px 12px',borderRadius:20,fontSize:13,fontWeight:600,
+                            background:o.status==='pending'?C.sub+'22':C.danger+'22',color:o.status==='pending'?C.sub:C.danger}}>
+                            {o.status==='pending'?'⏳ ממתין':'✕ נדחה'}
+                          </span>
+                        </td>
+                        <td style={{padding:'12px 16px',fontSize:14,color:C.sub}}>{fmtDate(o.created_at)}</td>
+                        <td style={{padding:'12px 16px',display:'flex',gap:8}}>
+                          <button onClick={()=>approveOffice(o.id)}
+                            style={{padding:'5px 14px',borderRadius:20,border:'none',cursor:'pointer',fontSize:13,fontWeight:600,
+                              background:C.success+'22',color:C.success}}>
+                            ✓ אשר
+                          </button>
+                          {o.status==='pending' && (
+                            <button onClick={()=>rejectOffice(o.id)}
+                              style={{padding:'5px 14px',borderRadius:20,border:'none',cursor:'pointer',fontSize:13,fontWeight:600,
+                                background:C.danger+'22',color:C.danger}}>
+                              ✕ דחה
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
         {section==='offices' && offices && (
           <div style={{background:C.card,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden'}}>
             <div style={{overflowX:'auto'}}>
@@ -4834,7 +4996,7 @@ function PlatformAdminDashboard({ onLogout }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {offices.map(o=>(
+                  {approvedOffices.map(o=>(
                     <tr key={o.id} style={{borderBottom:`1px solid ${C.border}`}}>
                       <td style={{padding:'12px 16px',fontSize:16,fontWeight:600,color:C.text}}>{o.name}</td>
                       <td style={{padding:'12px 16px'}}>
@@ -4891,6 +5053,9 @@ const SCREEN_PATHS = {
   backup: '/backup',
   platformadmin: '/platform',
   suspended: '/suspended',
+  signup: '/signup',
+  pending: '/pending',
+  rejected: '/rejected',
 };
 const PATH_SCREENS = Object.fromEntries(Object.entries(SCREEN_PATHS).map(([s,p])=>[p,s]));
 
@@ -4932,6 +5097,7 @@ function App() {
   const [activeTab, setActiveTab] = React.useState('dashboard');
   const [themeId, setThemeId] = React.useState('lightStone');
   const [projectsFilter, setProjectsFilter] = React.useState(null);
+  const [signupUser, setSignupUser] = React.useState(null);
   const officeIdRef = React.useRef(null);
 
   const updateData = (updater) => {
@@ -4962,6 +5128,8 @@ function App() {
     officeIdRef.current = u.officeId;
     setUser(u);
     const office = await loadOffice(u.officeId);
+    if (office && office.status === 'pending') { navigate('pending', { replace:true }); return; }
+    if (office && office.status === 'rejected') { navigate('rejected', { replace:true }); return; }
     if (office && office.active === false) { navigate('suspended', { replace:true }); return; }
     if (office) {
       OFFICE_PLAN.plan = office.plan || 'pro';
@@ -4997,9 +5165,14 @@ function App() {
         if (owner) { await enterOffice(buildOwnerUser(owner, session.user.email)); return; }
         const member = await fetchOfficeMember(session.user.id);
         if (member) { await enterOffice(buildAppUser(member, session.user.email)); return; }
-        await sb.auth.signOut();
+        // Authenticated (e.g. via Google) but not linked to any office yet — let them
+        // finish the franchise signup form instead of silently signing them out.
+        setSignupUser({ id: session.user.id, email: session.user.email,
+          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '' });
+        navigate('signup', { replace:true });
+        return;
       }
-      navigate('login', { replace:true });
+      navigate(window.location.pathname === '/signup' ? 'signup' : 'login', { replace:true });
     };
     initApp();
   },[]);
@@ -5053,9 +5226,20 @@ function App() {
     </div>
   );
 
-  if (screen==='login') return <LoginScreen onLogin={handleLogin}/>;
+  if (screen==='login') return <LoginScreen onLogin={handleLogin} onSignup={()=>navigate('signup')}/>;
 
   if (screen==='platformadmin') return <PlatformAdminDashboard onLogout={handleLogout}/>;
+
+  if (screen==='signup') return (
+    <SignupScreen
+      googleUser={signupUser}
+      onSubmitted={async()=>{
+        const member = await fetchOfficeMember(signupUser.id);
+        if (member) await enterOffice(buildAppUser(member, signupUser.email));
+      }}
+      onCancel={async()=>{ await sb.auth.signOut(); setSignupUser(null); navigate('login', { replace:true }); }}
+    />
+  );
 
   if (screen==='suspended') return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,display:'flex',alignItems:'center',
@@ -5064,6 +5248,32 @@ function App() {
         <div style={{fontSize:44,marginBottom:16}}>🔒</div>
         <div style={{fontSize:22,fontWeight:700,color:C.text,marginBottom:8}}>המשרד הושהה</div>
         <div style={{color:C.sub,fontSize:16,marginBottom:20}}>הגישה למערכת הושעתה. פנו לבעל הפלטפורמה לפרטים.</div>
+        <Btn onClick={handleLogout}>חזרה למסך כניסה</Btn>
+      </div>
+    </div>
+  );
+
+  if (screen==='pending') return (
+    <div style={{width:'100vw',height:'100vh',background:C.bg,display:'flex',alignItems:'center',
+      justifyContent:'center',direction:'rtl',textAlign:'center'}}>
+      <div>
+        <div style={{fontSize:44,marginBottom:16}}>⏳</div>
+        <div style={{fontSize:22,fontWeight:700,color:C.text,marginBottom:8}}>הבקשה שלכם ממתינה לאישור</div>
+        <div style={{color:C.sub,fontSize:16,marginBottom:20,maxWidth:420}}>
+          ההרשמה למערכת התקבלה. לאחר סגירת התשלום מול בעל הפלטפורמה, המשרד יאושר ותקבלו גישה מלאה.
+        </div>
+        <Btn onClick={handleLogout}>חזרה למסך כניסה</Btn>
+      </div>
+    </div>
+  );
+
+  if (screen==='rejected') return (
+    <div style={{width:'100vw',height:'100vh',background:C.bg,display:'flex',alignItems:'center',
+      justifyContent:'center',direction:'rtl',textAlign:'center'}}>
+      <div>
+        <div style={{fontSize:44,marginBottom:16}}>✕</div>
+        <div style={{fontSize:22,fontWeight:700,color:C.text,marginBottom:8}}>הבקשה נדחתה</div>
+        <div style={{color:C.sub,fontSize:16,marginBottom:20,maxWidth:420}}>בקשת ההצטרפות שלכם לא אושרה. לפרטים נוספים פנו לבעל הפלטפורמה.</div>
         <Btn onClick={handleLogout}>חזרה למסך כניסה</Btn>
       </div>
     </div>

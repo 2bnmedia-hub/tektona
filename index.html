@@ -1459,7 +1459,7 @@ async function loadOffice(officeId) {
   const {
     data,
     error
-  } = await sb.from('offices').select('data, name, logo, slogan, plan, active').eq('id', officeId).single();
+  } = await sb.from('offices').select('data, name, logo, slogan, plan, active, status').eq('id', officeId).single();
   if (error || !data) return null;
   return data;
 }
@@ -3376,7 +3376,8 @@ function LegalModal({
 
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
 function LoginScreen({
-  onLogin
+  onLogin,
+  onSignup
 }) {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -3696,7 +3697,19 @@ function LoginScreen({
       fontSize: 13,
       letterSpacing: '0.08em'
     }
-  }, "DEMO ENVIRONMENT")), /*#__PURE__*/React.createElement("div", {
+  }, "DEMO ENVIRONMENT"), /*#__PURE__*/React.createElement("button", {
+    onClick: onSignup,
+    style: {
+      marginTop: 20,
+      background: 'none',
+      border: 'none',
+      color: C.sub,
+      cursor: 'pointer',
+      fontSize: 14,
+      textDecoration: 'underline',
+      fontFamily: "'Space Grotesk',sans-serif"
+    }
+  }, "\u05DE\u05E9\u05E8\u05D3 \u05D0\u05D3\u05E8\u05D9\u05DB\u05DC\u05D9\u05DD? \u05D4\u05E6\u05D8\u05E8\u05E4\u05D5 \u05DB\u05D6\u05DB\u05D9\u05D9\u05E0\u05D9\u05DD \u2190")), /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'absolute',
       bottom: 0,
@@ -3746,6 +3759,229 @@ function LoginScreen({
     onSelect: handleTheme,
     onClose: () => setShowTheme(false)
   }));
+}
+
+// ─── FRANCHISE SIGNUP SCREEN ────────────────────────────────────────────────────
+// Public entry point for architecture offices joining as franchisees: sign in with
+// Google, fill in office details, then wait for the platform owner's approval.
+function SignupScreen({
+  googleUser,
+  onSubmitted,
+  onCancel
+}) {
+  const [officeName, setOfficeName] = React.useState('');
+  const [contactName, setContactName] = React.useState(googleUser?.name || '');
+  const [phone, setPhone] = React.useState('');
+  const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [submitted, setSubmitted] = React.useState(false);
+  const isMobile = useIsMobile();
+  const handleGoogleSignup = async () => {
+    await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/signup'
+      }
+    });
+  };
+  const handleSubmit = async () => {
+    if (!officeName || !contactName) {
+      setError('נא למלא שם משרד ושם איש קשר');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const {
+        data: {
+          session
+        }
+      } = await sb.auth.getSession();
+      const res = await fetch('/api/signup-office', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({
+          name: officeName,
+          contactName,
+          phone
+        })
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'שגיאה בשליחת ההרשמה');
+      setSubmitted(true);
+    } catch (e) {
+      setError(e.message);
+    }
+    setLoading(false);
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: '100vw',
+      height: '100vh',
+      background: C.bg,
+      direction: 'rtl',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '0 20px',
+      position: 'relative'
+    }
+  }, /*#__PURE__*/React.createElement("img", {
+    src: isLightColor(C.bg) ? '/logo-dark.png' : '/logo-white.png',
+    alt: "TEKTONA",
+    style: {
+      width: 'clamp(160px,22vw,300px)',
+      height: 'auto',
+      display: 'block',
+      margin: '0 auto 32px'
+    }
+  }), submitted ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      maxWidth: 420
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 44,
+      marginBottom: 16
+    }
+  }, "\u23F3"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 700,
+      color: C.text,
+      marginBottom: 8
+    }
+  }, "\u05D4\u05D1\u05E7\u05E9\u05D4 \u05E0\u05E9\u05DC\u05D7\u05D4 \u05D1\u05D4\u05E6\u05DC\u05D7\u05D4"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 16,
+      marginBottom: 24
+    }
+  }, "\u05E0\u05D1\u05D3\u05D5\u05E7 \u05D0\u05EA \u05D4\u05D1\u05E7\u05E9\u05D4 \u05D5\u05E0\u05D0\u05E9\u05E8 \u05D0\u05D5\u05EA\u05D4 \u05DC\u05D0\u05D7\u05E8 \u05E1\u05D2\u05D9\u05E8\u05EA \u05D4\u05EA\u05E9\u05DC\u05D5\u05DD. \u05EA\u05E7\u05D1\u05DC\u05D5 \u05D2\u05D9\u05E9\u05D4 \u05DE\u05DC\u05D0\u05D4 \u05E2\u05DD \u05D4\u05D0\u05D9\u05E9\u05D5\u05E8."), /*#__PURE__*/React.createElement(Btn, {
+    onClick: onSubmitted
+  }, "\u05D4\u05DE\u05E9\u05DA")) : !googleUser ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      maxWidth: 420,
+      width: '100%'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 700,
+      color: C.text,
+      marginBottom: 8
+    }
+  }, "\u05D4\u05E6\u05D8\u05E8\u05E4\u05D5\u05EA \u05DB\u05D6\u05DB\u05D9\u05D9\u05DF \u05DC\u05DE\u05E2\u05E8\u05DB\u05EA Tektona"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 16,
+      marginBottom: 28,
+      lineHeight: 1.6
+    }
+  }, "\u05DE\u05E9\u05E8\u05D3 \u05D0\u05D3\u05E8\u05D9\u05DB\u05DC\u05D9\u05DD? \u05D4\u05D9\u05E8\u05E9\u05DE\u05D5 \u05E2\u05DD \u05D7\u05E9\u05D1\u05D5\u05DF Google, \u05DE\u05DC\u05D0\u05D5 \u05E4\u05E8\u05D8\u05D9 \u05DE\u05E9\u05E8\u05D3, \u05D5\u05DC\u05D0\u05D7\u05E8 \u05D0\u05D9\u05E9\u05D5\u05E8 \u05D1\u05E2\u05DC \u05D4\u05DE\u05E2\u05E8\u05DB\u05EA \u05EA\u05E7\u05D1\u05DC\u05D5 \u05D2\u05D9\u05E9\u05EA \u05DE\u05E0\u05D4\u05DC \u05DE\u05E9\u05E8\u05D3 \u05DE\u05DC\u05D0\u05D4."), /*#__PURE__*/React.createElement("button", {
+    onClick: handleGoogleSignup,
+    style: {
+      width: '100%',
+      padding: '14px 20px',
+      background: C.text,
+      color: C.bg,
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: 16,
+      fontWeight: 700,
+      letterSpacing: '0.04em',
+      fontFamily: "'Space Grotesk',sans-serif",
+      borderRadius: 0,
+      marginBottom: 14
+    }
+  }, "\u05D4\u05E8\u05E9\u05DE\u05D4 \u05E2\u05DD Google"), /*#__PURE__*/React.createElement("button", {
+    onClick: onCancel,
+    style: {
+      background: 'none',
+      border: 'none',
+      color: C.sub,
+      cursor: 'pointer',
+      fontSize: 14,
+      textDecoration: 'underline'
+    }
+  }, "\u05D7\u05D6\u05E8\u05D4 \u05DC\u05DE\u05E1\u05DA \u05DB\u05E0\u05D9\u05E1\u05D4")) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: '100%',
+      maxWidth: 380,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 20,
+      fontWeight: 700,
+      color: C.text,
+      marginBottom: 4,
+      textAlign: 'center'
+    }
+  }, "\u05E4\u05E8\u05D8\u05D9 \u05D4\u05DE\u05E9\u05E8\u05D3"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 14,
+      marginBottom: 10,
+      textAlign: 'center'
+    }
+  }, "\u05DE\u05D7\u05D5\u05D1\u05E8\u05D9\u05DD \u05DB-", googleUser.email), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05E9\u05DD \u05D4\u05DE\u05E9\u05E8\u05D3",
+    value: officeName,
+    onChange: setOfficeName,
+    required: true
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05E9\u05DD \u05D0\u05D9\u05E9 \u05E7\u05E9\u05E8",
+    value: contactName,
+    onChange: setContactName,
+    required: true
+  }), /*#__PURE__*/React.createElement(Input, {
+    label: "\u05D8\u05DC\u05E4\u05D5\u05DF (\u05DC\u05D0 \u05D7\u05D5\u05D1\u05D4)",
+    value: phone,
+    onChange: setPhone
+  }), error && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.danger,
+      fontSize: 14,
+      textAlign: 'center'
+    }
+  }, error), /*#__PURE__*/React.createElement("button", {
+    onClick: handleSubmit,
+    disabled: loading,
+    style: {
+      padding: '14px 20px',
+      background: C.text,
+      color: C.bg,
+      border: 'none',
+      cursor: loading ? 'wait' : 'pointer',
+      fontSize: 16,
+      fontWeight: 700,
+      letterSpacing: '0.04em',
+      fontFamily: "'Space Grotesk',sans-serif",
+      borderRadius: 0,
+      opacity: loading ? 0.7 : 1,
+      marginTop: 8
+    }
+  }, loading ? '...' : 'שליחת בקשת הצטרפות'), /*#__PURE__*/React.createElement("button", {
+    onClick: onCancel,
+    style: {
+      background: 'none',
+      border: 'none',
+      color: C.sub,
+      cursor: 'pointer',
+      fontSize: 14,
+      textDecoration: 'underline',
+      marginTop: 4
+    }
+  }, "\u05D1\u05D9\u05D8\u05D5\u05DC")));
 }
 
 // ─── PRICING SCREEN ───────────────────────────────────────────────────────────
@@ -13157,18 +13393,21 @@ function PlatformAdminDashboard({
   const load = async () => {
     const {
       data: offs
-    } = await sb.from('offices').select('id, name, plan, active, created_at, data');
+    } = await sb.from('offices').select('id, name, plan, active, status, contact_email, contact_phone, created_at, data');
     const {
       data: members
-    } = await sb.from('office_members').select('office_id');
+    } = await sb.from('office_members').select('office_id, role, display_name');
     const counts = {};
+    const adminNames = {};
     (members || []).forEach(m => {
       counts[m.office_id] = (counts[m.office_id] || 0) + 1;
+      if (m.role === 'admin' && !adminNames[m.office_id]) adminNames[m.office_id] = m.display_name;
     });
     setOffices((offs || []).map(o => ({
       ...o,
       userCount: counts[o.id] || 0,
-      projectCount: (o.data?.projects || []).length
+      projectCount: (o.data?.projects || []).length,
+      adminName: adminNames[o.id] || ''
     })).sort((a, b) => a.name.localeCompare(b.name)));
   };
   React.useEffect(() => {
@@ -13183,6 +13422,18 @@ function PlatformAdminDashboard({
   const toggleActive = async (id, active) => {
     await sb.from('offices').update({
       active: !active
+    }).eq('id', id);
+    load();
+  };
+  const approveOffice = async id => {
+    await sb.from('offices').update({
+      status: 'active'
+    }).eq('id', id);
+    load();
+  };
+  const rejectOffice = async id => {
+    await sb.from('offices').update({
+      status: 'rejected'
     }).eq('id', id);
     load();
   };
@@ -13218,6 +13469,9 @@ function PlatformAdminDashboard({
     }
     setCreating(false);
   };
+  const approvedOffices = (offices || []).filter(o => o.status === 'active');
+  const requestOffices = (offices || []).filter(o => o.status !== 'active');
+  const pendingCount = (offices || []).filter(o => o.status === 'pending').length;
   return /*#__PURE__*/React.createElement("div", {
     style: {
       width: '100vw',
@@ -13265,9 +13519,10 @@ function PlatformAdminDashboard({
     style: {
       display: 'flex',
       gap: 8,
-      marginBottom: 20
+      marginBottom: 20,
+      flexWrap: 'wrap'
     }
-  }, [['offices', 'משרדים'], ['legal', 'מסמכים משפטיים'], ['archive', 'ארכיון מחיקות']].map(([key, label]) => /*#__PURE__*/React.createElement("button", {
+  }, [['offices', 'משרדים'], ['requests', 'בקשות הרשמה'], ['legal', 'מסמכים משפטיים'], ['archive', 'ארכיון מחיקות']].map(([key, label]) => /*#__PURE__*/React.createElement("button", {
     key: key,
     onClick: () => setSection(key),
     style: {
@@ -13278,9 +13533,21 @@ function PlatformAdminDashboard({
       fontSize: 14,
       fontWeight: 600,
       background: section === key ? C.primary : 'transparent',
-      color: section === key ? '#fff' : C.text
+      color: section === key ? '#fff' : C.text,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6
     }
-  }, label))), section === 'legal' && /*#__PURE__*/React.createElement(LegalDocsAdmin, null), section === 'archive' && /*#__PURE__*/React.createElement(DeletedProjectsArchive, null), section === 'offices' && offices === null && /*#__PURE__*/React.createElement("div", {
+  }, label, key === 'requests' && pendingCount > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      background: section === key ? '#fff' : C.danger,
+      color: section === key ? C.primary : '#fff',
+      borderRadius: 10,
+      fontSize: 11,
+      fontWeight: 700,
+      padding: '1px 7px'
+    }
+  }, pendingCount)))), section === 'legal' && /*#__PURE__*/React.createElement(LegalDocsAdmin, null), section === 'archive' && /*#__PURE__*/React.createElement(DeletedProjectsArchive, null), (section === 'offices' || section === 'requests') && offices === null && /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'center',
@@ -13288,7 +13555,127 @@ function PlatformAdminDashboard({
       color: C.sub,
       fontSize: 16
     }
-  }, /*#__PURE__*/React.createElement(Honeycomb, null), " \u05D8\u05D5\u05E2\u05DF..."), section === 'offices' && offices && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Honeycomb, null), " \u05D8\u05D5\u05E2\u05DF..."), section === 'requests' && offices && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.card,
+      borderRadius: 16,
+      border: `1px solid ${C.border}`,
+      overflow: 'hidden'
+    }
+  }, requestOffices.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: 28,
+      textAlign: 'center',
+      color: C.sub,
+      fontSize: 16
+    }
+  }, "\u05D0\u05D9\u05DF \u05D1\u05E7\u05E9\u05D5\u05EA \u05D4\u05E8\u05E9\u05DE\u05D4 \u05DB\u05E8\u05D2\u05E2") : /*#__PURE__*/React.createElement("div", {
+    style: {
+      overflowX: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      borderCollapse: 'collapse'
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: C.bg
+    }
+  }, ['משרד', 'איש קשר', 'אימייל', 'טלפון', 'סטטוס', 'נשלח', 'פעולות'].map(h => /*#__PURE__*/React.createElement("th", {
+    key: h,
+    style: {
+      padding: '10px 16px',
+      textAlign: 'right',
+      fontSize: 14,
+      color: C.sub,
+      fontWeight: 600,
+      borderBottom: `1px solid ${C.border}`
+    }
+  }, h)))), /*#__PURE__*/React.createElement("tbody", null, requestOffices.map(o => /*#__PURE__*/React.createElement("tr", {
+    key: o.id,
+    style: {
+      borderBottom: `1px solid ${C.border}`
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 16px',
+      fontSize: 16,
+      fontWeight: 600,
+      color: C.text
+    }
+  }, o.name), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 16px',
+      fontSize: 15,
+      color: C.text
+    }
+  }, o.adminName || '—'), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 16px',
+      fontSize: 14,
+      color: C.sub,
+      direction: 'ltr',
+      textAlign: 'right'
+    }
+  }, o.contact_email || '—'), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 16px',
+      fontSize: 14,
+      color: C.sub,
+      direction: 'ltr',
+      textAlign: 'right'
+    }
+  }, o.contact_phone || '—'), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 16px'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      padding: '4px 12px',
+      borderRadius: 20,
+      fontSize: 13,
+      fontWeight: 600,
+      background: o.status === 'pending' ? C.sub + '22' : C.danger + '22',
+      color: o.status === 'pending' ? C.sub : C.danger
+    }
+  }, o.status === 'pending' ? '⏳ ממתין' : '✕ נדחה')), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 16px',
+      fontSize: 14,
+      color: C.sub
+    }
+  }, fmtDate(o.created_at)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 16px',
+      display: 'flex',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => approveOffice(o.id),
+    style: {
+      padding: '5px 14px',
+      borderRadius: 20,
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: 13,
+      fontWeight: 600,
+      background: C.success + '22',
+      color: C.success
+    }
+  }, "\u2713 \u05D0\u05E9\u05E8"), o.status === 'pending' && /*#__PURE__*/React.createElement("button", {
+    onClick: () => rejectOffice(o.id),
+    style: {
+      padding: '5px 14px',
+      borderRadius: 20,
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: 13,
+      fontWeight: 600,
+      background: C.danger + '22',
+      color: C.danger
+    }
+  }, "\u2715 \u05D3\u05D7\u05D4")))))))), section === 'offices' && offices && /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.card,
       borderRadius: 16,
@@ -13318,7 +13705,7 @@ function PlatformAdminDashboard({
       fontWeight: 600,
       borderBottom: `1px solid ${C.border}`
     }
-  }, h)))), /*#__PURE__*/React.createElement("tbody", null, offices.map(o => /*#__PURE__*/React.createElement("tr", {
+  }, h)))), /*#__PURE__*/React.createElement("tbody", null, approvedOffices.map(o => /*#__PURE__*/React.createElement("tr", {
     key: o.id,
     style: {
       borderBottom: `1px solid ${C.border}`
@@ -13451,7 +13838,10 @@ const SCREEN_PATHS = {
   users: '/users',
   backup: '/backup',
   platformadmin: '/platform',
-  suspended: '/suspended'
+  suspended: '/suspended',
+  signup: '/signup',
+  pending: '/pending',
+  rejected: '/rejected'
 };
 const PATH_SCREENS = Object.fromEntries(Object.entries(SCREEN_PATHS).map(([s, p]) => [p, s]));
 function buildPath(screen, projectId, tab, projects) {
@@ -13496,6 +13886,7 @@ function App() {
   const [activeTab, setActiveTab] = React.useState('dashboard');
   const [themeId, setThemeId] = React.useState('lightStone');
   const [projectsFilter, setProjectsFilter] = React.useState(null);
+  const [signupUser, setSignupUser] = React.useState(null);
   const officeIdRef = React.useRef(null);
   const updateData = updater => {
     setData(d => {
@@ -13537,6 +13928,18 @@ function App() {
     officeIdRef.current = u.officeId;
     setUser(u);
     const office = await loadOffice(u.officeId);
+    if (office && office.status === 'pending') {
+      navigate('pending', {
+        replace: true
+      });
+      return;
+    }
+    if (office && office.status === 'rejected') {
+      navigate('rejected', {
+        replace: true
+      });
+      return;
+    }
     if (office && office.active === false) {
       navigate('suspended', {
         replace: true
@@ -13598,9 +14001,19 @@ function App() {
           await enterOffice(buildAppUser(member, session.user.email));
           return;
         }
-        await sb.auth.signOut();
+        // Authenticated (e.g. via Google) but not linked to any office yet — let them
+        // finish the franchise signup form instead of silently signing them out.
+        setSignupUser({
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || ''
+        });
+        navigate('signup', {
+          replace: true
+        });
+        return;
       }
-      navigate('login', {
+      navigate(window.location.pathname === '/signup' ? 'signup' : 'login', {
         replace: true
       });
     };
@@ -13691,10 +14104,25 @@ function App() {
     }
   }, "\u05D8\u05D5\u05E2\u05DF...")));
   if (screen === 'login') return /*#__PURE__*/React.createElement(LoginScreen, {
-    onLogin: handleLogin
+    onLogin: handleLogin,
+    onSignup: () => navigate('signup')
   });
   if (screen === 'platformadmin') return /*#__PURE__*/React.createElement(PlatformAdminDashboard, {
     onLogout: handleLogout
+  });
+  if (screen === 'signup') return /*#__PURE__*/React.createElement(SignupScreen, {
+    googleUser: signupUser,
+    onSubmitted: async () => {
+      const member = await fetchOfficeMember(signupUser.id);
+      if (member) await enterOffice(buildAppUser(member, signupUser.email));
+    },
+    onCancel: async () => {
+      await sb.auth.signOut();
+      setSignupUser(null);
+      navigate('login', {
+        replace: true
+      });
+    }
   });
   if (screen === 'suspended') return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -13726,6 +14154,72 @@ function App() {
       marginBottom: 20
     }
   }, "\u05D4\u05D2\u05D9\u05E9\u05D4 \u05DC\u05DE\u05E2\u05E8\u05DB\u05EA \u05D4\u05D5\u05E9\u05E2\u05EA\u05D4. \u05E4\u05E0\u05D5 \u05DC\u05D1\u05E2\u05DC \u05D4\u05E4\u05DC\u05D8\u05E4\u05D5\u05E8\u05DE\u05D4 \u05DC\u05E4\u05E8\u05D8\u05D9\u05DD."), /*#__PURE__*/React.createElement(Btn, {
+    onClick: handleLogout
+  }, "\u05D7\u05D6\u05E8\u05D4 \u05DC\u05DE\u05E1\u05DA \u05DB\u05E0\u05D9\u05E1\u05D4")));
+  if (screen === 'pending') return /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: '100vw',
+      height: '100vh',
+      background: C.bg,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      direction: 'rtl',
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 44,
+      marginBottom: 16
+    }
+  }, "\u23F3"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 700,
+      color: C.text,
+      marginBottom: 8
+    }
+  }, "\u05D4\u05D1\u05E7\u05E9\u05D4 \u05E9\u05DC\u05DB\u05DD \u05DE\u05DE\u05EA\u05D9\u05E0\u05D4 \u05DC\u05D0\u05D9\u05E9\u05D5\u05E8"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 16,
+      marginBottom: 20,
+      maxWidth: 420
+    }
+  }, "\u05D4\u05D4\u05E8\u05E9\u05DE\u05D4 \u05DC\u05DE\u05E2\u05E8\u05DB\u05EA \u05D4\u05EA\u05E7\u05D1\u05DC\u05D4. \u05DC\u05D0\u05D7\u05E8 \u05E1\u05D2\u05D9\u05E8\u05EA \u05D4\u05EA\u05E9\u05DC\u05D5\u05DD \u05DE\u05D5\u05DC \u05D1\u05E2\u05DC \u05D4\u05E4\u05DC\u05D8\u05E4\u05D5\u05E8\u05DE\u05D4, \u05D4\u05DE\u05E9\u05E8\u05D3 \u05D9\u05D0\u05D5\u05E9\u05E8 \u05D5\u05EA\u05E7\u05D1\u05DC\u05D5 \u05D2\u05D9\u05E9\u05D4 \u05DE\u05DC\u05D0\u05D4."), /*#__PURE__*/React.createElement(Btn, {
+    onClick: handleLogout
+  }, "\u05D7\u05D6\u05E8\u05D4 \u05DC\u05DE\u05E1\u05DA \u05DB\u05E0\u05D9\u05E1\u05D4")));
+  if (screen === 'rejected') return /*#__PURE__*/React.createElement("div", {
+    style: {
+      width: '100vw',
+      height: '100vh',
+      background: C.bg,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      direction: 'rtl',
+      textAlign: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 44,
+      marginBottom: 16
+    }
+  }, "\u2715"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 22,
+      fontWeight: 700,
+      color: C.text,
+      marginBottom: 8
+    }
+  }, "\u05D4\u05D1\u05E7\u05E9\u05D4 \u05E0\u05D3\u05D7\u05EA\u05D4"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 16,
+      marginBottom: 20,
+      maxWidth: 420
+    }
+  }, "\u05D1\u05E7\u05E9\u05EA \u05D4\u05D4\u05E6\u05D8\u05E8\u05E4\u05D5\u05EA \u05E9\u05DC\u05DB\u05DD \u05DC\u05D0 \u05D0\u05D5\u05E9\u05E8\u05D4. \u05DC\u05E4\u05E8\u05D8\u05D9\u05DD \u05E0\u05D5\u05E1\u05E4\u05D9\u05DD \u05E4\u05E0\u05D5 \u05DC\u05D1\u05E2\u05DC \u05D4\u05E4\u05DC\u05D8\u05E4\u05D5\u05E8\u05DE\u05D4."), /*#__PURE__*/React.createElement(Btn, {
     onClick: handleLogout
   }, "\u05D7\u05D6\u05E8\u05D4 \u05DC\u05DE\u05E1\u05DA \u05DB\u05E0\u05D9\u05E1\u05D4")));
   const goHome = () => navigate('projects');
