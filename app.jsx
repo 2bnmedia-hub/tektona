@@ -444,6 +444,10 @@ function SVGCircle({ value, max, color, label, sublabel, size=80 }) {
             strokeLinecap="round" transform="rotate(-90 40 40)"
             filter={`url(#glow_${gradId})`}
             style={{ transition:'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)', animation:'circleGrow 1.2s ease-out' }}/>
+          {/* Glossy highlight streak — modern glass-ring shine, independent of value */}
+          <circle cx="40" cy="40" r={R} fill="none" stroke="#fff" strokeOpacity="0.65" strokeWidth="2"
+            strokeLinecap="round" strokeDasharray={`${circ*0.1} ${circ}`} strokeDashoffset={circ*0.045}
+            transform="rotate(-90 40 40)" pointerEvents="none"/>
           {/* Center value */}
           <text x="40" y="37" textAnchor="middle" fill={C.text}
             style={{ fontSize:19, fontWeight:800, fontFamily:'Space Grotesk, Heebo, Arial, sans-serif' }}>
@@ -1450,18 +1454,11 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
           <h1 style={{ color:C.text, fontSize: isMobile ? 19 : 23, fontWeight:800 }}>⚙️ לוח ניהול מערכת</h1>
           <div style={{ color:C.sub, fontSize:14 }}>סקירה כללית — {OFFICE_PLAN.officeName}</div>
         </div>
-        {/* Stats + financials — one compact row */}
-        <div style={{ display:'flex', gap:isMobile?18:28, justifyContent:'space-between', alignItems:'center',
-          flexWrap:'wrap', marginBottom:14, background:`linear-gradient(135deg,${C.card},${C.bg})`,
+        {/* Stats + financials — one compact row, circles truly centered on the page */}
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr auto 1fr', gap:isMobile?18:16,
+          alignItems:'center', marginBottom:14, background:`linear-gradient(135deg,${C.card},${C.bg})`,
           padding:'18px', borderRadius:14, border:`1px solid ${C.border}` }}>
-          <div style={{ display:'flex', gap:isMobile?16:26, flexWrap:'wrap', flex:1, justifyContent:'center' }}>
-            <SVGCircle value={projects.length} max={OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}
-              color={C.primary} label="סה״כ פרויקטים" sublabel={`/${OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}`} size={176}/>
-            <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" sublabel="active" size={176}/>
-            <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" sublabel="done" size={176}/>
-            <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={176}/>
-          </div>
-          <div style={{ display:'flex', gap:isMobile?14:24, flexWrap:'wrap' }}>
+          <div style={{ display:'flex', gap:isMobile?14:24, flexWrap:'wrap', justifyContent: isMobile ? 'center' : 'flex-start' }}>
             <div>
               <div style={{ color:C.sub, fontSize:13 }}>הכנסות שהתקבלו</div>
               <div style={{ fontSize:22, fontWeight:800, color:C.success }}>{fmtCurrency(totalRevenue)}</div>
@@ -1471,6 +1468,14 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
               <div style={{ fontSize:22, fontWeight:800, color:C.warning }}>{fmtCurrency(pendingPayments)}</div>
             </div>
           </div>
+          <div style={{ display:'flex', gap:isMobile?16:26, flexWrap:'wrap', justifyContent:'center' }}>
+            <SVGCircle value={projects.length} max={OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}
+              color={C.primary} label="סה״כ פרויקטים" sublabel={`/${OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}`} size={176}/>
+            <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" sublabel="active" size={176}/>
+            <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" sublabel="done" size={176}/>
+            <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={176}/>
+          </div>
+          {!isMobile && <div/>}
         </div>
         {/* Branding — logo + slogan side by side */}
         <div style={{background:C.card,borderRadius:14,border:`1px solid ${C.border}`,marginBottom:14,
