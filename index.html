@@ -1383,6 +1383,51 @@ async function notifyProjectMembers(officeId, project, actor, type, title, body)
   }
 }
 
+// A task privately assigned to one person notifies only them (+ admins) — broadcasting
+// it to notifyProjectMembers' wider audience would leak the task's existence to
+// people who aren't supposed to see it.
+async function notifyTaskAssignee(officeId, project, actor, assigneeId, title, body) {
+  try {
+    const {
+      data: admins
+    } = await sb.from('office_members').select('id').eq('office_id', officeId).eq('role', 'admin');
+    const recipientIds = new Set([assigneeId, ...(admins || []).map(a => a.id)]);
+    recipientIds.delete(actor.id);
+    recipientIds.delete(null);
+    recipientIds.delete(undefined);
+    if (recipientIds.size === 0) return;
+    await sb.from('notifications').insert([...recipientIds].map(recipient_id => ({
+      office_id: officeId,
+      recipient_id,
+      project_id: project.id,
+      project_name: project.name,
+      type: 'task',
+      title,
+      body,
+      actor_name: actor.name
+    })));
+  } catch (e) {
+    console.error('notifyTaskAssignee failed:', e.message);
+  }
+}
+
+// Snapshots a project into the cross-office deletion archive before it's removed from
+// the office's data, so the platform owner can still see (and the office can still be
+// asked about) what was deleted for 90 days.
+async function archiveDeletedProject(officeId, officeName, project, deletedByName) {
+  const {
+    error
+  } = await sb.from('deleted_projects').insert({
+    office_id: officeId,
+    office_name: officeName,
+    project_id: project.id,
+    project_name: project.name,
+    project_data: project,
+    deleted_by: deletedByName
+  });
+  if (error) throw error;
+}
+
 // Platform owner is a role above any single office — checked separately from office_members.
 async function fetchPlatformAdmin(authUserId) {
   const {
@@ -2530,6 +2575,62 @@ function Modal({
   }, "\xD7")), children));
 }
 
+// ─── DELETE PROJECT CONFIRMATION ──────────────────────────────────────────────
+function DeleteProjectConfirm({
+  project,
+  onCancel,
+  onConfirm
+}) {
+  const [deleting, setDeleting] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const confirm = async () => {
+    setDeleting(true);
+    setError('');
+    try {
+      await onConfirm();
+    } catch (e) {
+      setError('שגיאה במחיקת הפרויקט: ' + e.message);
+      setDeleting(false);
+    }
+  };
+  return /*#__PURE__*/React.createElement(Modal, {
+    title: "\u26A0\uFE0F \u05DE\u05D7\u05D9\u05E7\u05EA \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8",
+    onClose: onCancel,
+    width: 440
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.text,
+      fontSize: 16,
+      lineHeight: 1.7
+    }
+  }, "\u05D0\u05EA\u05D4 \u05E2\u05D5\u05DE\u05D3 \u05DC\u05DE\u05D7\u05D5\u05E7 \u05DC\u05E6\u05DE\u05D9\u05EA\u05D5\u05EA \u05D0\u05EA \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 ", /*#__PURE__*/React.createElement("strong", null, "\"", project.name, "\""), " \u2014 \u05DB\u05D5\u05DC\u05DC \u05DB\u05DC \u05D4\u05DE\u05E9\u05D9\u05DE\u05D5\u05EA, \u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD, \u05D4\u05D4\u05D5\u05D3\u05E2\u05D5\u05EA \u05D5\u05D4\u05EA\u05E9\u05DC\u05D5\u05DE\u05D9\u05DD \u05D4\u05DE\u05E9\u05D5\u05D9\u05DB\u05D9\u05DD \u05D0\u05DC\u05D9\u05D5. \u05DC\u05D0 \u05E0\u05D9\u05EA\u05DF \u05DC\u05E9\u05D7\u05D6\u05E8 \u05D0\u05EA \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u05D1\u05E2\u05E6\u05DE\u05DA \u05DC\u05D0\u05D7\u05E8 \u05D4\u05D0\u05D9\u05E9\u05D5\u05E8. \u05DC\u05E6\u05D5\u05E8\u05DA \u05D1\u05E7\u05E8\u05D4, \u05E2\u05D5\u05EA\u05E7 \u05DE\u05DC\u05D0 \u05D9\u05D9\u05E9\u05DE\u05E8 \u05D1\u05D0\u05E8\u05DB\u05D9\u05D5\u05DF \u05D1\u05E2\u05DC \u05D4\u05DE\u05E2\u05E8\u05DB\u05EA \u05DC\u05DE\u05E9\u05DA 90 \u05D9\u05D5\u05DD."), error && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.danger,
+      fontSize: 14
+    }
+  }, error), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 10,
+      justifyContent: 'flex-end'
+    }
+  }, /*#__PURE__*/React.createElement(Btn, {
+    variant: "ghost",
+    onClick: onCancel,
+    disabled: deleting
+  }, "\u05D1\u05D9\u05D8\u05D5\u05DC"), /*#__PURE__*/React.createElement(Btn, {
+    variant: "danger",
+    onClick: confirm,
+    disabled: deleting
+  }, deleting ? 'מוחק...' : 'מחק לצמיתות'))));
+}
+
 // ─── SMALL INPUT / BUTTON HELPERS ─────────────────────────────────────────────
 function Input({
   label,
@@ -3349,6 +3450,10 @@ function LoginScreen({
     label: 'אדריכל',
     desc: 'פרויקטים שהוקצו'
   }, {
+    id: 'employee',
+    label: 'עובד משרד',
+    desc: 'משימות שהוקצו'
+  }, {
     id: 'client',
     label: 'לקוח',
     desc: 'פרויקט אישי'
@@ -3473,7 +3578,7 @@ function LoginScreen({
   }, "\u05E0\u05D9\u05D4\u05D5\u05DC \u05DE\u05E9\u05E8\u05D3 \u05D0\u05D3\u05E8\u05D9\u05DB\u05DC\u05D9\u05DD")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3,1fr)',
+      gridTemplateColumns: 'repeat(2,1fr)',
       gap: 8,
       marginBottom: 24,
       width: '100%',
@@ -3891,6 +3996,7 @@ function SystemDashboard({
     architectName: '',
     architectId: null,
     clientIds: [],
+    employeeIds: [],
     budget: '',
     area: '',
     startDate: '',
@@ -3957,6 +4063,7 @@ function SystemDashboard({
       architectName: '',
       architectId: null,
       clientIds: [],
+      employeeIds: [],
       budget: '',
       area: '',
       startDate: '',
@@ -4364,6 +4471,7 @@ function SystemDashboard({
     officeId: officeId,
     architectId: form.architectId,
     clientIds: form.clientIds,
+    employeeIds: form.employeeIds,
     onChange: patch => setForm(f => ({
       ...f,
       ...patch
@@ -4553,6 +4661,7 @@ function UsersScreen({
   const roleLabel = {
     admin: 'מנהל',
     arch: 'אדריכל',
+    employee: 'עובד משרד',
     client: 'לקוח'
   };
   return /*#__PURE__*/React.createElement("div", {
@@ -4717,6 +4826,9 @@ function UsersScreen({
     options: [{
       value: 'arch',
       label: 'אדריכל'
+    }, {
+      value: 'employee',
+      label: 'עובד משרד'
     }, {
       value: 'client',
       label: 'לקוח'
@@ -4972,6 +5084,7 @@ function ProjectAccessEditor({
   officeId,
   architectId,
   clientIds,
+  employeeIds,
   onChange
 }) {
   const [members, setMembers] = React.useState(null);
@@ -4993,6 +5106,7 @@ function ProjectAccessEditor({
   }, [officeId]);
   const archs = (members || []).filter(m => m.role === 'arch');
   const clients = (members || []).filter(m => m.role === 'client');
+  const employees = (members || []).filter(m => m.role === 'employee');
   const setArchitect = id => {
     const m = archs.find(a => a.id === id);
     onChange({
@@ -5007,6 +5121,13 @@ function ProjectAccessEditor({
     onChange({
       clientIds: next,
       clientName: names
+    });
+  };
+  const toggleEmployee = id => {
+    const cur = employeeIds || [];
+    const next = cur.includes(id) ? cur.filter(c => c !== id) : [...cur, id];
+    onChange({
+      employeeIds: next
     });
   };
   const inviteClient = async () => {
@@ -5163,16 +5284,46 @@ function ProjectAccessEditor({
     size: "sm",
     onClick: inviteClient,
     disabled: inviting
-  }, inviting ? 'שולח...' : 'הזמן והוסף')))));
+  }, inviting ? 'שולח...' : 'הזמן והוסף')))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 14,
+      fontWeight: 600,
+      color: C.sub,
+      display: 'block',
+      marginBottom: 6
+    }
+  }, "\u05E2\u05D5\u05D1\u05D3\u05D9 \u05DE\u05E9\u05E8\u05D3"), employees.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 14
+    }
+  }, "\u05D0\u05D9\u05DF \u05E2\u05D5\u05D1\u05D3\u05D9 \u05DE\u05E9\u05E8\u05D3 \u2014 \u05D4\u05D6\u05DE\u05DF \u05D3\u05E8\u05DA \"\u05E0\u05D9\u05D4\u05D5\u05DC \u05DE\u05E9\u05EA\u05DE\u05E9\u05D9\u05DD\"") : employees.map(e => /*#__PURE__*/React.createElement("label", {
+    key: e.id,
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      padding: '4px 0',
+      color: C.text,
+      fontSize: 16,
+      cursor: 'pointer'
+    }
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: (employeeIds || []).includes(e.id),
+    onChange: () => toggleEmployee(e.id)
+  }), e.display_name))));
 }
 
 // ─── DASHBOARD TAB ────────────────────────────────────────────────────────────
 function DashboardTab({
   project,
   setProject,
-  user
+  user,
+  onDeleteProject
 }) {
   const [editingInfo, setEditingInfo] = React.useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [infoForm, setInfoForm] = React.useState(null);
   const startEditInfo = () => {
     setInfoForm({
@@ -5683,11 +5834,50 @@ function DashboardTab({
     officeId: user.officeId,
     architectId: project.architectId,
     clientIds: project.clientIds,
+    employeeIds: project.employeeIds,
     onChange: patch => setProject(p => ({
       ...p,
       ...patch
     }))
-  })));
+  })), user?.role === 'admin' && onDeleteProject && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.card,
+      borderRadius: 14,
+      padding: 18,
+      border: `1px solid ${C.danger}`,
+      marginTop: 16
+    }
+  }, /*#__PURE__*/React.createElement("h4", {
+    style: {
+      color: C.danger,
+      fontSize: 13,
+      fontWeight: 700,
+      marginBottom: 10,
+      letterSpacing: '0.1em',
+      textTransform: 'uppercase'
+    }
+  }, "\u26A0\uFE0F \u05D0\u05D6\u05D5\u05E8 \u05DE\u05E1\u05D5\u05DB\u05DF"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 12,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 14
+    }
+  }, "\u05DE\u05D7\u05D9\u05E7\u05EA \u05D4\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8 \u05D4\u05D9\u05D0 \u05E4\u05E2\u05D5\u05DC\u05D4 \u05D1\u05DC\u05EA\u05D9 \u05D4\u05E4\u05D9\u05DB\u05D4."), /*#__PURE__*/React.createElement(Btn, {
+    variant: "danger",
+    size: "sm",
+    onClick: () => setShowDeleteConfirm(true)
+  }, "\uD83D\uDDD1\uFE0F \u05DE\u05D7\u05E7 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8"))), showDeleteConfirm && /*#__PURE__*/React.createElement(DeleteProjectConfirm, {
+    project: project,
+    onCancel: () => setShowDeleteConfirm(false),
+    onConfirm: onDeleteProject
+  }));
 }
 
 // ─── BRIEF TAB ────────────────────────────────────────────────────────────────
@@ -6685,7 +6875,8 @@ function TimelineTab({
 function TasksTab({
   project,
   setProject,
-  user
+  user,
+  officeId
 }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [logHoursId, setLogHoursId] = React.useState(null);
@@ -6693,32 +6884,48 @@ function TasksTab({
   const [form, setForm] = React.useState({
     title: '',
     desc: '',
-    assignee: '',
+    assigneeId: '',
     priority: 'medium',
     dueDate: '',
     notes: ''
   });
   const [editingId, setEditingId] = React.useState(null);
   const [editForm, setEditForm] = React.useState(null);
+  const [members, setMembers] = React.useState(null);
+  React.useEffect(() => {
+    sb.from('office_members').select('id,role,display_name').eq('office_id', officeId).then(({
+      data
+    }) => setMembers((data || []).filter(m => m.role === 'arch' || m.role === 'employee')));
+  }, [officeId]);
   const tasks = project.tasks || [];
+  // Admins see every task; everyone else sees unassigned tasks plus tasks assigned to them —
+  // once the office manager assigns a task to a specific person, only that person (and admins) see it.
+  const visibleTasks = user.role === 'admin' ? tasks : tasks.filter(t => !t.assigneeId || t.assigneeId === user.id);
+  const nameFor = id => (members || []).find(m => m.id === id)?.display_name || '';
   const add = () => {
     if (!form.title) return;
+    const np = {
+      ...form,
+      assignee: nameFor(form.assigneeId),
+      id: 't' + uid(),
+      status: 'todo',
+      createdBy: user.name,
+      createdAt: today(),
+      hoursLogged: []
+    };
     setProject(p => ({
       ...p,
-      tasks: [...tasks, {
-        ...form,
-        id: 't' + uid(),
-        status: 'todo',
-        createdBy: user.name,
-        createdAt: today(),
-        hoursLogged: []
-      }]
+      tasks: [...(p.tasks || tasks), np]
     }));
-    notifyProjectMembers(user.officeId, project, user, 'task', 'משימה חדשה: ' + form.title, form.desc);
+    if (form.assigneeId) {
+      notifyTaskAssignee(officeId, project, user, form.assigneeId, 'משימה חדשה הוקצתה לך: ' + form.title, form.desc);
+    } else {
+      notifyProjectMembers(officeId, project, user, 'task', 'משימה חדשה: ' + form.title, form.desc);
+    }
     setForm({
       title: '',
       desc: '',
-      assignee: '',
+      assigneeId: '',
       priority: 'medium',
       dueDate: '',
       notes: ''
@@ -6727,7 +6934,7 @@ function TasksTab({
   };
   const updateStatus = (id, s) => setProject(p => ({
     ...p,
-    tasks: tasks.map(t => t.id === id ? {
+    tasks: (p.tasks || tasks).map(t => t.id === id ? {
       ...t,
       status: s
     } : t)
@@ -6736,7 +6943,7 @@ function TasksTab({
     setEditForm({
       title: t.title || '',
       desc: t.desc || '',
-      assignee: t.assignee || '',
+      assigneeId: t.assigneeId || '',
       priority: t.priority || 'medium',
       dueDate: t.dueDate || '',
       notes: t.notes || ''
@@ -6744,13 +6951,18 @@ function TasksTab({
     setEditingId(t.id);
   };
   const saveEdit = () => {
+    const prevTask = tasks.find(t => t.id === editingId);
     setProject(p => ({
       ...p,
       tasks: (p.tasks || tasks).map(t => t.id === editingId ? {
         ...t,
-        ...editForm
+        ...editForm,
+        assignee: nameFor(editForm.assigneeId)
       } : t)
     }));
+    if (editForm.assigneeId && editForm.assigneeId !== prevTask?.assigneeId) {
+      notifyTaskAssignee(officeId, project, user, editForm.assigneeId, 'משימה הוקצתה לך: ' + editForm.title, editForm.desc);
+    }
     setEditingId(null);
     setEditForm(null);
   };
@@ -6763,7 +6975,7 @@ function TasksTab({
     if (!h || h <= 0) return;
     setProject(p => ({
       ...p,
-      tasks: tasks.map(t => t.id === id ? {
+      tasks: (p.tasks || tasks).map(t => t.id === id ? {
         ...t,
         hoursLogged: [...(t.hoursLogged || []), {
           hours: h,
@@ -6775,7 +6987,7 @@ function TasksTab({
     setHoursInput('');
     setLogHoursId(null);
   };
-  const totalHours = tasks.reduce((s, t) => (t.hoursLogged || []).reduce((a, l) => a + l.hours, 0) + s, 0);
+  const totalHours = visibleTasks.reduce((s, t) => (t.hoursLogged || []).reduce((a, l) => a + l.hours, 0) + s, 0);
   const priColors = {
     high: C.danger,
     medium: C.warning,
@@ -6831,7 +7043,7 @@ function TasksTab({
     style: {
       color: C.primary
     }
-  }, totalHours.toFixed(1))), tasks.filter(t => (t.hoursLogged || []).length > 0).map(t => /*#__PURE__*/React.createElement("div", {
+  }, totalHours.toFixed(1))), visibleTasks.filter(t => (t.hoursLogged || []).length > 0).map(t => /*#__PURE__*/React.createElement("div", {
     key: t.id,
     style: {
       fontSize: 13,
@@ -6856,14 +7068,14 @@ function TasksTab({
       fontSize: 14,
       marginBottom: 10
     }
-  }, col.l, " (", tasks.filter(t => t.status === col.k).length, ")"), /*#__PURE__*/React.createElement("div", {
+  }, col.l, " (", visibleTasks.filter(t => t.status === col.k).length, ")"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
       gap: 10,
       minHeight: 80
     }
-  }, tasks.filter(t => t.status === col.k).map(t => /*#__PURE__*/React.createElement("div", {
+  }, visibleTasks.filter(t => t.status === col.k).map(t => /*#__PURE__*/React.createElement("div", {
     key: t.id,
     style: {
       background: C.card,
@@ -6912,7 +7124,7 @@ function TasksTab({
       flexWrap: 'wrap'
     }
   }, t.assignee && /*#__PURE__*/React.createElement(Badge, {
-    text: t.assignee,
+    text: (t.assigneeId ? '🔒 ' : '') + t.assignee,
     color: C.info
   }), t.dueDate && /*#__PURE__*/React.createElement("span", {
     style: {
@@ -7017,13 +7229,20 @@ function TasksTab({
       ...f,
       desc: v
     }))
-  }), /*#__PURE__*/React.createElement(Input, {
+  }), /*#__PURE__*/React.createElement(Select, {
     label: "\u05DE\u05D5\u05E7\u05E6\u05D4 \u05DC",
-    value: form.assignee,
+    value: form.assigneeId,
     onChange: v => setForm(f => ({
       ...f,
-      assignee: v
-    }))
+      assigneeId: v
+    })),
+    options: [{
+      value: '',
+      label: '— ללא הקצאה (גלוי לכולם) —'
+    }, ...(members || []).map(m => ({
+      value: m.id,
+      label: m.display_name
+    }))]
   }), /*#__PURE__*/React.createElement(Select, {
     label: "\u05E2\u05D3\u05D9\u05E4\u05D5\u05EA",
     value: form.priority,
@@ -7118,13 +7337,20 @@ function TasksTab({
       ...f,
       desc: v
     }))
-  }), /*#__PURE__*/React.createElement(Input, {
+  }), /*#__PURE__*/React.createElement(Select, {
     label: "\u05DE\u05D5\u05E7\u05E6\u05D4 \u05DC",
-    value: editForm.assignee,
+    value: editForm.assigneeId,
     onChange: v => setEditForm(f => ({
       ...f,
-      assignee: v
-    }))
+      assigneeId: v
+    })),
+    options: [{
+      value: '',
+      label: '— ללא הקצאה (גלוי לכולם) —'
+    }, ...(members || []).map(m => ({
+      value: m.id,
+      label: m.display_name
+    }))]
   }), /*#__PURE__*/React.createElement(Select, {
     label: "\u05E2\u05D3\u05D9\u05E4\u05D5\u05EA",
     value: editForm.priority,
@@ -8298,6 +8524,7 @@ function RFITab({
   const roleLabel = {
     admin: 'מנהל',
     arch: 'אדריכל',
+    employee: 'עובד משרד',
     client: 'לקוח'
   };
   const add = () => {
@@ -10829,7 +11056,8 @@ function ProjectView({
   onOpenProject,
   activeTab: activeTabProp,
   onTabChange,
-  onSystemDash
+  onSystemDash,
+  onDeleteProject
 }) {
   const project = (data.projects || []).find(p => p.id === projectId);
   const [localTab, setLocalTab] = React.useState('dashboard');
@@ -10946,7 +11174,7 @@ function ProjectView({
     icon: '🧩',
     feature: 'portal'
   }];
-  const visibleTabs = user.role === 'client' ? allTabs.filter(t => ['dashboard', 'brief', 'gallery', 'approvals', 'messages', 'payments', 'quotes', 'rfi'].includes(t.id)) : user.role === 'arch' ? allTabs.filter(t => canUse(t.feature) && !['payments', 'quotes'].includes(t.id) && (t.id !== 'ai' || user.aiEnabled)) : allTabs.filter(t => canUse(t.feature));
+  const visibleTabs = user.role === 'client' ? allTabs.filter(t => ['dashboard', 'brief', 'gallery', 'approvals', 'messages', 'payments', 'quotes', 'rfi'].includes(t.id)) : user.role === 'arch' || user.role === 'employee' ? allTabs.filter(t => canUse(t.feature) && !['payments', 'quotes'].includes(t.id) && (t.id !== 'ai' || user.aiEnabled)) : allTabs.filter(t => canUse(t.feature));
   React.useEffect(() => {
     if (!visibleTabs.some(t => t.id === activeTab)) setActiveTab('dashboard');
   }, [activeTab]);
@@ -10965,7 +11193,8 @@ function ProjectView({
         return /*#__PURE__*/React.createElement(DashboardTab, {
           project: project,
           setProject: setProject,
-          user: user
+          user: user,
+          onDeleteProject: onDeleteProject ? () => onDeleteProject(project) : null
         });
       case 'brief':
         return /*#__PURE__*/React.createElement(BriefTab, {
@@ -10986,7 +11215,8 @@ function ProjectView({
         return /*#__PURE__*/React.createElement(TasksTab, {
           project: project,
           setProject: setProject,
-          user: user
+          user: user,
+          officeId: user.officeId
         });
       case 'meetings':
         return /*#__PURE__*/React.createElement(MeetingsTab, {
@@ -11298,8 +11528,10 @@ function ProjectsList({
   onUsers,
   onBackup,
   statusFilter,
-  onClearFilter
+  onClearFilter,
+  onDeleteProject
 }) {
+  const [deletingProject, setDeletingProject] = React.useState(null);
   const [showNewProject, setShowNewProject] = React.useState(false);
   const [showTheme, setShowTheme] = React.useState(false);
   const [themeId, setThemeId] = React.useState('calqNoir');
@@ -11310,6 +11542,7 @@ function ProjectsList({
     architectName: '',
     architectId: null,
     clientIds: [],
+    employeeIds: [],
     budget: '',
     area: '',
     startDate: '',
@@ -11322,6 +11555,7 @@ function ProjectsList({
   const isMobile = useIsMobile();
   const projects = (data.projects || []).filter(p => {
     if (user.role === 'arch') return p.architectId === user.id;
+    if (user.role === 'employee') return (p.employeeIds || []).includes(user.id);
     if (user.role === 'client') return (p.clientIds || []).includes(user.id);
     return true;
   }).filter(p => !search || p.name.includes(search) || p.clientName.includes(search)).filter(p => !statusFilter || p.status === statusFilter);
@@ -11393,6 +11627,7 @@ function ProjectsList({
       architectName: '',
       architectId: null,
       clientIds: [],
+      employeeIds: [],
       budget: '',
       area: '',
       startDate: '',
@@ -11792,7 +12027,25 @@ function ProjectsList({
         height: '100%',
         background: `linear-gradient(180deg,${p.status === 'active' ? C.success : p.status === 'planning' ? C.info : C.sub}55,transparent)`
       }
-    }), p.coverImage && /*#__PURE__*/React.createElement("div", {
+    }), user.role === 'admin' && onDeleteProject && /*#__PURE__*/React.createElement("button", {
+      onClick: e => {
+        e.stopPropagation();
+        setDeletingProject(p);
+      },
+      title: "\u05DE\u05D7\u05E7 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8",
+      style: {
+        position: 'absolute',
+        top: 10,
+        left: 10,
+        background: 'none',
+        border: 'none',
+        color: C.sub,
+        cursor: 'pointer',
+        fontSize: 16,
+        zIndex: 1,
+        padding: 4
+      }
+    }, "\uD83D\uDDD1\uFE0F"), p.coverImage && /*#__PURE__*/React.createElement("div", {
       style: {
         height: 160,
         marginBottom: 20,
@@ -12065,6 +12318,7 @@ function ProjectsList({
     officeId: user.officeId,
     architectId: form.architectId,
     clientIds: form.clientIds,
+    employeeIds: form.employeeIds,
     onChange: patch => setForm(f => ({
       ...f,
       ...patch
@@ -12173,6 +12427,13 @@ function ProjectsList({
     currentId: themeId,
     onSelect: handleTheme,
     onClose: () => setShowTheme(false)
+  }), deletingProject && /*#__PURE__*/React.createElement(DeleteProjectConfirm, {
+    project: deletingProject,
+    onCancel: () => setDeletingProject(null),
+    onConfirm: async () => {
+      await onDeleteProject(deletingProject);
+      setDeletingProject(null);
+    }
   }), /*#__PURE__*/React.createElement(AccessibilityWidget, null));
 }
 
@@ -12450,6 +12711,106 @@ function LegalDocsAdmin() {
   }, "\u05D9\u05E9 \u05E9\u05D9\u05E0\u05D5\u05D9\u05D9\u05DD \u05E9\u05DC\u05D0 \u05E0\u05E9\u05DE\u05E8\u05D5"))));
 }
 
+// ─── DELETED PROJECTS ARCHIVE (platform owner only, 90-day retention window) ──
+function DeletedProjectsArchive() {
+  const [rows, setRows] = React.useState(null);
+  const [expandedId, setExpandedId] = React.useState(null);
+  const load = async () => {
+    const since = new Date(Date.now() - 90 * 86400000).toISOString();
+    const {
+      data
+    } = await sb.from('deleted_projects').select('*').gte('deleted_at', since).order('deleted_at', {
+      ascending: false
+    });
+    setRows(data || []);
+  };
+  React.useEffect(() => {
+    load();
+  }, []);
+  if (rows === null) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      color: C.sub,
+      fontSize: 16
+    }
+  }, /*#__PURE__*/React.createElement(Honeycomb, null), " \u05D8\u05D5\u05E2\u05DF...");
+  if (rows.length === 0) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      textAlign: 'center',
+      padding: 40,
+      fontSize: 17
+    }
+  }, "\u05D0\u05D9\u05DF \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05E9\u05E0\u05DE\u05D7\u05E7\u05D5 \u05D1-90 \u05D4\u05D9\u05DE\u05D9\u05DD \u05D4\u05D0\u05D7\u05E8\u05D5\u05E0\u05D9\u05DD");
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.card,
+      borderRadius: 16,
+      border: `1px solid ${C.border}`,
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '12px 16px',
+      borderBottom: `1px solid ${C.border}`,
+      color: C.sub,
+      fontSize: 13
+    }
+  }, "\u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05E9\u05E0\u05DE\u05D7\u05E7\u05D5 \u05E0\u05E9\u05DE\u05E8\u05D9\u05DD \u05DB\u05D0\u05DF \u05DC\u05DE\u05E9\u05DA 90 \u05D9\u05D5\u05DD \u05D1\u05DC\u05D1\u05D3 \u05DE\u05DE\u05D5\u05E2\u05D3 \u05D4\u05DE\u05D7\u05D9\u05E7\u05D4."), rows.map(r => /*#__PURE__*/React.createElement("div", {
+    key: r.id,
+    style: {
+      borderBottom: `1px solid ${C.border}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: () => setExpandedId(id => id === r.id ? null : r.id),
+    style: {
+      padding: '14px 16px',
+      cursor: 'pointer',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 12,
+      flexWrap: 'wrap'
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      color: C.text,
+      fontSize: 17
+    }
+  }, r.project_name), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 14
+    }
+  }, r.office_name, " \xB7 \u05E0\u05DE\u05D7\u05E7 \u05E2\"\u05D9 ", r.deleted_by || '—')), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 14
+    }
+  }, fmtDate(r.deleted_at))), expandedId === r.id && /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '0 16px 16px',
+      color: C.sub,
+      fontSize: 14
+    }
+  }, /*#__PURE__*/React.createElement("pre", {
+    style: {
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+      background: C.bg,
+      borderRadius: 8,
+      padding: 12,
+      maxHeight: 300,
+      overflowY: 'auto',
+      fontFamily: 'monospace',
+      fontSize: 12
+    }
+  }, JSON.stringify(r.project_data, null, 2))))));
+}
+
 // ─── PLATFORM ADMIN DASHBOARD (cross-tenant owner view) ──────────────────────
 function PlatformAdminDashboard({
   onLogout
@@ -12584,7 +12945,7 @@ function PlatformAdminDashboard({
       gap: 8,
       marginBottom: 20
     }
-  }, [['offices', 'משרדים'], ['legal', 'מסמכים משפטיים']].map(([key, label]) => /*#__PURE__*/React.createElement("button", {
+  }, [['offices', 'משרדים'], ['legal', 'מסמכים משפטיים'], ['archive', 'ארכיון מחיקות']].map(([key, label]) => /*#__PURE__*/React.createElement("button", {
     key: key,
     onClick: () => setSection(key),
     style: {
@@ -12597,7 +12958,7 @@ function PlatformAdminDashboard({
       background: section === key ? C.primary : 'transparent',
       color: section === key ? '#fff' : C.text
     }
-  }, label))), section === 'legal' && /*#__PURE__*/React.createElement(LegalDocsAdmin, null), section === 'offices' && offices === null && /*#__PURE__*/React.createElement("div", {
+  }, label))), section === 'legal' && /*#__PURE__*/React.createElement(LegalDocsAdmin, null), section === 'archive' && /*#__PURE__*/React.createElement(DeletedProjectsArchive, null), section === 'offices' && offices === null && /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'center',
@@ -12802,6 +13163,7 @@ const ROLE_SCREENS = {
   owner: ['platformadmin'],
   admin: ['systemdash', 'users', 'backup', 'project', 'projects'],
   arch: ['project', 'projects'],
+  employee: ['project', 'projects'],
   client: ['project', 'projects']
 };
 function App() {
@@ -13053,6 +13415,17 @@ function App() {
     setProjectsFilter(status);
     navigate('projects');
   };
+  const deleteProject = async project => {
+    await archiveDeletedProject(user.officeId, OFFICE_PLAN.officeName, project, user.name);
+    updateData(d => ({
+      ...d,
+      projects: (d.projects || []).filter(p => p.id !== project.id)
+    }));
+    if (activeProject === project.id) {
+      setActiveProject(null);
+      navigate('projects');
+    }
+  };
   return /*#__PURE__*/React.createElement(React.Fragment, null, screen === 'systemdash' && /*#__PURE__*/React.createElement(SystemDashboard, {
     data: data,
     setData: updateData,
@@ -13088,13 +13461,15 @@ function App() {
       replace: true
     }),
     onOpenProject: openProject,
-    onSystemDash: () => navigate('systemdash')
+    onSystemDash: () => navigate('systemdash'),
+    onDeleteProject: deleteProject
   }), (screen === 'projects' || !['systemdash', 'users', 'backup', 'project', 'platformadmin', 'suspended'].includes(screen)) && /*#__PURE__*/React.createElement(ProjectsList, {
     data: data,
     setData: updateData,
     user: user,
     onLogout: handleLogout,
     onOpenProject: openProject,
+    onDeleteProject: deleteProject,
     onSystemDash: () => navigate('systemdash'),
     onUsers: () => navigate('users'),
     onBackup: () => navigate('backup'),

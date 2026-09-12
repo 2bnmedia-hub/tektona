@@ -339,6 +339,33 @@ async function notifyProjectMembers(officeId, project, actor, type, title, body)
   } catch(e) { console.error('notifyProjectMembers failed:', e.message); }
 }
 
+// A task privately assigned to one person notifies only them (+ admins) — broadcasting
+// it to notifyProjectMembers' wider audience would leak the task's existence to
+// people who aren't supposed to see it.
+async function notifyTaskAssignee(officeId, project, actor, assigneeId, title, body) {
+  try {
+    const { data: admins } = await sb.from('office_members').select('id').eq('office_id', officeId).eq('role','admin');
+    const recipientIds = new Set([assigneeId, ...(admins||[]).map(a=>a.id)]);
+    recipientIds.delete(actor.id); recipientIds.delete(null); recipientIds.delete(undefined);
+    if (recipientIds.size === 0) return;
+    await sb.from('notifications').insert([...recipientIds].map(recipient_id => ({
+      office_id: officeId, recipient_id, project_id: project.id, project_name: project.name,
+      type:'task', title, body, actor_name: actor.name
+    })));
+  } catch(e) { console.error('notifyTaskAssignee failed:', e.message); }
+}
+
+// Snapshots a project into the cross-office deletion archive before it's removed from
+// the office's data, so the platform owner can still see (and the office can still be
+// asked about) what was deleted for 90 days.
+async function archiveDeletedProject(officeId, officeName, project, deletedByName) {
+  const { error } = await sb.from('deleted_projects').insert({
+    office_id: officeId, office_name: officeName, project_id: project.id,
+    project_name: project.name, project_data: project, deleted_by: deletedByName,
+  });
+  if (error) throw error;
+}
+
 // Platform owner is a role above any single office — checked separately from office_members.
 async function fetchPlatformAdmin(authUserId) {
   const { data, error } = await sb.from('platform_admins').select('id').eq('user_id', authUserId).maybeSingle();
@@ -861,6 +888,33 @@ function Modal({ title, onClose, children, width=600 }) {
   );
 }
 
+// ─── DELETE PROJECT CONFIRMATION ──────────────────────────────────────────────
+function DeleteProjectConfirm({ project, onCancel, onConfirm }) {
+  const [deleting, setDeleting] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const confirm = async () => {
+    setDeleting(true); setError('');
+    try { await onConfirm(); }
+    catch(e) { setError('שגיאה במחיקת הפרויקט: '+e.message); setDeleting(false); }
+  };
+  return (
+    <Modal title="⚠️ מחיקת פרויקט" onClose={onCancel} width={440}>
+      <div style={{display:'flex',flexDirection:'column',gap:14}}>
+        <div style={{color:C.text,fontSize:16,lineHeight:1.7}}>
+          אתה עומד למחוק לצמיתות את הפרויקט <strong>"{project.name}"</strong> — כולל כל
+          המשימות, המסמכים, ההודעות והתשלומים המשויכים אליו. לא ניתן לשחזר את הפרויקט
+          בעצמך לאחר האישור. לצורך בקרה, עותק מלא יישמר בארכיון בעל המערכת למשך 90 יום.
+        </div>
+        {error && <div style={{color:C.danger,fontSize:14}}>{error}</div>}
+        <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+          <Btn variant="ghost" onClick={onCancel} disabled={deleting}>ביטול</Btn>
+          <Btn variant="danger" onClick={confirm} disabled={deleting}>{deleting?'מוחק...':'מחק לצמיתות'}</Btn>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 // ─── SMALL INPUT / BUTTON HELPERS ─────────────────────────────────────────────
 function Input({ label, value, onChange, type='text', placeholder='', required=false, style:s={} }) {
   return (
@@ -1220,9 +1274,10 @@ function LoginScreen({ onLogin }) {
   };
 
   const roles = [
-    { id:'admin',  label:'מנהל משרד',   desc:'גישה מלאה' },
-    { id:'arch',   label:'אדריכל',        desc:'פרויקטים שהוקצו' },
-    { id:'client', label:'לקוח',          desc:'פרויקט אישי' }
+    { id:'admin',    label:'מנהל משרד',   desc:'גישה מלאה' },
+    { id:'arch',     label:'אדריכל',        desc:'פרויקטים שהוקצו' },
+    { id:'employee', label:'עובד משרד',    desc:'משימות שהוקצו' },
+    { id:'client',   label:'לקוח',          desc:'פרויקט אישי' }
   ];
 
   return (
@@ -1282,7 +1337,7 @@ function LoginScreen({ onLogin }) {
         </div>
 
         {/* Role buttons - calq style (pre-fill demo email only; password still required) */}
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3,1fr)',
+        <div style={{ display:'grid', gridTemplateColumns: 'repeat(2,1fr)',
           gap:8, marginBottom:24, width:'100%', maxWidth: isMobile ? '100%' : 460 }}>
           {roles.map(r => (
             <button key={r.id} onClick={() => pickRole(r.id)}
@@ -1439,7 +1494,7 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
   const [showTheme, setShowTheme] = React.useState(false);
   const [themeId, setThemeId] = React.useState('lightStone');
   const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
-  const [form, setForm] = React.useState({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
+  const [form, setForm] = React.useState({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],employeeIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
   const addProject = () => {
     if (!form.name) return;
     const np = {
@@ -1452,7 +1507,7 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
       clientProfile:{healthScore:80,paymentReliability:80,approvalSpeed:80,changeFrequency:10,tags:[],notes:'',history:[]}
     };
     setData(d=>({...d,projects:[...(d.projects||[]),np]}));
-    setForm({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
+    setForm({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],employeeIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
     setShowNewProject(false);
   };
   const handleLogoUpload = (e) => {
@@ -1580,6 +1635,7 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
             <Input label="כתובת" value={form.address} onChange={v=>setForm(f=>({...f,address:v}))} style={{gridColumn:'1/-1'}}/>
             <div style={{gridColumn:'1/-1'}}>
               <ProjectAccessEditor officeId={officeId} architectId={form.architectId} clientIds={form.clientIds}
+                employeeIds={form.employeeIds}
                 onChange={patch=>setForm(f=>({...f,...patch}))}/>
             </div>
             <Input label="תקציב (₪)" type="number" value={form.budget} onChange={v=>setForm(f=>({...f,budget:v}))}/>
@@ -1638,7 +1694,7 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
     setInviting(false);
   };
   const toggleAI = (uid) => setData(d=>({...d, users:(d.users||MOCK_USERS).map(u=>u.id===uid?{...u,aiEnabled:!u.aiEnabled}:u)}));
-  const roleLabel = { admin:'מנהל', arch:'אדריכל', client:'לקוח' };
+  const roleLabel = { admin:'מנהל', arch:'אדריכל', employee:'עובד משרד', client:'לקוח' };
   return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
       <AppNavBar onGoHome={onGoHome} title="ניהול משתמשים" subtitle={`${users.length} משתמשים`} onBack={onBack}
@@ -1685,7 +1741,7 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
             <Input label="שם מלא" value={form.name} onChange={v=>setForm(f=>({...f,name:v}))} required/>
             <Input label="אימייל" type="email" value={form.email} onChange={v=>setForm(f=>({...f,email:v}))} required/>
             <Select label="תפקיד" value={form.role} onChange={v=>setForm(f=>({...f,role:v}))}
-              options={[{value:'arch',label:'אדריכל'},{value:'client',label:'לקוח'},{value:'admin',label:'מנהל'}]}/>
+              options={[{value:'arch',label:'אדריכל'},{value:'employee',label:'עובד משרד'},{value:'client',label:'לקוח'},{value:'admin',label:'מנהל'}]}/>
             {inviteError && <div style={{color:C.danger,fontSize:14}}>{inviteError}</div>}
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
               <Btn onClick={()=>setShowInvite(false)} variant="ghost">ביטול</Btn>
@@ -1768,7 +1824,7 @@ function SharePanel({ project, onClose }) {
 }
 
 // ─── PROJECT ACCESS EDITOR (real architect/client assignment, not name-matching) ──
-function ProjectAccessEditor({ officeId, architectId, clientIds, onChange }) {
+function ProjectAccessEditor({ officeId, architectId, clientIds, employeeIds, onChange }) {
   const [members, setMembers] = React.useState(null);
   const [showInvite, setShowInvite] = React.useState(false);
   const [inviteForm, setInviteForm] = React.useState({name:'',email:''});
@@ -1783,6 +1839,7 @@ function ProjectAccessEditor({ officeId, architectId, clientIds, onChange }) {
 
   const archs = (members||[]).filter(m=>m.role==='arch');
   const clients = (members||[]).filter(m=>m.role==='client');
+  const employees = (members||[]).filter(m=>m.role==='employee');
 
   const setArchitect = (id) => {
     const m = archs.find(a=>a.id===id);
@@ -1793,6 +1850,11 @@ function ProjectAccessEditor({ officeId, architectId, clientIds, onChange }) {
     const next = cur.includes(id) ? cur.filter(c=>c!==id) : [...cur, id];
     const names = clients.filter(c=>next.includes(c.id)).map(c=>c.display_name).join(', ');
     onChange({ clientIds: next, clientName: names });
+  };
+  const toggleEmployee = (id) => {
+    const cur = employeeIds || [];
+    const next = cur.includes(id) ? cur.filter(c=>c!==id) : [...cur, id];
+    onChange({ employeeIds: next });
   };
 
   const inviteClient = async () => {
@@ -1851,13 +1913,25 @@ function ProjectAccessEditor({ officeId, architectId, clientIds, onChange }) {
           </div>
         )}
       </div>
+      <div>
+        <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>עובדי משרד</label>
+        {employees.length===0
+          ? <div style={{color:C.sub,fontSize:14}}>אין עובדי משרד — הזמן דרך "ניהול משתמשים"</div>
+          : employees.map(e=>(
+            <label key={e.id} style={{display:'flex',alignItems:'center',gap:8,padding:'4px 0',color:C.text,fontSize:16,cursor:'pointer'}}>
+              <input type="checkbox" checked={(employeeIds||[]).includes(e.id)} onChange={()=>toggleEmployee(e.id)}/>
+              {e.display_name}
+            </label>
+          ))}
+      </div>
     </div>
   );
 }
 
 // ─── DASHBOARD TAB ────────────────────────────────────────────────────────────
-function DashboardTab({ project, setProject, user }) {
+function DashboardTab({ project, setProject, user, onDeleteProject }) {
   const [editingInfo, setEditingInfo] = React.useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [infoForm, setInfoForm] = React.useState(null);
   const startEditInfo = () => {
     setInfoForm({ architectName:project.architectName||'', clientName:project.clientName||'',
@@ -2018,8 +2092,24 @@ function DashboardTab({ project, setProject, user }) {
         <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
           <h4 style={{color:C.sub,fontSize:13,fontWeight:700,marginBottom:14,letterSpacing:'0.1em',textTransform:'uppercase'}}>🔑 ניהול גישה לפרויקט</h4>
           <ProjectAccessEditor officeId={user.officeId} architectId={project.architectId} clientIds={project.clientIds}
+            employeeIds={project.employeeIds}
             onChange={patch=>setProject(p=>({...p,...patch}))}/>
         </div>
+      )}
+
+      {/* Danger zone — permanent project deletion, admin only */}
+      {user?.role==='admin' && onDeleteProject && (
+        <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.danger}`,marginTop:16}}>
+          <h4 style={{color:C.danger,fontSize:13,fontWeight:700,marginBottom:10,letterSpacing:'0.1em',textTransform:'uppercase'}}>⚠️ אזור מסוכן</h4>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+            <div style={{color:C.sub,fontSize:14}}>מחיקת הפרויקט היא פעולה בלתי הפיכה.</div>
+            <Btn variant="danger" size="sm" onClick={()=>setShowDeleteConfirm(true)}>🗑️ מחק פרויקט</Btn>
+          </div>
+        </div>
+      )}
+      {showDeleteConfirm && (
+        <DeleteProjectConfirm project={project} onCancel={()=>setShowDeleteConfirm(false)}
+          onConfirm={onDeleteProject}/>
       )}
     </div>
   );
@@ -2406,36 +2496,54 @@ function TimelineTab({ project, setProject }) {
 }
 
 // ─── TASKS TAB ────────────────────────────────────────────────────────────────
-function TasksTab({ project, setProject, user }) {
+function TasksTab({ project, setProject, user, officeId }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [logHoursId, setLogHoursId] = React.useState(null);
   const [hoursInput, setHoursInput] = React.useState('');
-  const [form, setForm] = React.useState({title:'',desc:'',assignee:'',priority:'medium',dueDate:'',notes:''});
+  const [form, setForm] = React.useState({title:'',desc:'',assigneeId:'',priority:'medium',dueDate:'',notes:''});
   const [editingId, setEditingId] = React.useState(null);
   const [editForm, setEditForm] = React.useState(null);
+  const [members, setMembers] = React.useState(null);
+  React.useEffect(()=>{
+    sb.from('office_members').select('id,role,display_name').eq('office_id', officeId)
+      .then(({data})=>setMembers((data||[]).filter(m=>m.role==='arch'||m.role==='employee')));
+  },[officeId]);
   const tasks = project.tasks || [];
+  // Admins see every task; everyone else sees unassigned tasks plus tasks assigned to them —
+  // once the office manager assigns a task to a specific person, only that person (and admins) see it.
+  const visibleTasks = user.role==='admin' ? tasks : tasks.filter(t=>!t.assigneeId || t.assigneeId===user.id);
+  const nameFor = (id) => (members||[]).find(m=>m.id===id)?.display_name || '';
   const add = () => {
     if (!form.title) return;
-    setProject(p=>({...p, tasks:[...tasks,{...form,id:'t'+uid(),status:'todo',createdBy:user.name,createdAt:today(),hoursLogged:[]}]}));
-    notifyProjectMembers(user.officeId, project, user, 'task', 'משימה חדשה: '+form.title, form.desc);
-    setForm({title:'',desc:'',assignee:'',priority:'medium',dueDate:'',notes:''}); setShowAdd(false);
+    const np = {...form, assignee:nameFor(form.assigneeId), id:'t'+uid(), status:'todo', createdBy:user.name, createdAt:today(), hoursLogged:[]};
+    setProject(p=>({...p, tasks:[...(p.tasks||tasks),np]}));
+    if (form.assigneeId) {
+      notifyTaskAssignee(officeId, project, user, form.assigneeId, 'משימה חדשה הוקצתה לך: '+form.title, form.desc);
+    } else {
+      notifyProjectMembers(officeId, project, user, 'task', 'משימה חדשה: '+form.title, form.desc);
+    }
+    setForm({title:'',desc:'',assigneeId:'',priority:'medium',dueDate:'',notes:''}); setShowAdd(false);
   };
-  const updateStatus = (id, s) => setProject(p=>({...p,tasks:tasks.map(t=>t.id===id?{...t,status:s}:t)}));
+  const updateStatus = (id, s) => setProject(p=>({...p,tasks:(p.tasks||tasks).map(t=>t.id===id?{...t,status:s}:t)}));
   const startEdit = (t) => {
-    setEditForm({title:t.title||'',desc:t.desc||'',assignee:t.assignee||'',priority:t.priority||'medium',dueDate:t.dueDate||'',notes:t.notes||''});
+    setEditForm({title:t.title||'',desc:t.desc||'',assigneeId:t.assigneeId||'',priority:t.priority||'medium',dueDate:t.dueDate||'',notes:t.notes||''});
     setEditingId(t.id);
   };
   const saveEdit = () => {
-    setProject(p=>({...p,tasks:(p.tasks||tasks).map(t=>t.id===editingId?{...t,...editForm}:t)}));
+    const prevTask = tasks.find(t=>t.id===editingId);
+    setProject(p=>({...p,tasks:(p.tasks||tasks).map(t=>t.id===editingId?{...t,...editForm,assignee:nameFor(editForm.assigneeId)}:t)}));
+    if (editForm.assigneeId && editForm.assigneeId !== prevTask?.assigneeId) {
+      notifyTaskAssignee(officeId, project, user, editForm.assigneeId, 'משימה הוקצתה לך: '+editForm.title, editForm.desc);
+    }
     setEditingId(null); setEditForm(null);
   };
   const removeTask = (id) => setProject(p=>({...p,tasks:(p.tasks||tasks).filter(t=>t.id!==id)}));
   const logHours = (id) => {
     const h = parseFloat(hoursInput); if (!h||h<=0) return;
-    setProject(p=>({...p,tasks:tasks.map(t=>t.id===id?{...t,hoursLogged:[...(t.hoursLogged||[]),{hours:h,by:user.name,date:today()}]}:t)}));
+    setProject(p=>({...p,tasks:(p.tasks||tasks).map(t=>t.id===id?{...t,hoursLogged:[...(t.hoursLogged||[]),{hours:h,by:user.name,date:today()}]}:t)}));
     setHoursInput(''); setLogHoursId(null);
   };
-  const totalHours = tasks.reduce((s,t)=>(t.hoursLogged||[]).reduce((a,l)=>a+l.hours,0)+s,0);
+  const totalHours = visibleTasks.reduce((s,t)=>(t.hoursLogged||[]).reduce((a,l)=>a+l.hours,0)+s,0);
   const priColors = {high:C.danger,medium:C.warning,low:C.success};
   const cols = [{k:'todo',l:'לביצוע'},{k:'in-progress',l:'בביצוע'},{k:'done',l:'בוצע'}];
   return (
@@ -2449,7 +2557,7 @@ function TasksTab({ project, setProject, user }) {
         <div style={{background:C.card,borderRadius:12,padding:'12px 18px',marginBottom:16,
           border:`1px solid ${C.border}`,display:'flex',gap:20,flexWrap:'wrap'}}>
           <div style={{color:C.sub,fontSize:14}}>⏱️ סה"כ שעות מדווחות: <strong style={{color:C.primary}}>{totalHours.toFixed(1)}</strong></div>
-          {tasks.filter(t=>(t.hoursLogged||[]).length>0).map(t=>(
+          {visibleTasks.filter(t=>(t.hoursLogged||[]).length>0).map(t=>(
             <div key={t.id} style={{fontSize:13,color:C.sub}}>
               {t.title}: <strong style={{color:C.text}}>{(t.hoursLogged||[]).reduce((s,l)=>s+l.hours,0).toFixed(1)}h</strong>
             </div>
@@ -2460,10 +2568,10 @@ function TasksTab({ project, setProject, user }) {
         {cols.map(col=>(
           <div key={col.k}>
             <div style={{fontWeight:700,color:C.sub,fontSize:14,marginBottom:10}}>
-              {col.l} ({tasks.filter(t=>t.status===col.k).length})
+              {col.l} ({visibleTasks.filter(t=>t.status===col.k).length})
             </div>
             <div style={{display:'flex',flexDirection:'column',gap:10,minHeight:80}}>
-              {tasks.filter(t=>t.status===col.k).map(t=>(
+              {visibleTasks.filter(t=>t.status===col.k).map(t=>(
                 <div key={t.id} style={{background:C.card,borderRadius:12,padding:14,
                   border:`1px solid ${C.border}`,borderRight:`3px solid ${priColors[t.priority]||C.border}`}}>
                   <div style={{fontWeight:600,color:C.text,fontSize:16,marginBottom:4}}>{t.title}</div>
@@ -2476,7 +2584,7 @@ function TasksTab({ project, setProject, user }) {
                   )}
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                      {t.assignee && <Badge text={t.assignee} color={C.info}/>}
+                      {t.assignee && <Badge text={(t.assigneeId?'🔒 ':'')+t.assignee} color={C.info}/>}
                       {t.dueDate && <span style={{fontSize:13,color:C.sub}}>{fmtDate(t.dueDate)}</span>}
                     </div>
                     {user.role!=='client' && (
@@ -2521,7 +2629,8 @@ function TasksTab({ project, setProject, user }) {
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <Input label="כותרת" value={form.title} onChange={v=>setForm(f=>({...f,title:v}))} required/>
             <Input label="תיאור" value={form.desc} onChange={v=>setForm(f=>({...f,desc:v}))}/>
-            <Input label="מוקצה ל" value={form.assignee} onChange={v=>setForm(f=>({...f,assignee:v}))}/>
+            <Select label="מוקצה ל" value={form.assigneeId} onChange={v=>setForm(f=>({...f,assigneeId:v}))}
+              options={[{value:'',label:'— ללא הקצאה (גלוי לכולם) —'}, ...(members||[]).map(m=>({value:m.id,label:m.display_name}))]}/>
             <Select label="עדיפות" value={form.priority} onChange={v=>setForm(f=>({...f,priority:v}))}
               options={[{value:'high',label:'גבוהה'},{value:'medium',label:'בינונית'},{value:'low',label:'נמוכה'}]}/>
             <Input label="תאריך יעד" type="date" value={form.dueDate} onChange={v=>setForm(f=>({...f,dueDate:v}))}/>
@@ -2545,7 +2654,8 @@ function TasksTab({ project, setProject, user }) {
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <Input label="כותרת" value={editForm.title} onChange={v=>setEditForm(f=>({...f,title:v}))} required/>
             <Input label="תיאור" value={editForm.desc} onChange={v=>setEditForm(f=>({...f,desc:v}))}/>
-            <Input label="מוקצה ל" value={editForm.assignee} onChange={v=>setEditForm(f=>({...f,assignee:v}))}/>
+            <Select label="מוקצה ל" value={editForm.assigneeId} onChange={v=>setEditForm(f=>({...f,assigneeId:v}))}
+              options={[{value:'',label:'— ללא הקצאה (גלוי לכולם) —'}, ...(members||[]).map(m=>({value:m.id,label:m.display_name}))]}/>
             <Select label="עדיפות" value={editForm.priority} onChange={v=>setEditForm(f=>({...f,priority:v}))}
               options={[{value:'high',label:'גבוהה'},{value:'medium',label:'בינונית'},{value:'low',label:'נמוכה'}]}/>
             <Input label="תאריך יעד" type="date" value={editForm.dueDate} onChange={v=>setEditForm(f=>({...f,dueDate:v}))}/>
@@ -2929,7 +3039,7 @@ function RFITab({ project, setProject, user }) {
   const [form, setForm] = React.useState({title:'',desc:'',from:'',priority:'medium',dueDate:''});
   const [replyForm, setReplyForm] = React.useState({});
   const rfis = project.rfis || [];
-  const roleLabel = { admin:'מנהל', arch:'אדריכל', client:'לקוח' };
+  const roleLabel = { admin:'מנהל', arch:'אדריכל', employee:'עובד משרד', client:'לקוח' };
   const add = () => {
     if (!form.title) return;
     setProject(p=>({...p,rfis:[...rfis,{...form,id:'r'+uid(),number:rfis.length+1,img:null,reply:null,repliedBy:null,repliedAt:null}]}));
@@ -3843,7 +3953,7 @@ function CustomBlocksTab({ project, setProject }) {
 }
 
 // ─── PROJECT VIEW (main container) ───────────────────────────────────────────
-function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack, onOpenProject, activeTab: activeTabProp, onTabChange, onSystemDash }) {
+function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack, onOpenProject, activeTab: activeTabProp, onTabChange, onSystemDash, onDeleteProject }) {
   const project = (data.projects||[]).find(p=>p.id===projectId);
   const [localTab, setLocalTab] = React.useState('dashboard');
   const activeTab = activeTabProp || localTab;
@@ -3884,7 +3994,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
 
   const visibleTabs = user.role==='client'
     ? allTabs.filter(t=>['dashboard','brief','gallery','approvals','messages','payments','quotes','rfi'].includes(t.id))
-    : user.role==='arch'
+    : (user.role==='arch' || user.role==='employee')
       ? allTabs.filter(t=>canUse(t.feature) && !['payments','quotes'].includes(t.id) && (t.id!=='ai' || user.aiEnabled))
       : allTabs.filter(t=>canUse(t.feature));
 
@@ -3900,11 +4010,12 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
 
   const renderTab = () => {
     switch(activeTab) {
-      case 'dashboard':    return <DashboardTab project={project} setProject={setProject} user={user}/>;
+      case 'dashboard':    return <DashboardTab project={project} setProject={setProject} user={user}
+        onDeleteProject={onDeleteProject ? ()=>onDeleteProject(project) : null}/>;
       case 'brief':        return <BriefTab project={project} setProject={setProject} user={user}/>;
       case 'ai':           return <AIAgentTab project={project}/>;
       case 'timeline':     return <TimelineTab project={project} setProject={setProject}/>;
-      case 'tasks':        return <TasksTab project={project} setProject={setProject} user={user}/>;
+      case 'tasks':        return <TasksTab project={project} setProject={setProject} user={user} officeId={user.officeId}/>;
       case 'meetings':     return <MeetingsTab project={project} setProject={setProject} user={user}/>;
       case 'payments':     return <PaymentsTab project={project} setProject={setProject}/>;
       case 'punchlist':    return <PunchListTab project={project} setProject={setProject} officeId={user.officeId} user={user}/>;
@@ -4024,17 +4135,19 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
 }
 
 // ─── PROJECTS LIST ────────────────────────────────────────────────────────────
-function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDash, onUsers, onBackup, statusFilter, onClearFilter }) {
+function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDash, onUsers, onBackup, statusFilter, onClearFilter, onDeleteProject }) {
+  const [deletingProject, setDeletingProject] = React.useState(null);
   const [showNewProject, setShowNewProject] = React.useState(false);
   const [showTheme, setShowTheme] = React.useState(false);
   const [themeId, setThemeId] = React.useState('calqNoir');
-  const [form, setForm] = React.useState({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
+  const [form, setForm] = React.useState({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],employeeIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
   const [search, setSearch] = React.useState('');
   const [showMobileMenu, setShowMobileMenu] = React.useState(false);
   const isMobile = useIsMobile();
 
   const projects = (data.projects||[]).filter(p=>{
     if (user.role==='arch') return p.architectId === user.id;
+    if (user.role==='employee') return (p.employeeIds||[]).includes(user.id);
     if (user.role==='client') return (p.clientIds||[]).includes(user.id);
     return true;
   }).filter(p=>!search||p.name.includes(search)||p.clientName.includes(search))
@@ -4055,7 +4168,7 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
       clientProfile:{healthScore:80,paymentReliability:80,approvalSpeed:80,changeFrequency:10,tags:[],notes:'',history:[]}
     };
     setData(d=>({...d,projects:[...(d.projects||[]),np]}));
-    setForm({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
+    setForm({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],employeeIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
     setShowNewProject(false);
   };
 
@@ -4232,6 +4345,12 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
                 {/* Subtle corner accent */}
                 <div style={{position:'absolute',top:0,right:0,width:3,height:'100%',
                   background:`linear-gradient(180deg,${p.status==='active'?C.success:p.status==='planning'?C.info:C.sub}55,transparent)`}}/>
+                {user.role==='admin' && onDeleteProject && (
+                  <button onClick={e=>{e.stopPropagation();setDeletingProject(p);}}
+                    title="מחק פרויקט"
+                    style={{position:'absolute',top:10,left:10,background:'none',border:'none',
+                      color:C.sub,cursor:'pointer',fontSize:16,zIndex:1,padding:4}}>🗑️</button>
+                )}
                 {/* Cover */}
                 {p.coverImage && (
                   <div style={{height:160,marginBottom:20,overflow:'hidden',borderRadius:8,margin:'-28px -28px 20px'}}>
@@ -4340,6 +4459,7 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
             <Input label="כתובת" value={form.address} onChange={v=>setForm(f=>({...f,address:v}))} style={{gridColumn:'1/-1'}}/>
             <div style={{gridColumn:'1/-1'}}>
               <ProjectAccessEditor officeId={user.officeId} architectId={form.architectId} clientIds={form.clientIds}
+                employeeIds={form.employeeIds}
                 onChange={patch=>setForm(f=>({...f,...patch}))}/>
             </div>
             <Input label="תקציב (₪)" type="number" value={form.budget} onChange={v=>setForm(f=>({...f,budget:v}))}/>
@@ -4364,6 +4484,10 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
         </Modal>
       )}
       {showTheme && <ThemeSelector currentId={themeId} onSelect={handleTheme} onClose={()=>setShowTheme(false)}/>}
+      {deletingProject && (
+        <DeleteProjectConfirm project={deletingProject} onCancel={()=>setDeletingProject(null)}
+          onConfirm={async ()=>{ await onDeleteProject(deletingProject); setDeletingProject(null); }}/>
+      )}
       <AccessibilityWidget/>
     </div>
   );
@@ -4489,6 +4613,51 @@ function LegalDocsAdmin() {
   );
 }
 
+// ─── DELETED PROJECTS ARCHIVE (platform owner only, 90-day retention window) ──
+function DeletedProjectsArchive() {
+  const [rows, setRows] = React.useState(null);
+  const [expandedId, setExpandedId] = React.useState(null);
+
+  const load = async () => {
+    const since = new Date(Date.now() - 90*86400000).toISOString();
+    const { data } = await sb.from('deleted_projects').select('*').gte('deleted_at', since).order('deleted_at', {ascending:false});
+    setRows(data||[]);
+  };
+  React.useEffect(()=>{ load(); },[]);
+
+  if (rows===null) return <div style={{display:'flex',alignItems:'center',gap:10,color:C.sub,fontSize:16}}><Honeycomb/> טוען...</div>;
+  if (rows.length===0) return <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17}}>אין פרויקטים שנמחקו ב-90 הימים האחרונים</div>;
+
+  return (
+    <div style={{background:C.card,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden'}}>
+      <div style={{padding:'12px 16px',borderBottom:`1px solid ${C.border}`,color:C.sub,fontSize:13}}>
+        פרויקטים שנמחקו נשמרים כאן למשך 90 יום בלבד ממועד המחיקה.
+      </div>
+      {rows.map(r=>(
+        <div key={r.id} style={{borderBottom:`1px solid ${C.border}`}}>
+          <div onClick={()=>setExpandedId(id=>id===r.id?null:r.id)}
+            style={{padding:'14px 16px',cursor:'pointer',display:'flex',justifyContent:'space-between',
+              alignItems:'center',gap:12,flexWrap:'wrap'}}>
+            <div>
+              <div style={{fontWeight:700,color:C.text,fontSize:17}}>{r.project_name}</div>
+              <div style={{color:C.sub,fontSize:14}}>{r.office_name} · נמחק ע"י {r.deleted_by||'—'}</div>
+            </div>
+            <div style={{color:C.sub,fontSize:14}}>{fmtDate(r.deleted_at)}</div>
+          </div>
+          {expandedId===r.id && (
+            <div style={{padding:'0 16px 16px',color:C.sub,fontSize:14}}>
+              <pre style={{whiteSpace:'pre-wrap',wordBreak:'break-word',background:C.bg,borderRadius:8,
+                padding:12,maxHeight:300,overflowY:'auto',fontFamily:'monospace',fontSize:12}}>
+                {JSON.stringify(r.project_data, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── PLATFORM ADMIN DASHBOARD (cross-tenant owner view) ──────────────────────
 function PlatformAdminDashboard({ onLogout }) {
   const isMobile = useIsMobile();
@@ -4542,7 +4711,7 @@ function PlatformAdminDashboard({ onLogout }) {
           {section==='offices' && <Btn onClick={()=>setShowNew(true)}>+ משרד חדש</Btn>}
         </div>
         <div style={{display:'flex',gap:8,marginBottom:20}}>
-          {[['offices','משרדים'],['legal','מסמכים משפטיים']].map(([key,label])=>(
+          {[['offices','משרדים'],['legal','מסמכים משפטיים'],['archive','ארכיון מחיקות']].map(([key,label])=>(
             <button key={key} onClick={()=>setSection(key)}
               style={{padding:'7px 18px',borderRadius:20,border:`1px solid ${C.border}`,cursor:'pointer',fontSize:14,fontWeight:600,
                 background:section===key?C.primary:'transparent',color:section===key?'#fff':C.text}}>
@@ -4551,6 +4720,7 @@ function PlatformAdminDashboard({ onLogout }) {
           ))}
         </div>
         {section==='legal' && <LegalDocsAdmin/>}
+        {section==='archive' && <DeletedProjectsArchive/>}
         {section==='offices' && offices===null && <div style={{display:'flex',alignItems:'center',gap:10,color:C.sub,fontSize:16}}><Honeycomb/> טוען...</div>}
         {section==='offices' && offices && (
           <div style={{background:C.card,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden'}}>
@@ -4650,6 +4820,7 @@ const ROLE_SCREENS = {
   owner: ['platformadmin'],
   admin: ['systemdash','users','backup','project','projects'],
   arch: ['project','projects'],
+  employee: ['project','projects'],
   client: ['project','projects'],
 };
 
@@ -4801,6 +4972,11 @@ function App() {
   const goHome = () => navigate('projects');
   const openProject = (id, tab) => navigate('project', { projectId: id, tab });
   const filterProjects = (status) => { setProjectsFilter(status); navigate('projects'); };
+  const deleteProject = async (project) => {
+    await archiveDeletedProject(user.officeId, OFFICE_PLAN.officeName, project, user.name);
+    updateData(d=>({...d, projects:(d.projects||[]).filter(p=>p.id!==project.id)}));
+    if (activeProject === project.id) { setActiveProject(null); navigate('projects'); }
+  };
   return (
     <>
       {screen==='systemdash' && <SystemDashboard data={data} setData={updateData} user={user} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}
@@ -4811,11 +4987,11 @@ function App() {
         <ProjectView projectId={activeProject} data={data} setData={updateData}
           user={user} onBack={goHome} onGoHome={handleLogout}
           activeTab={activeTab} onTabChange={(tab)=>navigate('project', { projectId: activeProject, tab, replace:true })}
-          onOpenProject={openProject} onSystemDash={()=>navigate('systemdash')}/>
+          onOpenProject={openProject} onSystemDash={()=>navigate('systemdash')} onDeleteProject={deleteProject}/>
       )}
       {(screen==='projects' || (!['systemdash','users','backup','project','platformadmin','suspended'].includes(screen))) && (
         <ProjectsList data={data} setData={updateData} user={user} onLogout={handleLogout}
-          onOpenProject={openProject}
+          onOpenProject={openProject} onDeleteProject={deleteProject}
           onSystemDash={()=>navigate('systemdash')}
           onUsers={()=>navigate('users')}
           onBackup={()=>navigate('backup')}

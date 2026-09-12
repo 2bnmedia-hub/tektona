@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   if (!officeId || !name || !email || !role) {
     return res.status(400).json({ error: 'officeId, name, email, role are required' });
   }
-  if (!['admin', 'arch', 'client'].includes(role)) {
+  if (!['admin', 'arch', 'client', 'employee'].includes(role)) {
     return res.status(400).json({ error: 'invalid role' });
   }
 
