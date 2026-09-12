@@ -1422,7 +1422,7 @@ function PricingScreen({ onBack }) {
 }
 
 // ─── SYSTEM DASHBOARD ─────────────────────────────────────────────────────────
-function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onBack, onOpenProject }) {
+function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onBack, onOpenProject, onUsers, onFilterProjects }) {
   const isMobile = useIsMobile();
   const logoRef = React.useRef();
   const [officeLogo, setOfficeLogo] = React.useState(OFFICE_PLAN.logo);
@@ -1485,9 +1485,15 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
           <div style={{ display:'flex', gap:isMobile?16:26, flexWrap:'wrap', justifyContent:'center' }}>
             <SVGCircle value={projects.length} max={OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}
               color={C.primary} label="סה״כ פרויקטים" sublabel={`/${OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}`} size={176}/>
-            <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" sublabel="active" size={176}/>
-            <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" sublabel="done" size={176}/>
-            <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={176}/>
+            <div onClick={()=>onFilterProjects && onFilterProjects('active')} style={{cursor:onFilterProjects?'pointer':'default'}} title="הצג פרויקטים פעילים">
+              <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" sublabel="active" size={176}/>
+            </div>
+            <div onClick={()=>onFilterProjects && onFilterProjects('completed')} style={{cursor:onFilterProjects?'pointer':'default'}} title="הצג פרויקטים שהושלמו">
+              <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" sublabel="done" size={176}/>
+            </div>
+            <div onClick={onUsers} style={{cursor:onUsers?'pointer':'default'}} title="הצג משתמשים">
+              <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={176}/>
+            </div>
           </div>
           <div style={{ display:'flex', gap:isMobile?24:48, flexWrap:'wrap', justifyContent:'center' }}>
             <div style={{ display:'flex', alignItems:'baseline', gap:8 }}>
@@ -3955,7 +3961,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
 }
 
 // ─── PROJECTS LIST ────────────────────────────────────────────────────────────
-function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDash, onUsers, onBackup }) {
+function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDash, onUsers, onBackup, statusFilter, onClearFilter }) {
   const [showNewProject, setShowNewProject] = React.useState(false);
   const [showTheme, setShowTheme] = React.useState(false);
   const [themeId, setThemeId] = React.useState('calqNoir');
@@ -3968,7 +3974,9 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
     if (user.role==='arch') return p.architectId === user.id;
     if (user.role==='client') return (p.clientIds||[]).includes(user.id);
     return true;
-  }).filter(p=>!search||p.name.includes(search)||p.clientName.includes(search));
+  }).filter(p=>!search||p.name.includes(search)||p.clientName.includes(search))
+    .filter(p=>!statusFilter||p.status===statusFilter);
+  const filterLabels = { active:'פעילים', completed:'הושלמו', planning:'בתכנון' };
 
   const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
 
@@ -4118,6 +4126,14 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
                 {user.role==='client'?'MY PROJECTS':'PROJECTS'}
               </h2>
               <span style={{color:C.sub,fontSize:16}}>{projects.length}</span>
+              {statusFilter && (
+                <span style={{display:'flex',alignItems:'center',gap:6,padding:'3px 10px',
+                  border:`1px solid ${C.border}`,borderRadius:20,fontSize:13,color:C.text}}>
+                  מסונן: {filterLabels[statusFilter]||statusFilter}
+                  <button onClick={onClearFilter} style={{background:'none',border:'none',color:C.sub,
+                    cursor:'pointer',fontSize:14,padding:0,lineHeight:1}} title="נקה סינון">✕</button>
+                </span>
+              )}
             </div>
             <div style={{width:32,height:1,background:C.sub}}/>
           </div>
@@ -4580,6 +4596,7 @@ function App() {
   const [activeProject, setActiveProject] = React.useState(null);
   const [activeTab, setActiveTab] = React.useState('dashboard');
   const [themeId, setThemeId] = React.useState('lightStone');
+  const [projectsFilter, setProjectsFilter] = React.useState(null);
   const officeIdRef = React.useRef(null);
 
   const updateData = (updater) => {
@@ -4719,10 +4736,11 @@ function App() {
 
   const goHome = () => navigate('projects');
   const openProject = (id, tab) => navigate('project', { projectId: id, tab });
+  const filterProjects = (status) => { setProjectsFilter(status); navigate('projects'); };
   return (
     <>
       {screen==='systemdash' && <SystemDashboard data={data} setData={updateData} user={user} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}
-        onOpenProject={openProject}/>}
+        onOpenProject={openProject} onUsers={()=>navigate('users')} onFilterProjects={filterProjects}/>}
       {screen==='users' && <UsersScreen data={data} setData={updateData} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='backup' && <BackupPanel data={data} setData={updateData} onBack={goHome} onGoHome={handleLogout}/>}
       {screen==='project' && activeProject && (
@@ -4736,7 +4754,8 @@ function App() {
           onOpenProject={openProject}
           onSystemDash={()=>navigate('systemdash')}
           onUsers={()=>navigate('users')}
-          onBackup={()=>navigate('backup')}/>
+          onBackup={()=>navigate('backup')}
+          statusFilter={projectsFilter} onClearFilter={()=>setProjectsFilter(null)}/>
       )}
       <AppFooter/>
     </>

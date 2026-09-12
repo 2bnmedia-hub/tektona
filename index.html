@@ -3858,7 +3858,9 @@ function SystemDashboard({
   officeId,
   onBack,
   onGoHome = onBack,
-  onOpenProject
+  onOpenProject,
+  onUsers,
+  onFilterProjects
 }) {
   const isMobile = useIsMobile();
   const logoRef = React.useRef();
@@ -4039,28 +4041,46 @@ function SystemDashboard({
     label: "\u05E1\u05D4\u05F4\u05DB \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD",
     sublabel: `/${OFFICE_PLAN.plan === 'studio' ? 30 : OFFICE_PLAN.plan === 'pro' ? 15 : 5}`,
     size: 176
-  }), /*#__PURE__*/React.createElement(SVGCircle, {
+  }), /*#__PURE__*/React.createElement("div", {
+    onClick: () => onFilterProjects && onFilterProjects('active'),
+    style: {
+      cursor: onFilterProjects ? 'pointer' : 'default'
+    },
+    title: "\u05D4\u05E6\u05D2 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05E4\u05E2\u05D9\u05DC\u05D9\u05DD"
+  }, /*#__PURE__*/React.createElement(SVGCircle, {
     value: active,
     max: projects.length || 1,
     color: C.success,
     label: "\u05E4\u05E2\u05D9\u05DC\u05D9\u05DD",
     sublabel: "active",
     size: 176
-  }), /*#__PURE__*/React.createElement(SVGCircle, {
+  })), /*#__PURE__*/React.createElement("div", {
+    onClick: () => onFilterProjects && onFilterProjects('completed'),
+    style: {
+      cursor: onFilterProjects ? 'pointer' : 'default'
+    },
+    title: "\u05D4\u05E6\u05D2 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD \u05E9\u05D4\u05D5\u05E9\u05DC\u05DE\u05D5"
+  }, /*#__PURE__*/React.createElement(SVGCircle, {
     value: completed,
     max: projects.length || 1,
     color: C.info,
     label: "\u05D4\u05D5\u05E9\u05DC\u05DE\u05D5",
     sublabel: "done",
     size: 176
-  }), /*#__PURE__*/React.createElement(SVGCircle, {
+  })), /*#__PURE__*/React.createElement("div", {
+    onClick: onUsers,
+    style: {
+      cursor: onUsers ? 'pointer' : 'default'
+    },
+    title: "\u05D4\u05E6\u05D2 \u05DE\u05E9\u05EA\u05DE\u05E9\u05D9\u05DD"
+  }, /*#__PURE__*/React.createElement(SVGCircle, {
     value: (data.users || MOCK_USERS).length,
     max: 20,
     color: C.ai,
     label: "\u05DE\u05E9\u05EA\u05DE\u05E9\u05D9\u05DD",
     sublabel: "users",
     size: 176
-  })), /*#__PURE__*/React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: isMobile ? 24 : 48,
@@ -11084,7 +11104,9 @@ function ProjectsList({
   onOpenProject,
   onSystemDash,
   onUsers,
-  onBackup
+  onBackup,
+  statusFilter,
+  onClearFilter
 }) {
   const [showNewProject, setShowNewProject] = React.useState(false);
   const [showTheme, setShowTheme] = React.useState(false);
@@ -11110,7 +11132,12 @@ function ProjectsList({
     if (user.role === 'arch') return p.architectId === user.id;
     if (user.role === 'client') return (p.clientIds || []).includes(user.id);
     return true;
-  }).filter(p => !search || p.name.includes(search) || p.clientName.includes(search));
+  }).filter(p => !search || p.name.includes(search) || p.clientName.includes(search)).filter(p => !statusFilter || p.status === statusFilter);
+  const filterLabels = {
+    active: 'פעילים',
+    completed: 'הושלמו',
+    planning: 'בתכנון'
+  };
   const handleTheme = id => {
     C = THEMES[id];
     setThemeId(id);
@@ -11490,7 +11517,30 @@ function ProjectsList({
       color: C.sub,
       fontSize: 16
     }
-  }, projects.length)), /*#__PURE__*/React.createElement("div", {
+  }, projects.length), statusFilter && /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 6,
+      padding: '3px 10px',
+      border: `1px solid ${C.border}`,
+      borderRadius: 20,
+      fontSize: 13,
+      color: C.text
+    }
+  }, "\u05DE\u05E1\u05D5\u05E0\u05DF: ", filterLabels[statusFilter] || statusFilter, /*#__PURE__*/React.createElement("button", {
+    onClick: onClearFilter,
+    style: {
+      background: 'none',
+      border: 'none',
+      color: C.sub,
+      cursor: 'pointer',
+      fontSize: 14,
+      padding: 0,
+      lineHeight: 1
+    },
+    title: "\u05E0\u05E7\u05D4 \u05E1\u05D9\u05E0\u05D5\u05DF"
+  }, "\u2715"))), /*#__PURE__*/React.createElement("div", {
     style: {
       width: 32,
       height: 1,
@@ -12566,6 +12616,7 @@ function App() {
   const [activeProject, setActiveProject] = React.useState(null);
   const [activeTab, setActiveTab] = React.useState('dashboard');
   const [themeId, setThemeId] = React.useState('lightStone');
+  const [projectsFilter, setProjectsFilter] = React.useState(null);
   const officeIdRef = React.useRef(null);
   const updateData = updater => {
     setData(d => {
@@ -12803,6 +12854,10 @@ function App() {
     projectId: id,
     tab
   });
+  const filterProjects = status => {
+    setProjectsFilter(status);
+    navigate('projects');
+  };
   return /*#__PURE__*/React.createElement(React.Fragment, null, screen === 'systemdash' && /*#__PURE__*/React.createElement(SystemDashboard, {
     data: data,
     setData: updateData,
@@ -12810,7 +12865,9 @@ function App() {
     officeId: user.officeId,
     onBack: goHome,
     onGoHome: handleLogout,
-    onOpenProject: openProject
+    onOpenProject: openProject,
+    onUsers: () => navigate('users'),
+    onFilterProjects: filterProjects
   }), screen === 'users' && /*#__PURE__*/React.createElement(UsersScreen, {
     data: data,
     setData: updateData,
@@ -12845,7 +12902,9 @@ function App() {
     onOpenProject: openProject,
     onSystemDash: () => navigate('systemdash'),
     onUsers: () => navigate('users'),
-    onBackup: () => navigate('backup')
+    onBackup: () => navigate('backup'),
+    statusFilter: projectsFilter,
+    onClearFilter: () => setProjectsFilter(null)
   }), /*#__PURE__*/React.createElement(AppFooter, null));
 }
 
