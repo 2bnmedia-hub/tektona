@@ -942,11 +942,11 @@ function StatusBadge({ status }) {
 
 // ─── LEGAL MODAL ─────────────────────────────────────────────────────────────
 // ─── SHARED NAVBAR ────────────────────────────────────────────────────────────
-function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent }) {
+function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent, onOpenTheme }) {
   const isMobile = useIsMobile();
   return (
-    <div style={{background:C.sidebar, height:56, display:'flex', alignItems:'center',
-      justifyContent:'space-between', padding: isMobile ? '0 16px' : '0 32px',
+    <div style={{background:C.sidebar, minHeight:56, display:'flex', alignItems:'center',
+      justifyContent:'space-between', padding: isMobile ? '8px 16px' : '8px 32px',
       borderBottom:`1px solid ${C.border}`, flexShrink:0, zIndex:20, position:'relative'}}>
       <div style={{display:'flex', alignItems:'center', gap: isMobile ? 10 : 20}}>
         <button onClick={onGoHome}
@@ -957,11 +957,11 @@ function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent }) {
             onMouseEnter={e=>e.currentTarget.style.opacity='0.7'}
             onMouseLeave={e=>e.currentTarget.style.opacity='1'}/>
           {!isMobile && OFFICE_PLAN.logo && (
-            <div style={{display:'flex', flexDirection:'column', alignItems:'flex-start', gap:2,
-              borderRight:`1px solid ${C.border}`, paddingRight:10}}>
-              <img src={OFFICE_PLAN.logo} alt="Office Logo" style={{height:28, width:'auto', display:'block', opacity:0.9}}/>
+            <div style={{display:'flex', flexDirection:'column', alignItems:'flex-start', gap:6,
+              borderRight:`1px solid ${C.border}`, paddingRight:16}}>
+              <img src={OFFICE_PLAN.logo} alt="Office Logo" style={{height:112, width:'auto', display:'block', opacity:0.9}}/>
               {OFFICE_PLAN.slogan && (
-                <div style={{fontSize:10, color:C.sub, letterSpacing:'0.02em', whiteSpace:'nowrap'}}>{OFFICE_PLAN.slogan}</div>
+                <div style={{fontSize:40, color:C.sub, letterSpacing:'0.02em', whiteSpace:'nowrap'}}>{OFFICE_PLAN.slogan}</div>
               )}
             </div>
           )}
@@ -982,7 +982,18 @@ function AppNavBar({ onGoHome, title, subtitle, onBack, rightContent }) {
           </div>
         )}
       </div>
-      {rightContent && <div style={{display:'flex', alignItems:'center', gap:12}}>{rightContent}</div>}
+      {(onOpenTheme || rightContent) && (
+        <div style={{display:'flex', alignItems:'center', gap:12}}>
+          {onOpenTheme && canUse('themes') && (
+            <button onClick={onOpenTheme}
+              style={{background:'none',border:`1px solid ${C.border}`,padding:'5px 12px',
+                color:C.sub,cursor:'pointer',fontSize:13,letterSpacing:'0.06em',borderRadius:0}}>
+              THEME
+            </button>
+          )}
+          {rightContent}
+        </div>
+      )}
     </div>
   );
 }
@@ -1464,16 +1475,8 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
       display:'flex', flexDirection:'column' }}>
       {C.archBg && <ArchBackground />}
       <AppNavBar onGoHome={onGoHome} title="ניהול מערכת" subtitle={OFFICE_PLAN.officeName} onBack={onBack}
-        rightContent={<>
-          {canUse('themes') && (
-            <button onClick={()=>setShowTheme(true)}
-              style={{background:'none',border:`1px solid ${C.border}`,padding:'5px 12px',
-                color:C.sub,cursor:'pointer',fontSize:13,letterSpacing:'0.06em',borderRadius:0}}>
-              THEME
-            </button>
-          )}
-          <NotificationBell user={user} onOpenProject={onOpenProject}/>
-        </>}/>
+        onOpenTheme={()=>setShowTheme(true)}
+        rightContent={<NotificationBell user={user} onOpenProject={onOpenProject}/>}/>
       <div style={{ flex:1, overflowY:'auto', padding: isMobile ? 12 : 18, paddingBottom:32, position:'relative', zIndex:1 }}>
         {/* Stats + financials — circles centered, financials in one row underneath */}
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:18,
@@ -1487,13 +1490,13 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
             <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={176}/>
           </div>
           <div style={{ display:'flex', gap:isMobile?24:48, flexWrap:'wrap', justifyContent:'center' }}>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ color:C.sub, fontSize:13 }}>הכנסות שהתקבלו</div>
-              <div style={{ fontSize:22, fontWeight:800, color:C.success }}>{fmtCurrency(totalRevenue)}</div>
+            <div style={{ display:'flex', alignItems:'baseline', gap:8 }}>
+              <span style={{ color:C.sub, fontSize:13 }}>הכנסות שהתקבלו</span>
+              <span style={{ fontSize:22, fontWeight:800, color:C.success }}>{fmtCurrency(totalRevenue)}</span>
             </div>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ color:C.sub, fontSize:13 }}>תשלומים ממתינים</div>
-              <div style={{ fontSize:22, fontWeight:800, color:C.warning }}>{fmtCurrency(pendingPayments)}</div>
+            <div style={{ display:'flex', alignItems:'baseline', gap:8 }}>
+              <span style={{ color:C.sub, fontSize:13 }}>תשלומים ממתינים</span>
+              <span style={{ fontSize:22, fontWeight:800, color:C.warning }}>{fmtCurrency(pendingPayments)}</span>
             </div>
           </div>
         </div>
@@ -1596,6 +1599,9 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
 function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
   const isMobile = useIsMobile();
   const [showInvite, setShowInvite] = React.useState(false);
+  const [showTheme, setShowTheme] = React.useState(false);
+  const [themeId, setThemeId] = React.useState('lightStone');
+  const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
   const [form, setForm] = React.useState({ name:'', email:'', role:'arch' });
   const [inviteError, setInviteError] = React.useState('');
   const [inviting, setInviting] = React.useState(false);
@@ -1623,7 +1629,9 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
   return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
       <AppNavBar onGoHome={onGoHome} title="ניהול משתמשים" subtitle={`${users.length} משתמשים`} onBack={onBack}
+        onOpenTheme={()=>setShowTheme(true)}
         rightContent={<Btn onClick={()=>setShowInvite(true)} size="sm">+ הזמן</Btn>}/>
+      {showTheme && <ThemeSelector currentId={themeId} onSelect={handleTheme} onClose={()=>setShowTheme(false)}/>}
       <div style={{flex:1,overflowY:'auto',padding: isMobile ? 16 : 28, paddingBottom:56}}>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:16}}>
           {users.map(u=>(
@@ -1681,6 +1689,9 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
 function BackupPanel({ data, setData, onBack, onGoHome = onBack }) {
   const isMobile = useIsMobile();
   const [msg, setMsg] = React.useState('');
+  const [showTheme, setShowTheme] = React.useState(false);
+  const [themeId, setThemeId] = React.useState('lightStone');
+  const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
   const inputRef = React.useRef();
   const doExport = () => { exportData(data); setMsg('גיבוי יוצא בהצלחה!'); };
   const doImport = (e) => {
@@ -1694,7 +1705,8 @@ function BackupPanel({ data, setData, onBack, onGoHome = onBack }) {
   };
   return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
-      <AppNavBar onGoHome={onGoHome} title="גיבוי ושחזור" onBack={onBack}/>
+      <AppNavBar onGoHome={onGoHome} title="גיבוי ושחזור" onBack={onBack} onOpenTheme={()=>setShowTheme(true)}/>
+      {showTheme && <ThemeSelector currentId={themeId} onSelect={handleTheme} onClose={()=>setShowTheme(false)}/>}
       <div style={{flex:1,overflowY:'auto',padding: isMobile ? 16 : 28, paddingBottom:56}}>
         <h2 style={{color:C.text,fontSize: isMobile ? 20 : 24,fontWeight:800,marginBottom:12}}>💾 גיבוי ושחזור</h2>
         <div style={{background:C.success+'15',border:`1px solid ${C.success}`,borderRadius:10,padding:'8px 16px',marginBottom:16,
@@ -3541,6 +3553,9 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
   const activeTab = activeTabProp || localTab;
   const setActiveTab = onTabChange || setLocalTab;
   const [showShare, setShowShare] = React.useState(false);
+  const [showTheme, setShowTheme] = React.useState(false);
+  const [themeId, setThemeId] = React.useState('lightStone');
+  const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
   const isMobile = useIsMobile();
 
   if (!project) return <div style={{padding:40,color:C.text}}>פרויקט לא נמצא</div>;
@@ -3655,6 +3670,13 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
                 SHARE
               </button>
             )}
+            {canUse('themes') && (
+              <button onClick={()=>setShowTheme(true)}
+                style={{background:'none',border:`1px solid ${C.border}`,padding: isMobile ? '4px 10px' : '5px 14px',
+                  color:C.sub,cursor:'pointer',fontSize: isMobile ? 12 : 14,letterSpacing:'0.06em',borderRadius:0}}>
+                THEME
+              </button>
+            )}
             <NotificationBell user={user} onOpenProject={onOpenProject}/>
           </div>
         </div>
@@ -3686,6 +3708,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
       </div>
 
       {showShare && <SharePanel project={project} onClose={()=>setShowShare(false)}/>}
+      {showTheme && <ThemeSelector currentId={themeId} onSelect={handleTheme} onClose={()=>setShowTheme(false)}/>}
     </div>
   );
 }
@@ -4154,6 +4177,9 @@ function PlatformAdminDashboard({ onLogout }) {
   const [form, setForm] = React.useState({ name:'', adminName:'', adminEmail:'' });
   const [formError, setFormError] = React.useState('');
   const [creating, setCreating] = React.useState(false);
+  const [showTheme, setShowTheme] = React.useState(false);
+  const [themeId, setThemeId] = React.useState('lightStone');
+  const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
 
   const load = async () => {
     const { data: offs } = await sb.from('offices').select('id, name, plan, active, created_at, data');
@@ -4187,7 +4213,8 @@ function PlatformAdminDashboard({ onLogout }) {
 
   return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
-      <AppNavBar onGoHome={onLogout} title="Platform Owner" subtitle="כל המשרדים" onBack={onLogout}/>
+      <AppNavBar onGoHome={onLogout} title="Platform Owner" subtitle="כל המשרדים" onBack={onLogout} onOpenTheme={()=>setShowTheme(true)}/>
+      {showTheme && <ThemeSelector currentId={themeId} onSelect={handleTheme} onClose={()=>setShowTheme(false)}/>}
       <div style={{flex:1,overflowY:'auto',padding: isMobile?16:28,paddingBottom:56}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:12}}>
           <h1 style={{color:C.text,fontSize:isMobile?22:29,fontWeight:800}}>⚡ Platform Owner</h1>

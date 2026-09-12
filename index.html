@@ -2749,17 +2749,18 @@ function AppNavBar({
   title,
   subtitle,
   onBack,
-  rightContent
+  rightContent,
+  onOpenTheme
 }) {
   const isMobile = useIsMobile();
   return /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.sidebar,
-      height: 56,
+      minHeight: 56,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: isMobile ? '0 16px' : '0 32px',
+      padding: isMobile ? '8px 16px' : '8px 32px',
       borderBottom: `1px solid ${C.border}`,
       flexShrink: 0,
       zIndex: 20,
@@ -2799,22 +2800,22 @@ function AppNavBar({
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'flex-start',
-      gap: 2,
+      gap: 6,
       borderRight: `1px solid ${C.border}`,
-      paddingRight: 10
+      paddingRight: 16
     }
   }, /*#__PURE__*/React.createElement("img", {
     src: OFFICE_PLAN.logo,
     alt: "Office Logo",
     style: {
-      height: 28,
+      height: 112,
       width: 'auto',
       display: 'block',
       opacity: 0.9
     }
   }), OFFICE_PLAN.slogan && /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 10,
+      fontSize: 40,
       color: C.sub,
       letterSpacing: '0.02em',
       whiteSpace: 'nowrap'
@@ -2849,13 +2850,25 @@ function AppNavBar({
       color: C.sub,
       fontSize: 13
     }
-  }, subtitle))), rightContent && /*#__PURE__*/React.createElement("div", {
+  }, subtitle))), (onOpenTheme || rightContent) && /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'center',
       gap: 12
     }
-  }, rightContent));
+  }, onOpenTheme && canUse('themes') && /*#__PURE__*/React.createElement("button", {
+    onClick: onOpenTheme,
+    style: {
+      background: 'none',
+      border: `1px solid ${C.border}`,
+      padding: '5px 12px',
+      color: C.sub,
+      cursor: 'pointer',
+      fontSize: 13,
+      letterSpacing: '0.06em',
+      borderRadius: 0
+    }
+  }, "THEME"), rightContent));
 }
 
 // ─── NOTIFICATION BELL ────────────────────────────────────────────────────────
@@ -3985,22 +3998,11 @@ function SystemDashboard({
     title: "\u05E0\u05D9\u05D4\u05D5\u05DC \u05DE\u05E2\u05E8\u05DB\u05EA",
     subtitle: OFFICE_PLAN.officeName,
     onBack: onBack,
-    rightContent: /*#__PURE__*/React.createElement(React.Fragment, null, canUse('themes') && /*#__PURE__*/React.createElement("button", {
-      onClick: () => setShowTheme(true),
-      style: {
-        background: 'none',
-        border: `1px solid ${C.border}`,
-        padding: '5px 12px',
-        color: C.sub,
-        cursor: 'pointer',
-        fontSize: 13,
-        letterSpacing: '0.06em',
-        borderRadius: 0
-      }
-    }, "THEME"), /*#__PURE__*/React.createElement(NotificationBell, {
+    onOpenTheme: () => setShowTheme(true),
+    rightContent: /*#__PURE__*/React.createElement(NotificationBell, {
       user: user,
       onOpenProject: onOpenProject
-    }))
+    })
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
@@ -4066,14 +4068,16 @@ function SystemDashboard({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      textAlign: 'center'
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: 8
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       color: C.sub,
       fontSize: 13
     }
-  }, "\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA \u05E9\u05D4\u05EA\u05E7\u05D1\u05DC\u05D5"), /*#__PURE__*/React.createElement("div", {
+  }, "\u05D4\u05DB\u05E0\u05E1\u05D5\u05EA \u05E9\u05D4\u05EA\u05E7\u05D1\u05DC\u05D5"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 22,
       fontWeight: 800,
@@ -4081,14 +4085,16 @@ function SystemDashboard({
     }
   }, fmtCurrency(totalRevenue))), /*#__PURE__*/React.createElement("div", {
     style: {
-      textAlign: 'center'
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: 8
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       color: C.sub,
       fontSize: 13
     }
-  }, "\u05EA\u05E9\u05DC\u05D5\u05DE\u05D9\u05DD \u05DE\u05DE\u05EA\u05D9\u05E0\u05D9\u05DD"), /*#__PURE__*/React.createElement("div", {
+  }, "\u05EA\u05E9\u05DC\u05D5\u05DE\u05D9\u05DD \u05DE\u05DE\u05EA\u05D9\u05E0\u05D9\u05DD"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 22,
       fontWeight: 800,
@@ -4448,6 +4454,12 @@ function UsersScreen({
 }) {
   const isMobile = useIsMobile();
   const [showInvite, setShowInvite] = React.useState(false);
+  const [showTheme, setShowTheme] = React.useState(false);
+  const [themeId, setThemeId] = React.useState('lightStone');
+  const handleTheme = id => {
+    C = THEMES[id];
+    setThemeId(id);
+  };
   const [form, setForm] = React.useState({
     name: '',
     email: '',
@@ -4526,10 +4538,15 @@ function UsersScreen({
     title: "\u05E0\u05D9\u05D4\u05D5\u05DC \u05DE\u05E9\u05EA\u05DE\u05E9\u05D9\u05DD",
     subtitle: `${users.length} משתמשים`,
     onBack: onBack,
+    onOpenTheme: () => setShowTheme(true),
     rightContent: /*#__PURE__*/React.createElement(Btn, {
       onClick: () => setShowInvite(true),
       size: "sm"
     }, "+ \u05D4\u05D6\u05DE\u05DF")
+  }), showTheme && /*#__PURE__*/React.createElement(ThemeSelector, {
+    currentId: themeId,
+    onSelect: handleTheme,
+    onClose: () => setShowTheme(false)
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
@@ -4706,6 +4723,12 @@ function BackupPanel({
 }) {
   const isMobile = useIsMobile();
   const [msg, setMsg] = React.useState('');
+  const [showTheme, setShowTheme] = React.useState(false);
+  const [themeId, setThemeId] = React.useState('lightStone');
+  const handleTheme = id => {
+    C = THEMES[id];
+    setThemeId(id);
+  };
   const inputRef = React.useRef();
   const doExport = () => {
     exportData(data);
@@ -4738,7 +4761,12 @@ function BackupPanel({
   }, /*#__PURE__*/React.createElement(AppNavBar, {
     onGoHome: onGoHome,
     title: "\u05D2\u05D9\u05D1\u05D5\u05D9 \u05D5\u05E9\u05D7\u05D6\u05D5\u05E8",
-    onBack: onBack
+    onBack: onBack,
+    onOpenTheme: () => setShowTheme(true)
+  }), showTheme && /*#__PURE__*/React.createElement(ThemeSelector, {
+    currentId: themeId,
+    onSelect: handleTheme,
+    onClose: () => setShowTheme(false)
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
@@ -9907,6 +9935,12 @@ function ProjectView({
   const activeTab = activeTabProp || localTab;
   const setActiveTab = onTabChange || setLocalTab;
   const [showShare, setShowShare] = React.useState(false);
+  const [showTheme, setShowTheme] = React.useState(false);
+  const [themeId, setThemeId] = React.useState('lightStone');
+  const handleTheme = id => {
+    C = THEMES[id];
+    setThemeId(id);
+  };
   const isMobile = useIsMobile();
   if (!project) return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -10251,7 +10285,19 @@ function ProjectView({
       letterSpacing: '0.06em',
       borderRadius: 0
     }
-  }, "SHARE"), /*#__PURE__*/React.createElement(NotificationBell, {
+  }, "SHARE"), canUse('themes') && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowTheme(true),
+    style: {
+      background: 'none',
+      border: `1px solid ${C.border}`,
+      padding: isMobile ? '4px 10px' : '5px 14px',
+      color: C.sub,
+      cursor: 'pointer',
+      fontSize: isMobile ? 12 : 14,
+      letterSpacing: '0.06em',
+      borderRadius: 0
+    }
+  }, "THEME"), /*#__PURE__*/React.createElement(NotificationBell, {
     user: user,
     onOpenProject: onOpenProject
   }))), /*#__PURE__*/React.createElement("div", {
@@ -10298,6 +10344,10 @@ function ProjectView({
   }, renderTab())), showShare && /*#__PURE__*/React.createElement(SharePanel, {
     project: project,
     onClose: () => setShowShare(false)
+  }), showTheme && /*#__PURE__*/React.createElement(ThemeSelector, {
+    currentId: themeId,
+    onSelect: handleTheme,
+    onClose: () => setShowTheme(false)
   }));
 }
 
@@ -11446,6 +11496,12 @@ function PlatformAdminDashboard({
   });
   const [formError, setFormError] = React.useState('');
   const [creating, setCreating] = React.useState(false);
+  const [showTheme, setShowTheme] = React.useState(false);
+  const [themeId, setThemeId] = React.useState('lightStone');
+  const handleTheme = id => {
+    C = THEMES[id];
+    setThemeId(id);
+  };
   const load = async () => {
     const {
       data: offs
@@ -11523,7 +11579,12 @@ function PlatformAdminDashboard({
     onGoHome: onLogout,
     title: "Platform Owner",
     subtitle: "\u05DB\u05DC \u05D4\u05DE\u05E9\u05E8\u05D3\u05D9\u05DD",
-    onBack: onLogout
+    onBack: onLogout,
+    onOpenTheme: () => setShowTheme(true)
+  }), showTheme && /*#__PURE__*/React.createElement(ThemeSelector, {
+    currentId: themeId,
+    onSelect: handleTheme,
+    onClose: () => setShowTheme(false)
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
