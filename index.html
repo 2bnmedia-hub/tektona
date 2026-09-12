@@ -7562,7 +7562,7 @@ function PunchListTab({
     location: '',
     responsible: '',
     priority: 'medium',
-    img: null
+    imgs: []
   });
   const [editingId, setEditingId] = React.useState(null);
   const [editForm, setEditForm] = React.useState(null);
@@ -7575,7 +7575,7 @@ function PunchListTab({
     if (!form.title) return;
     setProject(p => ({
       ...p,
-      punchList: [...list, {
+      punchList: [...(p.punchList || list), {
         ...form,
         id: 'pl' + uid(),
         number: list.length + 1,
@@ -7589,7 +7589,7 @@ function PunchListTab({
       location: '',
       responsible: '',
       priority: 'medium',
-      img: null
+      imgs: []
     });
     setShowAdd(false);
   };
@@ -7616,23 +7616,36 @@ function PunchListTab({
   };
   const updateStatus = (id, s) => setProject(p => ({
     ...p,
-    punchList: list.map(i => i.id === id ? {
+    punchList: (p.punchList || []).map(i => i.id === id ? {
       ...i,
       status: s,
       fixedAt: s === 'closed' ? today() : null
     } : i)
   }));
-  const uploadImg = async (id, file) => {
-    if (!file) return;
+  const itemImgs = item => item.imgs || (item.img ? [item.img] : []);
+  const uploadImgs = async (id, files) => {
+    if (!files || !files.length) return;
     setUploadingId(id);
-    await uploadOfficeFile(officeId, project.id, 'punchlist', file, path => setProject(p => ({
-      ...p,
-      punchList: list.map(i => i.id === id ? {
-        ...i,
-        img: path
-      } : i)
-    })));
+    for (const file of Array.from(files)) {
+      await uploadOfficeFile(officeId, project.id, 'punchlist', file, path => setProject(p => ({
+        ...p,
+        punchList: (p.punchList || []).map(i => i.id === id ? {
+          ...i,
+          imgs: [...itemImgs(i), path]
+        } : i)
+      })));
+    }
     setUploadingId(null);
+  };
+  const removeImg = (id, path) => {
+    setProject(p => ({
+      ...p,
+      punchList: (p.punchList || []).map(i => i.id === id ? {
+        ...i,
+        imgs: itemImgs(i).filter(p2 => p2 !== path),
+        img: i.img === path ? null : i.img
+      } : i)
+    }));
   };
   const priColors = {
     high: C.danger,
@@ -7737,17 +7750,51 @@ function PunchListTab({
   }), /*#__PURE__*/React.createElement(Badge, {
     text: item.priority === 'high' ? 'גבוה' : item.priority === 'medium' ? 'בינוני' : 'נמוך',
     color: priColors[item.priority]
-  }))), item.img && /*#__PURE__*/React.createElement(StorageImage, {
-    path: item.img,
-    alt: "\u05DE\u05DE\u05E6\u05D0",
+  }))), itemImgs(item).length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
-      width: '100%',
-      maxHeight: 180,
-      objectFit: 'cover',
-      borderRadius: 8,
+      display: 'flex',
+      gap: 8,
+      flexWrap: 'wrap',
       marginTop: 10
     }
-  }), /*#__PURE__*/React.createElement("div", {
+  }, itemImgs(item).map(path => /*#__PURE__*/React.createElement("div", {
+    key: path,
+    style: {
+      position: 'relative',
+      width: 72,
+      height: 72,
+      flexShrink: 0
+    }
+  }, /*#__PURE__*/React.createElement(StorageImage, {
+    path: path,
+    alt: "\u05DE\u05DE\u05E6\u05D0",
+    style: {
+      width: 72,
+      height: 72,
+      objectFit: 'cover',
+      borderRadius: 8
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => removeImg(item.id, path),
+    title: "\u05D4\u05E1\u05E8 \u05EA\u05DE\u05D5\u05E0\u05D4",
+    style: {
+      position: 'absolute',
+      top: -6,
+      left: -6,
+      width: 20,
+      height: 20,
+      borderRadius: '50%',
+      background: C.danger,
+      color: '#fff',
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: 12,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      lineHeight: 1
+    }
+  }, "\u2715")))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 8,
@@ -7764,17 +7811,21 @@ function PunchListTab({
   }, "\u2713 \u05E1\u05D2\u05D5\u05E8"), /*#__PURE__*/React.createElement("input", {
     type: "file",
     accept: "image/*",
+    multiple: true,
     style: {
       display: 'none'
     },
     ref: el => imgRefs.current[item.id] = el,
-    onChange: e => uploadImg(item.id, e.target.files[0])
+    onChange: e => {
+      uploadImgs(item.id, e.target.files);
+      e.target.value = '';
+    }
   }), /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
     onClick: () => imgRefs.current[item.id]?.click(),
     disabled: uploadingId === item.id
-  }, "\uD83D\uDCF7 ", uploadingId === item.id ? 'מעלה...' : item.img ? 'החלף תמונה' : 'הוסף תמונה'), user?.role === 'admin' && /*#__PURE__*/React.createElement(Btn, {
+  }, "\uD83D\uDCF7 ", uploadingId === item.id ? 'מעלה...' : 'הוסף תמונות'), user?.role === 'admin' && /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
     onClick: () => startEdit(item)
@@ -7843,40 +7894,79 @@ function PunchListTab({
       display: 'block',
       marginBottom: 6
     }
-  }, "\u05EA\u05DE\u05D5\u05E0\u05EA \u05DE\u05DE\u05E6\u05D0 (\u05D0\u05D5\u05E4\u05E6\u05D9\u05D5\u05E0\u05DC\u05D9)"), /*#__PURE__*/React.createElement("input", {
+  }, "\u05EA\u05DE\u05D5\u05E0\u05D5\u05EA \u05DE\u05DE\u05E6\u05D0 (\u05D0\u05D5\u05E4\u05E6\u05D9\u05D5\u05E0\u05DC\u05D9)"), /*#__PURE__*/React.createElement("input", {
     ref: formImgRef,
     type: "file",
     accept: "image/*",
+    multiple: true,
     style: {
       display: 'none'
     },
     onChange: async e => {
-      const file = e.target.files[0];
-      if (!file) return;
+      const files = Array.from(e.target.files || []);
+      e.target.value = '';
+      if (!files.length) return;
       setUploadingForm(true);
-      await uploadOfficeFile(officeId, project.id, 'punchlist', file, path => setForm(f => ({
-        ...f,
-        img: path
-      })));
+      for (const file of files) {
+        await uploadOfficeFile(officeId, project.id, 'punchlist', file, path => setForm(f => ({
+          ...f,
+          imgs: [...(f.imgs || []), path]
+        })));
+      }
       setUploadingForm(false);
     }
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 8,
-      alignItems: 'center'
+      alignItems: 'center',
+      flexWrap: 'wrap'
     }
   }, /*#__PURE__*/React.createElement(Btn, {
     size: "sm",
     variant: "ghost",
     onClick: () => formImgRef.current?.click(),
     disabled: uploadingForm
-  }, "\uD83D\uDCF7 ", uploadingForm ? 'מעלה...' : 'בחר תמונה'), form.img && /*#__PURE__*/React.createElement("span", {
+  }, "\uD83D\uDCF7 ", uploadingForm ? 'מעלה...' : 'הוסף תמונות'), (form.imgs || []).map(path => /*#__PURE__*/React.createElement("div", {
+    key: path,
     style: {
-      fontSize: 13,
-      color: C.success
+      position: 'relative',
+      width: 44,
+      height: 44
     }
-  }, "\u2713 \u05EA\u05DE\u05D5\u05E0\u05D4 \u05E0\u05D8\u05E2\u05E0\u05D4"))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(StorageImage, {
+    path: path,
+    alt: "\u05DE\u05DE\u05E6\u05D0",
+    style: {
+      width: 44,
+      height: 44,
+      objectFit: 'cover',
+      borderRadius: 6
+    }
+  }), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setForm(f => ({
+      ...f,
+      imgs: (f.imgs || []).filter(p => p !== path)
+    })),
+    title: "\u05D4\u05E1\u05E8",
+    style: {
+      position: 'absolute',
+      top: -5,
+      left: -5,
+      width: 16,
+      height: 16,
+      borderRadius: '50%',
+      background: C.danger,
+      color: '#fff',
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: 10,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      lineHeight: 1
+    }
+  }, "\u2715"))))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 10,
@@ -7969,7 +8059,8 @@ function PunchListTab({
 // ─── RFI TAB ─────────────────────────────────────────────────────────────────
 function RFITab({
   project,
-  setProject
+  setProject,
+  user
 }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({
@@ -7981,6 +8072,11 @@ function RFITab({
   });
   const [replyForm, setReplyForm] = React.useState({});
   const rfis = project.rfis || [];
+  const roleLabel = {
+    admin: 'מנהל',
+    arch: 'אדריכל',
+    client: 'לקוח'
+  };
   const add = () => {
     if (!form.title) return;
     setProject(p => ({
@@ -8007,12 +8103,13 @@ function RFITab({
   const reply = id => {
     const text = replyForm[id];
     if (!text) return;
+    const repliedBy = user?.name || roleLabel[user?.role] || 'משתמש';
     setProject(p => ({
       ...p,
       rfis: rfis.map(r => r.id === id ? {
         ...r,
         reply: text,
-        repliedBy: 'אדריכל',
+        repliedBy,
         repliedAt: today()
       } : r)
     }));
@@ -10626,7 +10723,7 @@ function ProjectView({
     icon: '🧩',
     feature: 'portal'
   }];
-  const visibleTabs = user.role === 'client' ? allTabs.filter(t => ['dashboard', 'brief', 'gallery', 'approvals', 'messages', 'payments', 'quotes'].includes(t.id)) : user.role === 'arch' ? allTabs.filter(t => canUse(t.feature) && !['payments', 'quotes'].includes(t.id) && (t.id !== 'ai' || user.aiEnabled)) : allTabs.filter(t => canUse(t.feature));
+  const visibleTabs = user.role === 'client' ? allTabs.filter(t => ['dashboard', 'brief', 'gallery', 'approvals', 'messages', 'payments', 'quotes', 'rfi'].includes(t.id)) : user.role === 'arch' ? allTabs.filter(t => canUse(t.feature) && !['payments', 'quotes'].includes(t.id) && (t.id !== 'ai' || user.aiEnabled)) : allTabs.filter(t => canUse(t.feature));
   React.useEffect(() => {
     if (!visibleTabs.some(t => t.id === activeTab)) setActiveTab('dashboard');
   }, [activeTab]);
@@ -10689,7 +10786,8 @@ function ProjectView({
       case 'rfi':
         return /*#__PURE__*/React.createElement(RFITab, {
           project: project,
-          setProject: setProject
+          setProject: setProject,
+          user: user
         });
       case 'gallery':
         return /*#__PURE__*/React.createElement(GalleryTab, {

@@ -2704,7 +2704,7 @@ function PaymentsTab({ project, setProject }) {
 // ─── PUNCH LIST TAB ───────────────────────────────────────────────────────────
 function PunchListTab({ project, setProject, officeId, user }) {
   const [showAdd, setShowAdd] = React.useState(false);
-  const [form, setForm] = React.useState({title:'',desc:'',location:'',responsible:'',priority:'medium',img:null});
+  const [form, setForm] = React.useState({title:'',desc:'',location:'',responsible:'',priority:'medium',imgs:[]});
   const [editingId, setEditingId] = React.useState(null);
   const [editForm, setEditForm] = React.useState(null);
   const [uploadingId, setUploadingId] = React.useState(null);
@@ -2714,8 +2714,8 @@ function PunchListTab({ project, setProject, officeId, user }) {
   const list = project.punchList || [];
   const add = () => {
     if (!form.title) return;
-    setProject(p=>({...p,punchList:[...list,{...form,id:'pl'+uid(),number:list.length+1,status:'open',fixedAt:null}]}));
-    setForm({title:'',desc:'',location:'',responsible:'',priority:'medium',img:null}); setShowAdd(false);
+    setProject(p=>({...p,punchList:[...(p.punchList||list),{...form,id:'pl'+uid(),number:list.length+1,status:'open',fixedAt:null}]}));
+    setForm({title:'',desc:'',location:'',responsible:'',priority:'medium',imgs:[]}); setShowAdd(false);
   };
   const startEdit = (item) => {
     setEditForm({title:item.title||'',desc:item.desc||'',location:item.location||'',responsible:item.responsible||'',priority:item.priority||'medium'});
@@ -2725,13 +2725,21 @@ function PunchListTab({ project, setProject, officeId, user }) {
     setProject(p=>({...p,punchList:list.map(i=>i.id===editingId?{...i,...editForm}:i)}));
     setEditingId(null); setEditForm(null);
   };
-  const updateStatus = (id,s) => setProject(p=>({...p,punchList:list.map(i=>i.id===id?{...i,status:s,fixedAt:s==='closed'?today():null}:i)}));
-  const uploadImg = async (id, file) => {
-    if (!file) return;
+  const updateStatus = (id,s) => setProject(p=>({...p,punchList:(p.punchList||[]).map(i=>i.id===id?{...i,status:s,fixedAt:s==='closed'?today():null}:i)}));
+  const itemImgs = (item) => item.imgs || (item.img ? [item.img] : []);
+  const uploadImgs = async (id, files) => {
+    if (!files || !files.length) return;
     setUploadingId(id);
-    await uploadOfficeFile(officeId, project.id, 'punchlist', file,
-      path => setProject(p=>({...p,punchList:list.map(i=>i.id===id?{...i,img:path}:i)})));
+    for (const file of Array.from(files)) {
+      await uploadOfficeFile(officeId, project.id, 'punchlist', file,
+        path => setProject(p=>({...p,punchList:(p.punchList||[]).map(i=>
+          i.id===id?{...i, imgs:[...itemImgs(i), path]}:i)})));
+    }
     setUploadingId(null);
+  };
+  const removeImg = (id, path) => {
+    setProject(p=>({...p,punchList:(p.punchList||[]).map(i=>
+      i.id===id?{...i, imgs:itemImgs(i).filter(p2=>p2!==path), img: i.img===path?null:i.img}:i)}));
   };
   const priColors = {high:C.danger,medium:C.warning,low:C.success};
   return (
@@ -2764,17 +2772,27 @@ function PunchListTab({ project, setProject, officeId, user }) {
                 <Badge text={item.priority==='high'?'גבוה':item.priority==='medium'?'בינוני':'נמוך'} color={priColors[item.priority]}/>
               </div>
             </div>
-            {item.img && (
-              <StorageImage path={item.img} alt="ממצא" style={{width:'100%',maxHeight:180,objectFit:'cover',borderRadius:8,marginTop:10}}/>
+            {itemImgs(item).length > 0 && (
+              <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
+                {itemImgs(item).map(path=>(
+                  <div key={path} style={{position:'relative',width:72,height:72,flexShrink:0}}>
+                    <StorageImage path={path} alt="ממצא" style={{width:72,height:72,objectFit:'cover',borderRadius:8}}/>
+                    <button onClick={()=>removeImg(item.id,path)} title="הסר תמונה"
+                      style={{position:'absolute',top:-6,left:-6,width:20,height:20,borderRadius:'50%',
+                        background:C.danger,color:'#fff',border:'none',cursor:'pointer',fontSize:12,
+                        display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1}}>✕</button>
+                  </div>
+                ))}
+              </div>
             )}
             <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap'}}>
               {item.status==='open' && <Btn size="sm" onClick={()=>updateStatus(item.id,'in-progress')}>בטיפול</Btn>}
               {(item.status==='open'||item.status==='in-progress') && <Btn size="sm" variant="ghost" onClick={()=>updateStatus(item.id,'closed')}>✓ סגור</Btn>}
-              <input type="file" accept="image/*" style={{display:'none'}}
+              <input type="file" accept="image/*" multiple style={{display:'none'}}
                 ref={el=>imgRefs.current[item.id]=el}
-                onChange={e=>uploadImg(item.id, e.target.files[0])}/>
+                onChange={e=>{uploadImgs(item.id, e.target.files); e.target.value='';}}/>
               <Btn size="sm" variant="ghost" onClick={()=>imgRefs.current[item.id]?.click()} disabled={uploadingId===item.id}>
-                📷 {uploadingId===item.id?'מעלה...':item.img?'החלף תמונה':'הוסף תמונה'}
+                📷 {uploadingId===item.id?'מעלה...':'הוסף תמונות'}
               </Btn>
               {user?.role==='admin' && (
                 <Btn size="sm" variant="ghost" onClick={()=>startEdit(item)}>✏️ ערוך</Btn>
@@ -2793,16 +2811,28 @@ function PunchListTab({ project, setProject, officeId, user }) {
             <Select label="עדיפות" value={form.priority} onChange={v=>setForm(f=>({...f,priority:v}))}
               options={[{value:'high',label:'גבוהה'},{value:'medium',label:'בינונית'},{value:'low',label:'נמוכה'}]}/>
             <div>
-              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>תמונת ממצא (אופציונלי)</label>
-              <input ref={formImgRef} type="file" accept="image/*" style={{display:'none'}}
-                onChange={async e=>{const file=e.target.files[0];if(!file)return;setUploadingForm(true);
-                  await uploadOfficeFile(officeId, project.id, 'punchlist', file, path=>setForm(f=>({...f,img:path})));
+              <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>תמונות ממצא (אופציונלי)</label>
+              <input ref={formImgRef} type="file" accept="image/*" multiple style={{display:'none'}}
+                onChange={async e=>{const files=Array.from(e.target.files||[]);e.target.value='';if(!files.length)return;
+                  setUploadingForm(true);
+                  for (const file of files) {
+                    await uploadOfficeFile(officeId, project.id, 'punchlist', file,
+                      path=>setForm(f=>({...f,imgs:[...(f.imgs||[]),path]})));
+                  }
                   setUploadingForm(false);}}/>
-              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
                 <Btn size="sm" variant="ghost" onClick={()=>formImgRef.current?.click()} disabled={uploadingForm}>
-                  📷 {uploadingForm?'מעלה...':'בחר תמונה'}
+                  📷 {uploadingForm?'מעלה...':'הוסף תמונות'}
                 </Btn>
-                {form.img && <span style={{fontSize:13,color:C.success}}>✓ תמונה נטענה</span>}
+                {(form.imgs||[]).map(path=>(
+                  <div key={path} style={{position:'relative',width:44,height:44}}>
+                    <StorageImage path={path} alt="ממצא" style={{width:44,height:44,objectFit:'cover',borderRadius:6}}/>
+                    <button onClick={()=>setForm(f=>({...f,imgs:(f.imgs||[]).filter(p=>p!==path)}))} title="הסר"
+                      style={{position:'absolute',top:-5,left:-5,width:16,height:16,borderRadius:'50%',
+                        background:C.danger,color:'#fff',border:'none',cursor:'pointer',fontSize:10,
+                        display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1}}>✕</button>
+                  </div>
+                ))}
               </div>
             </div>
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
@@ -2833,11 +2863,12 @@ function PunchListTab({ project, setProject, officeId, user }) {
 }
 
 // ─── RFI TAB ─────────────────────────────────────────────────────────────────
-function RFITab({ project, setProject }) {
+function RFITab({ project, setProject, user }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({title:'',desc:'',from:'',priority:'medium',dueDate:''});
   const [replyForm, setReplyForm] = React.useState({});
   const rfis = project.rfis || [];
+  const roleLabel = { admin:'מנהל', arch:'אדריכל', client:'לקוח' };
   const add = () => {
     if (!form.title) return;
     setProject(p=>({...p,rfis:[...rfis,{...form,id:'r'+uid(),number:rfis.length+1,img:null,reply:null,repliedBy:null,repliedAt:null}]}));
@@ -2845,7 +2876,8 @@ function RFITab({ project, setProject }) {
   };
   const reply = (id) => {
     const text = replyForm[id]; if (!text) return;
-    setProject(p=>({...p,rfis:rfis.map(r=>r.id===id?{...r,reply:text,repliedBy:'אדריכל',repliedAt:today()}:r)}));
+    const repliedBy = user?.name || roleLabel[user?.role] || 'משתמש';
+    setProject(p=>({...p,rfis:rfis.map(r=>r.id===id?{...r,reply:text,repliedBy,repliedAt:today()}:r)}));
     setReplyForm(f=>({...f,[id]:''}));
   };
   const priColors = {high:C.danger,medium:C.warning,low:C.success};
@@ -3790,7 +3822,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
   ];
 
   const visibleTabs = user.role==='client'
-    ? allTabs.filter(t=>['dashboard','brief','gallery','approvals','messages','payments','quotes'].includes(t.id))
+    ? allTabs.filter(t=>['dashboard','brief','gallery','approvals','messages','payments','quotes','rfi'].includes(t.id))
     : user.role==='arch'
       ? allTabs.filter(t=>canUse(t.feature) && !['payments','quotes'].includes(t.id) && (t.id!=='ai' || user.aiEnabled))
       : allTabs.filter(t=>canUse(t.feature));
@@ -3815,7 +3847,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
       case 'meetings':     return <MeetingsTab project={project} setProject={setProject} user={user}/>;
       case 'payments':     return <PaymentsTab project={project} setProject={setProject}/>;
       case 'punchlist':    return <PunchListTab project={project} setProject={setProject} officeId={user.officeId} user={user}/>;
-      case 'rfi':          return <RFITab project={project} setProject={setProject}/>;
+      case 'rfi':          return <RFITab project={project} setProject={setProject} user={user}/>;
       case 'gallery':      return <GalleryTab project={project} setProject={setProject} officeId={user.officeId}/>;
       case 'documents':    return <DocumentsTab project={project} setProject={setProject} officeId={user.officeId}/>;
       case 'quotes':       return <QuotesTab project={project} setProject={setProject} officeId={user.officeId}/>;
