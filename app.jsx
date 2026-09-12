@@ -1436,7 +1436,7 @@ function LoginScreen({ onLogin, onSignup }) {
       </div>
 
       {/* Footer */}
-      <div style={{ position:'absolute', bottom:0, left:0, right:0, borderTop:`1px solid ${C.border}`,
+      <div style={{ position:'absolute', bottom:0, left:0, right:0, zIndex:2, borderTop:`1px solid ${C.border}`,
         padding:'10px 24px', display:'flex', alignItems:'center', justifyContent:'center', gap:20 }}>
         {[['terms','תקנון אתר'],['privacy','מדיניות פרטיות'],['accessibility','הצהרת נגישות']].map(([tab,label])=>(
           <button key={tab} onClick={()=>setShowLegal(tab)}
@@ -2427,7 +2427,7 @@ function AIAgentTab({ project }) {
           <div key={i} style={{display:'flex',justifyContent:m.role==='user'?'flex-start':'flex-end'}}>
             <div style={{maxWidth:'75%',padding:'12px 16px',borderRadius:16,fontSize:17,lineHeight:1.7,
               background:m.role==='user'?C.primary:C.card,
-              color:m.role==='user'?'#fff':C.text,
+              color:m.role==='user'?(isLightColor(C.primary)?C.bg:'#fff'):C.text,
               border:m.role==='user'?'none':`1px solid ${C.border}`,
               borderTopRightRadius:m.role==='user'?4:16,
               borderTopLeftRadius:m.role==='assistant'?4:16}}>
@@ -3802,7 +3802,7 @@ function MessagesTab({ project, setProject, user }) {
           return (
             <div key={m.id||i} style={{display:'flex',flexDirection:'column',alignItems:isMe?'flex-end':'flex-start'}}>
               <div style={{maxWidth:'70%',padding:'10px 14px',borderRadius:16,fontSize:17,lineHeight:1.7,
-                background:isMe?C.primary:C.card,color:isMe?'#fff':C.text,
+                background:isMe?C.primary:C.card,color:isMe?(isLightColor(C.primary)?C.bg:'#fff'):C.text,
                 border:isMe?'none':`1px solid ${C.border}`,
                 borderTopRightRadius:isMe?4:16,borderTopLeftRadius:isMe?16:4}}>
                 {m.text}
