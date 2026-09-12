@@ -1428,14 +1428,10 @@ function LoginScreen({ onLogin, onSignup }) {
           {loading ? '...' : 'ENTER →'}
         </button>
 
-        <div style={{ marginTop:24, color:C.sub, fontSize:13, letterSpacing:'0.08em' }}>
-          DEMO ENVIRONMENT
-        </div>
-
-        <button onClick={onSignup} style={{ marginTop:20, background:'none', border:'none',
+        <button onClick={onSignup} style={{ marginTop:24, background:'none', border:'none',
           color:C.sub, cursor:'pointer', fontSize:14, textDecoration:'underline',
           fontFamily:"'Space Grotesk',sans-serif" }}>
-          משרד אדריכלים? הצטרפו כזכיינים ←
+          משרד אדריכלים? הצטרפו אלינו
         </button>
       </div>
 
