@@ -10,8 +10,8 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script crossorigin src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>window.__SUPABASE_URL__ = "https://fwcjjzodlezylpjpmeje.supabase.co";
-window.__SUPABASE_ANON_KEY__ = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3Y2pqem9kbGV6eWxwanBtZWplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMjIwNTcsImV4cCI6MjEwNDU5ODA1N30.geTQ-wjKyQk6dcxpbCwa2APoSNkF2Iu2UmVstz9jPa8";</script>
+  <script>window.__SUPABASE_URL__ = "";
+window.__SUPABASE_ANON_KEY__ = "";</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
@@ -5060,10 +5060,16 @@ function UsersScreen({
     setInviting(true);
     setInviteError('');
     try {
+      const {
+        data: {
+          session
+        }
+      } = await sb.auth.getSession();
       const res = await fetch('/api/invite-user', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
         },
         body: JSON.stringify({
           officeId,
@@ -5591,7 +5597,8 @@ function ProjectAccessEditor({
       const res = await fetch('/api/invite-user', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
         },
         body: JSON.stringify({
           officeId,

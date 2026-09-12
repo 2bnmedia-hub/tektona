@@ -1912,8 +1912,9 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
     if (!form.name || !form.email) return;
     setInviting(true); setInviteError('');
     try {
+      const { data:{ session } } = await sb.auth.getSession();
       const res = await fetch('/api/invite-user', {
-        method:'POST', headers:{'Content-Type':'application/json'},
+        method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+session.access_token},
         body: JSON.stringify({ officeId, name:form.name, email:form.email, role:form.role })
       });
       const result = await res.json();
@@ -2096,7 +2097,7 @@ function ProjectAccessEditor({ officeId, architectId, clientIds, employeeIds, on
     try {
       const { data: { session } } = await sb.auth.getSession();
       const res = await fetch('/api/invite-user', {
-        method:'POST', headers:{'Content-Type':'application/json'},
+        method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+session.access_token},
         body: JSON.stringify({ officeId, name: inviteForm.name, email: inviteForm.email, role:'client' })
       });
       const result = await res.json();

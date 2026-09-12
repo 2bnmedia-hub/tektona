@@ -3,6 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '');
+  if (!token) return res.status(401).json({ error: 'Missing authorization token' });
+
   const { officeId, name, email, role } = req.body || {};
   if (!officeId || !name || !email || !role) {
     return res.status(400).json({ error: 'officeId, name, email, role are required' });
@@ -16,6 +20,19 @@ export default async function handler(req, res) {
   });
 
   try {
+    // Only that specific office's own admin (or the platform owner) may invite into it —
+    // without this check any caller who knew/guessed an officeId could add themselves as
+    // admin to someone else's office.
+    const { data: userData, error: userErr } = await admin.auth.getUser(token);
+    if (userErr || !userData?.user) return res.status(401).json({ error: 'Invalid session' });
+
+    const { data: isPlatformAdmin } = await admin.from('platform_admins').select('id').eq('user_id', userData.user.id).maybeSingle();
+    if (!isPlatformAdmin) {
+      const { data: officeAdmin } = await admin.from('office_members').select('id')
+        .eq('user_id', userData.user.id).eq('office_id', officeId).eq('role', 'admin').maybeSingle();
+      if (!officeAdmin) return res.status(403).json({ error: 'Not an admin of this office' });
+    }
+
     const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email);
     if (inviteErr) return res.status(400).json({ error: inviteErr.message });
 
