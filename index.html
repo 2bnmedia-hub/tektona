@@ -3374,6 +3374,106 @@ function LegalModal({
   }, activeDoc.status ? `${activeDoc.status} · ` : '', "\u05E2\u05D5\u05D3\u05DB\u05DF: ", activeDoc.updated_label || '—'))));
 }
 
+// Standalone, publicly-reachable page for each legal document (e.g. /privacy) — needed
+// because external forms (like Google OAuth consent screen branding) require a real
+// URL to link to, not a modal that only opens from inside the app.
+function LegalPage({
+  docId,
+  onBack
+}) {
+  const [doc, setDoc] = React.useState(null);
+  const [loadError, setLoadError] = React.useState(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    fetchLegalDocs().then(map => {
+      if (cancelled) return;
+      if (!map) {
+        setLoadError(true);
+        return;
+      }
+      setDoc(map[docId] || null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [docId]);
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      minHeight: '100vh',
+      background: C.bg,
+      direction: 'rtl',
+      padding: '40px 20px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 720,
+      margin: '0 auto'
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: onBack,
+    style: {
+      background: 'none',
+      border: `1px solid ${C.border}`,
+      borderRadius: 20,
+      padding: '8px 20px',
+      cursor: 'pointer',
+      color: C.text,
+      fontSize: 15,
+      marginBottom: 24
+    }
+  }, "\u2190 \u05D7\u05D6\u05E8\u05D4 \u05DC\u05DE\u05E1\u05DA \u05DB\u05E0\u05D9\u05E1\u05D4"), /*#__PURE__*/React.createElement("h1", {
+    style: {
+      color: C.text,
+      fontSize: 28,
+      fontWeight: 800,
+      marginBottom: 20
+    }
+  }, doc && doc.title || LEGAL_DOC_LABELS[docId]), loadError && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.danger,
+      fontSize: 15
+    }
+  }, "\u05DC\u05D0 \u05E0\u05D9\u05EA\u05DF \u05DC\u05D8\u05E2\u05D5\u05DF \u05D0\u05EA \u05D4\u05DE\u05E1\u05DE\u05DA \u05DB\u05E8\u05D2\u05E2. \u05E0\u05E1\u05D5 \u05E9\u05D5\u05D1 \u05DE\u05D0\u05D5\u05D7\u05E8 \u05D9\u05D5\u05EA\u05E8."), !loadError && !doc && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
+      color: C.sub,
+      fontSize: 15
+    }
+  }, /*#__PURE__*/React.createElement(Honeycomb, null), " \u05D8\u05D5\u05E2\u05DF \u05DE\u05E1\u05DE\u05DA..."), doc && doc.sections.map((item, i) => /*#__PURE__*/React.createElement("div", {
+    key: i,
+    style: {
+      marginBottom: 16,
+      padding: '14px 16px',
+      background: C.card,
+      borderRadius: 10,
+      border: `1px solid ${C.border}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      color: C.text,
+      fontSize: 17,
+      marginBottom: 6
+    }
+  }, item.h), /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 15,
+      lineHeight: 1.75,
+      whiteSpace: 'pre-line'
+    }
+  }, item.t))), doc && /*#__PURE__*/React.createElement("div", {
+    style: {
+      color: C.sub,
+      fontSize: 12,
+      opacity: 0.7,
+      marginTop: 16
+    }
+  }, doc.status ? `${doc.status} · ` : '', "\u05E2\u05D5\u05D3\u05DB\u05DF: ", doc.updated_label || '—')));
+}
+
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
 function LoginScreen({
   onLogin,
@@ -13841,7 +13941,11 @@ const SCREEN_PATHS = {
   suspended: '/suspended',
   signup: '/signup',
   pending: '/pending',
-  rejected: '/rejected'
+  rejected: '/rejected',
+  terms: '/terms',
+  privacy: '/privacy',
+  accessibility: '/accessibility',
+  dpa: '/dpa'
 };
 const PATH_SCREENS = Object.fromEntries(Object.entries(SCREEN_PATHS).map(([s, p]) => [p, s]));
 function buildPath(screen, projectId, tab, projects) {
@@ -13985,6 +14089,15 @@ function App() {
   };
   React.useEffect(() => {
     const initApp = async () => {
+      // Legal pages (linked from external forms like the Google OAuth consent screen)
+      // must be reachable directly by URL regardless of login state.
+      const legalDocId = window.location.pathname.slice(1);
+      if (LEGAL_DOC_ORDER.includes(legalDocId)) {
+        navigate(legalDocId, {
+          replace: true
+        });
+        return;
+      }
       const {
         data: {
           session
@@ -14103,6 +14216,10 @@ function App() {
       fontSize: 17
     }
   }, "\u05D8\u05D5\u05E2\u05DF...")));
+  if (LEGAL_DOC_ORDER.includes(screen)) return /*#__PURE__*/React.createElement(LegalPage, {
+    docId: screen,
+    onBack: () => navigate('login')
+  });
   if (screen === 'login') return /*#__PURE__*/React.createElement(LoginScreen, {
     onLogin: handleLogin,
     onSignup: () => navigate('signup')

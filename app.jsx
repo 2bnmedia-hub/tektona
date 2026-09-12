@@ -1241,6 +1241,53 @@ function LegalModal({ tab='terms', onClose }) {
   );
 }
 
+// Standalone, publicly-reachable page for each legal document (e.g. /privacy) — needed
+// because external forms (like Google OAuth consent screen branding) require a real
+// URL to link to, not a modal that only opens from inside the app.
+function LegalPage({ docId, onBack }) {
+  const [doc, setDoc] = React.useState(null);
+  const [loadError, setLoadError] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetchLegalDocs().then(map => {
+      if (cancelled) return;
+      if (!map) { setLoadError(true); return; }
+      setDoc(map[docId] || null);
+    });
+    return () => { cancelled = true; };
+  }, [docId]);
+
+  return (
+    <div style={{ minHeight:'100vh', background:C.bg, direction:'rtl', padding:'40px 20px' }}>
+      <div style={{ maxWidth:720, margin:'0 auto' }}>
+        <button onClick={onBack} style={{ background:'none', border:`1px solid ${C.border}`, borderRadius:20,
+          padding:'8px 20px', cursor:'pointer', color:C.text, fontSize:15, marginBottom:24 }}>
+          ← חזרה למסך כניסה
+        </button>
+        <h1 style={{ color:C.text, fontSize:28, fontWeight:800, marginBottom:20 }}>{(doc && doc.title) || LEGAL_DOC_LABELS[docId]}</h1>
+        {loadError && <div style={{ color:C.danger, fontSize:15 }}>לא ניתן לטעון את המסמך כרגע. נסו שוב מאוחר יותר.</div>}
+        {!loadError && !doc && (
+          <div style={{ display:'flex', alignItems:'center', gap:10, color:C.sub, fontSize:15 }}>
+            <Honeycomb/> טוען מסמך...
+          </div>
+        )}
+        {doc && doc.sections.map((item, i) => (
+          <div key={i} style={{ marginBottom:16, padding:'14px 16px', background:C.card, borderRadius:10, border:`1px solid ${C.border}` }}>
+            <div style={{ fontWeight:700, color:C.text, fontSize:17, marginBottom:6 }}>{item.h}</div>
+            <div style={{ color:C.sub, fontSize:15, lineHeight:1.75, whiteSpace:'pre-line' }}>{item.t}</div>
+          </div>
+        ))}
+        {doc && (
+          <div style={{ color:C.sub, fontSize:12, opacity:0.7, marginTop:16 }}>
+            {doc.status ? `${doc.status} · ` : ''}עודכן: {doc.updated_label || '—'}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── LOGIN SCREEN ─────────────────────────────────────────────────────────────
 function LoginScreen({ onLogin, onSignup }) {
   const [email, setEmail] = React.useState('');
@@ -5056,6 +5103,10 @@ const SCREEN_PATHS = {
   signup: '/signup',
   pending: '/pending',
   rejected: '/rejected',
+  terms: '/terms',
+  privacy: '/privacy',
+  accessibility: '/accessibility',
+  dpa: '/dpa',
 };
 const PATH_SCREENS = Object.fromEntries(Object.entries(SCREEN_PATHS).map(([s,p])=>[p,s]));
 
@@ -5159,6 +5210,10 @@ function App() {
 
   React.useEffect(()=>{
     const initApp = async () => {
+      // Legal pages (linked from external forms like the Google OAuth consent screen)
+      // must be reachable directly by URL regardless of login state.
+      const legalDocId = window.location.pathname.slice(1);
+      if (LEGAL_DOC_ORDER.includes(legalDocId)) { navigate(legalDocId, { replace:true }); return; }
       const { data: { session } } = await sb.auth.getSession();
       if (session) {
         const owner = await fetchPlatformAdmin(session.user.id);
@@ -5225,6 +5280,8 @@ function App() {
       </div>
     </div>
   );
+
+  if (LEGAL_DOC_ORDER.includes(screen)) return <LegalPage docId={screen} onBack={()=>navigate('login')}/>;
 
   if (screen==='login') return <LoginScreen onLogin={handleLogin} onSignup={()=>navigate('signup')}/>;
 
