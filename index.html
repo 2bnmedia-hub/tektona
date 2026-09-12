@@ -1876,7 +1876,7 @@ function AccessibilityWidget() {
       borderRadius: '50%',
       border: 'none',
       background: C.primary,
-      color: '#fff',
+      color: contrastText(C.primary),
       fontSize: 24,
       cursor: 'pointer',
       boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
@@ -1953,7 +1953,7 @@ function AccessibilityWidget() {
       borderRadius: 8,
       border: `1px solid ${C.border}`,
       background: contrast ? C.primary : C.bg,
-      color: contrast ? '#fff' : C.text,
+      color: contrast ? contrastText(C.primary) : C.text,
       cursor: 'pointer',
       fontSize: 16
     }
@@ -2718,6 +2718,11 @@ function isLightColor(hex) {
     b = parseInt(hex.slice(5, 7), 16);
   return (r * 299 + g * 587 + b * 114) / 1000 > 160;
 }
+// Some themes (e.g. Calq Noir) have a near-white primary color, so text hardcoded to
+// white disappears on it — pick white or the theme's own background color for contrast.
+function contrastText(bg) {
+  return isLightColor(bg) ? C.bg : '#fff';
+}
 function Btn({
   children,
   onClick,
@@ -3320,7 +3325,7 @@ function LegalModal({
       borderRadius: 20,
       border: `1px solid ${C.border}`,
       background: activeTab === key ? C.primary : 'transparent',
-      color: activeTab === key ? '#fff' : C.text,
+      color: activeTab === key ? contrastText(C.primary) : C.text,
       cursor: 'pointer',
       fontSize: 15
     }
@@ -4218,7 +4223,7 @@ function PricingScreen({
         top: -12,
         right: 20,
         background: C.primary,
-        color: '#fff',
+        color: contrastText(C.primary),
         fontSize: 13,
         fontWeight: 700,
         padding: '4px 14px',
@@ -5052,7 +5057,7 @@ function UsersScreen({
       height: 44,
       borderRadius: '50%',
       background: C.primary,
-      color: '#fff',
+      color: contrastText(C.primary),
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -6940,13 +6945,13 @@ function TimelineTab({
       }, ph.status === 'completed' && /*#__PURE__*/React.createElement("span", {
         style: {
           fontSize: 10,
-          color: '#fff',
+          color: contrastText(color),
           fontWeight: 700
         }
       }, "\u2713"), ph.status === 'active' && /*#__PURE__*/React.createElement("span", {
         style: {
           fontSize: 10,
-          color: '#fff',
+          color: contrastText(color),
           fontWeight: 700
         }
       }, "\u25B6"))));
@@ -6991,7 +6996,7 @@ function TimelineTab({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#fff',
+        color: contrastText(color),
         fontWeight: 700,
         fontSize: 17,
         flexShrink: 0,
@@ -7125,7 +7130,7 @@ function TimelineTab({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#fff',
+        color: contrastText(color),
         fontWeight: 700,
         fontSize: 17,
         flexShrink: 0,
@@ -11207,7 +11212,7 @@ function ClientSuccessTab({
       fontSize: 16,
       fontWeight: 600,
       background: activeSection === s.k ? C.primary : 'transparent',
-      color: activeSection === s.k ? '#fff' : C.sub
+      color: activeSection === s.k ? contrastText(C.primary) : C.sub
     }
   }, s.l))), activeSection === 'profile' && /*#__PURE__*/React.createElement("div", {
     style: {
@@ -13212,7 +13217,7 @@ function LegalDocsAdmin() {
       fontSize: 14,
       fontWeight: 600,
       background: activeTab === key ? C.primary : 'transparent',
-      color: activeTab === key ? '#fff' : C.text
+      color: activeTab === key ? contrastText(C.primary) : C.text
     }
   }, docs[key] && docs[key].title || LEGAL_DOC_LABELS[key]))), doc && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -13628,15 +13633,15 @@ function PlatformAdminDashboard({
       fontSize: 14,
       fontWeight: 600,
       background: section === key ? C.primary : 'transparent',
-      color: section === key ? '#fff' : C.text,
+      color: section === key ? contrastText(C.primary) : C.text,
       display: 'flex',
       alignItems: 'center',
       gap: 6
     }
   }, label, key === 'requests' && pendingCount > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
-      background: section === key ? '#fff' : C.danger,
-      color: section === key ? C.primary : '#fff',
+      background: C.danger,
+      color: contrastText(C.danger),
       borderRadius: 10,
       fontSize: 11,
       fontWeight: 700,

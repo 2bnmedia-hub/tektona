@@ -603,7 +603,7 @@ function AccessibilityWidget() {
     <div style={{ position:'fixed', bottom:80, left:16, zIndex:9999 }}>
       <button onClick={() => setOpen(!open)}
         style={{ width:44, height:44, borderRadius:'50%', border:'none',
-          background:C.primary, color:'#fff', fontSize:24, cursor:'pointer',
+          background:C.primary, color:contrastText(C.primary), fontSize:24, cursor:'pointer',
           boxShadow:'0 2px 12px rgba(0,0,0,0.3)', display:'flex', alignItems:'center', justifyContent:'center' }}>
         ♿
       </button>
@@ -625,7 +625,7 @@ function AccessibilityWidget() {
           <button onClick={() => setContrast(c=>!c)}
             style={{ width:'100%', padding:'7px 0', borderRadius:8,
               border:`1px solid ${C.border}`, background: contrast ? C.primary : C.bg,
-              color: contrast ? '#fff' : C.text, cursor:'pointer', fontSize:16 }}>
+              color: contrast ? contrastText(C.primary) : C.text, cursor:'pointer', fontSize:16 }}>
             {contrast ? '✓ ' : ''}ניגודיות גבוהה
           </button>
         </div>
@@ -947,6 +947,9 @@ function isLightColor(hex) {
   const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
   return (r*299 + g*587 + b*114)/1000 > 160;
 }
+// Some themes (e.g. Calq Noir) have a near-white primary color, so text hardcoded to
+// white disappears on it — pick white or the theme's own background color for contrast.
+function contrastText(bg) { return isLightColor(bg) ? C.bg : '#fff'; }
 
 function Btn({ children, onClick, variant='primary', size='md', disabled=false, style:s={} }) {
   const bg = variant==='primary'?C.primary:variant==='danger'?C.danger:variant==='success'?C.success:'transparent';
@@ -1212,7 +1215,7 @@ function LegalModal({ tab='terms', onClose }) {
             <button key={key} onClick={() => setActiveTab(key)}
               style={{ padding:'7px 20px', borderRadius:20, border:`1px solid ${C.border}`,
                 background: activeTab===key ? C.primary : 'transparent',
-                color: activeTab===key ? '#fff' : C.text, cursor:'pointer', fontSize:15 }}>
+                color: activeTab===key ? contrastText(C.primary) : C.text, cursor:'pointer', fontSize:15 }}>
               {(docs && docs[key] && docs[key].title) || LEGAL_DOC_LABELS[key]}
             </button>
           ))}
@@ -1591,7 +1594,7 @@ function PricingScreen({ onBack }) {
               position:'relative' }}>
               {pl.popular && (
                 <div style={{ position:'absolute', top:-12, right:20,
-                  background:C.primary, color:'#fff', fontSize:13, fontWeight:700,
+                  background:C.primary, color:contrastText(C.primary), fontSize:13, fontWeight:700,
                   padding:'4px 14px', borderRadius:20 }}>הכי פופולרי</div>
               )}
               <div style={{ fontSize:26, fontWeight:800, color:C.text, marginBottom:6 }}>{pl.name}</div>
@@ -1845,7 +1848,7 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
           {users.map(u=>(
             <div key={u.id} style={{background:C.card,borderRadius:16,padding:20,border:`1px solid ${C.border}`}}>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
-                <div style={{width:44,height:44,borderRadius:'50%',background:C.primary,color:'#fff',
+                <div style={{width:44,height:44,borderRadius:'50%',background:C.primary,color:contrastText(C.primary),
                   display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,fontWeight:700}}>
                   {u.avatar}
                 </div>
@@ -2535,8 +2538,8 @@ function TimelineTab({ project, setProject }) {
                       <div style={{position:'absolute',right:`${100-left-width}%`,width:width+'%',height:'100%',
                         background:color,borderRadius:4,transition:'width .8s ease',
                         display:'flex',alignItems:'center',justifyContent:'center'}}>
-                        {ph.status==='completed'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>✓</span>}
-                        {ph.status==='active'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>▶</span>}
+                        {ph.status==='completed'&&<span style={{fontSize:10,color:contrastText(color),fontWeight:700}}>✓</span>}
+                        {ph.status==='active'&&<span style={{fontSize:10,color:contrastText(color),fontWeight:700}}>▶</span>}
                       </div>
                     </div>
                   </div>
@@ -2559,7 +2562,7 @@ function TimelineTab({ project, setProject }) {
                 <div style={{width:40,height:40,borderRadius:'50%',background:color,
                   border:`3px solid ${ph.status==='active'?C.primary:C.border}`,
                   display:'flex',alignItems:'center',justifyContent:'center',
-                  color:'#fff',fontWeight:700,fontSize:17,flexShrink:0,zIndex:1,
+                  color:contrastText(color),fontWeight:700,fontSize:17,flexShrink:0,zIndex:1,
                   boxShadow:ph.status==='active'?`0 0 0 4px ${C.primary}33`:'none'}}>
                   {ph.status==='completed'?'✓':phase.id}
                 </div>
@@ -2603,7 +2606,7 @@ function TimelineTab({ project, setProject }) {
                 <div style={{width:40,height:40,borderRadius:'50%',background:color,
                   border:`3px solid ${ph.status==='active'?C.primary:C.border}`,
                   display:'flex',alignItems:'center',justifyContent:'center',
-                  color:'#fff',fontWeight:700,fontSize:17,flexShrink:0,zIndex:1,
+                  color:contrastText(color),fontWeight:700,fontSize:17,flexShrink:0,zIndex:1,
                   boxShadow:ph.status==='active'?`0 0 0 4px ${C.primary}33`:'none'}}>
                   {ph.status==='completed'?'✓':PHASES.length+ci+1}
                 </div>
@@ -4012,7 +4015,7 @@ function ClientSuccessTab({ project, setProject }) {
           <button key={s.k} onClick={()=>setActiveSection(s.k)}
             style={{padding:'7px 16px',borderRadius:20,border:'none',cursor:'pointer',fontSize:16,fontWeight:600,
               background:activeSection===s.k?C.primary:'transparent',
-              color:activeSection===s.k?'#fff':C.sub}}>
+              color:activeSection===s.k?contrastText(C.primary):C.sub}}>
             {s.l}
           </button>
         ))}
@@ -4799,7 +4802,7 @@ function LegalDocsAdmin() {
         {LEGAL_DOC_ORDER.map(key=>(
           <button key={key} onClick={()=>switchTab(key)}
             style={{padding:'7px 18px',borderRadius:20,border:`1px solid ${C.border}`,cursor:'pointer',fontSize:14,fontWeight:600,
-              background:activeTab===key?C.primary:'transparent',color:activeTab===key?'#fff':C.text}}>
+              background:activeTab===key?C.primary:'transparent',color:activeTab===key?contrastText(C.primary):C.text}}>
             {(docs[key] && docs[key].title) || LEGAL_DOC_LABELS[key]}
           </button>
         ))}
@@ -4964,11 +4967,11 @@ function PlatformAdminDashboard({ onLogout }) {
           {[['offices','משרדים'],['requests','בקשות הרשמה'],['legal','מסמכים משפטיים'],['archive','ארכיון מחיקות']].map(([key,label])=>(
             <button key={key} onClick={()=>setSection(key)}
               style={{padding:'7px 18px',borderRadius:20,border:`1px solid ${C.border}`,cursor:'pointer',fontSize:14,fontWeight:600,
-                background:section===key?C.primary:'transparent',color:section===key?'#fff':C.text,
+                background:section===key?C.primary:'transparent',color:section===key?contrastText(C.primary):C.text,
                 display:'flex',alignItems:'center',gap:6}}>
               {label}
               {key==='requests' && pendingCount>0 && (
-                <span style={{background:section===key?'#fff':C.danger,color:section===key?C.primary:'#fff',
+                <span style={{background:C.danger,color:contrastText(C.danger),
                   borderRadius:10,fontSize:11,fontWeight:700,padding:'1px 7px'}}>{pendingCount}</span>
               )}
             </button>
