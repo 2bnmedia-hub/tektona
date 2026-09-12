@@ -1456,10 +1456,10 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
           padding:'18px', borderRadius:14, border:`1px solid ${C.border}` }}>
           <div style={{ display:'flex', gap:isMobile?16:26, flexWrap:'wrap', flex:1, justifyContent:'center' }}>
             <SVGCircle value={projects.length} max={OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}
-              color={C.primary} label="סה״כ פרויקטים" sublabel={`/${OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}`} size={88}/>
-            <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" sublabel="active" size={88}/>
-            <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" sublabel="done" size={88}/>
-            <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={88}/>
+              color={C.primary} label="סה״כ פרויקטים" sublabel={`/${OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}`} size={176}/>
+            <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" sublabel="active" size={176}/>
+            <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" sublabel="done" size={176}/>
+            <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={176}/>
           </div>
           <div style={{ display:'flex', gap:isMobile?14:24, flexWrap:'wrap' }}>
             <div>

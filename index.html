@@ -3974,28 +3974,28 @@ function SystemDashboard({
     color: C.primary,
     label: "\u05E1\u05D4\u05F4\u05DB \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8\u05D9\u05DD",
     sublabel: `/${OFFICE_PLAN.plan === 'studio' ? 30 : OFFICE_PLAN.plan === 'pro' ? 15 : 5}`,
-    size: 88
+    size: 176
   }), /*#__PURE__*/React.createElement(SVGCircle, {
     value: active,
     max: projects.length || 1,
     color: C.success,
     label: "\u05E4\u05E2\u05D9\u05DC\u05D9\u05DD",
     sublabel: "active",
-    size: 88
+    size: 176
   }), /*#__PURE__*/React.createElement(SVGCircle, {
     value: completed,
     max: projects.length || 1,
     color: C.info,
     label: "\u05D4\u05D5\u05E9\u05DC\u05DE\u05D5",
     sublabel: "done",
-    size: 88
+    size: 176
   }), /*#__PURE__*/React.createElement(SVGCircle, {
     value: (data.users || MOCK_USERS).length,
     max: 20,
     color: C.ai,
     label: "\u05DE\u05E9\u05EA\u05DE\u05E9\u05D9\u05DD",
     sublabel: "users",
-    size: 88
+    size: 176
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
