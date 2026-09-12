@@ -1308,11 +1308,16 @@ function SpaceDotsBackground() {
       w = canvas.width = canvas.offsetWidth;
       h = canvas.height = canvas.offsetHeight;
       const count = Math.max(30, Math.floor((w*h)/18000));
-      particles = Array.from({length:count}, () => ({
-        x: Math.random()*w, y: Math.random()*h,
-        vx: (Math.random()-0.5)*0.25, vy: (Math.random()-0.5)*0.25,
-        gray: 90 + Math.random()*110,
-      }));
+      particles = Array.from({length:count}, () => {
+        const depth = 0.25 + Math.random()*0.75; // 0=far/faint, 1=near/bright — gives the field a sense of depth
+        return {
+          x: Math.random()*w, y: Math.random()*h,
+          vx: (Math.random()-0.5)*0.25*depth, vy: (Math.random()-0.5)*0.25*depth,
+          gray: 90 + Math.random()*110, depth,
+          radius: 0.6 + depth*1.3,
+          opacity: 0.12 + depth*0.45,
+        };
+      });
     };
     resize();
     window.addEventListener('resize', resize);
@@ -1333,7 +1338,7 @@ function SpaceDotsBackground() {
         const dx = p.x-mouse.x, dy = p.y-mouse.y;
         const distToMouse = Math.sqrt(dx*dx+dy*dy);
         if (distToMouse < MOUSE_DIST) {
-          const force = (1 - distToMouse/MOUSE_DIST) * 0.6;
+          const force = (1 - distToMouse/MOUSE_DIST) * 0.6 * p.depth;
           p.x += (dx/(distToMouse||1)) * force;
           p.y += (dy/(distToMouse||1)) * force;
         }
@@ -1344,8 +1349,8 @@ function SpaceDotsBackground() {
       for (let i=0;i<particles.length;i++) {
         const a = particles[i];
         ctx.beginPath();
-        ctx.arc(a.x, a.y, 1.5, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(${a.gray},${a.gray},${a.gray},0.8)`;
+        ctx.arc(a.x, a.y, a.radius, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(${a.gray},${a.gray},${a.gray},${a.opacity})`;
         ctx.fill();
         for (let j=i+1;j<particles.length;j++) {
           const b = particles[j];
@@ -1353,10 +1358,11 @@ function SpaceDotsBackground() {
           const dist = Math.sqrt(dx*dx+dy*dy);
           if (dist < LINE_DIST) {
             const g = (a.gray+b.gray)/2;
+            const lineOpacity = (1-dist/LINE_DIST) * 0.18 * ((a.opacity+b.opacity)/2);
             ctx.beginPath();
             ctx.moveTo(a.x,a.y);
             ctx.lineTo(b.x,b.y);
-            ctx.strokeStyle = `rgba(${g},${g},${g},${(1-dist/LINE_DIST)*0.35})`;
+            ctx.strokeStyle = `rgba(${g},${g},${g},${lineOpacity})`;
             ctx.lineWidth = 1;
             ctx.stroke();
           }
