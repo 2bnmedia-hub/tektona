@@ -2209,10 +2209,24 @@ function AIAgentTab({ project }) {
 // ─── TIMELINE TAB ────────────────────────────────────────────────────────────
 function TimelineTab({ project, setProject }) {
   const [viewMode, setViewMode] = React.useState('list');
+  const [newPhaseName, setNewPhaseName] = React.useState('');
   const phases = project.phases || PHASES.map((p,i)=>({phaseId:p.id,status:i===0?'active':'pending',completedDate:null,notes:''}));
+  const customPhases = project.customPhases || [];
   const updatePhase = (idx, field, val) => {
     const updated = phases.map((p,i)=>i===idx?{...p,[field]:val}:p);
     setProject(pr=>({...pr,phases:updated}));
+  };
+  const updateCustomPhase = (id, field, val) => {
+    setProject(pr=>({...pr, customPhases:(pr.customPhases||[]).map(c=>c.id===id?{...c,[field]:val}:c)}));
+  };
+  const addCustomPhase = () => {
+    if (!newPhaseName.trim()) return;
+    setProject(pr=>({...pr, customPhases:[...(pr.customPhases||[]),
+      { id:'c'+uid(), name:newPhaseName.trim(), status:'pending', completedDate:null, notes:'' }]}));
+    setNewPhaseName('');
+  };
+  const removeCustomPhase = (id) => {
+    setProject(pr=>({...pr, customPhases:(pr.customPhases||[]).filter(c=>c.id!==id)}));
   };
   const statusColors = { completed:C.success, active:C.primary, pending:C.border };
 
@@ -2237,25 +2251,49 @@ function TimelineTab({ project, setProject }) {
           <div style={{fontSize:13,color:C.sub,marginBottom:12,display:'flex',justifyContent:'space-between'}}>
             <span>{project.startDate||'—'}</span><span>{project.endDate||'—'}</span>
           </div>
-          {PHASES.map((phase,i)=>{
-            const ph = phases[i]||{status:'pending'};
-            const color = ph.status==='completed'?C.success:ph.status==='active'?C.primary:C.border;
-            const left  = (i/PHASES.length)*100;
-            const width = (1/PHASES.length)*100;
-            return (
-              <div key={phase.id} style={{marginBottom:8,display:'flex',alignItems:'center',gap:10}}>
-                <div style={{width:90,fontSize:12,color:C.sub,textAlign:'right',flexShrink:0}}>{phase.short}</div>
-                <div style={{flex:1,height:20,background:C.border,borderRadius:4,position:'relative',minWidth:200}}>
-                  <div style={{position:'absolute',right:`${100-left-width}%`,width:width+'%',height:'100%',
-                    background:color,borderRadius:4,transition:'width .8s ease',
-                    display:'flex',alignItems:'center',justifyContent:'center'}}>
-                    {ph.status==='completed'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>✓</span>}
-                    {ph.status==='active'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>▶</span>}
+          {(() => {
+            const totalSegs = PHASES.length + customPhases.length;
+            return <>
+              {PHASES.map((phase,i)=>{
+                const ph = phases[i]||{status:'pending'};
+                const color = ph.status==='completed'?C.success:ph.status==='active'?C.primary:C.border;
+                const left  = (i/totalSegs)*100;
+                const width = (1/totalSegs)*100;
+                return (
+                  <div key={phase.id} style={{marginBottom:8,display:'flex',alignItems:'center',gap:10}}>
+                    <div style={{width:90,fontSize:12,color:C.sub,textAlign:'right',flexShrink:0}}>{phase.short}</div>
+                    <div style={{flex:1,height:20,background:C.border,borderRadius:4,position:'relative',minWidth:200}}>
+                      <div style={{position:'absolute',right:`${100-left-width}%`,width:width+'%',height:'100%',
+                        background:color,borderRadius:4,transition:'width .8s ease',
+                        display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        {ph.status==='completed'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>✓</span>}
+                        {ph.status==='active'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>▶</span>}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+              {customPhases.map((ph,ci)=>{
+                const i = PHASES.length + ci;
+                const color = ph.status==='completed'?C.success:ph.status==='active'?C.primary:C.border;
+                const left  = (i/totalSegs)*100;
+                const width = (1/totalSegs)*100;
+                return (
+                  <div key={ph.id} style={{marginBottom:8,display:'flex',alignItems:'center',gap:10}}>
+                    <div style={{width:90,fontSize:12,color:C.sub,textAlign:'right',flexShrink:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ph.name}</div>
+                    <div style={{flex:1,height:20,background:C.border,borderRadius:4,position:'relative',minWidth:200}}>
+                      <div style={{position:'absolute',right:`${100-left-width}%`,width:width+'%',height:'100%',
+                        background:color,borderRadius:4,transition:'width .8s ease',
+                        display:'flex',alignItems:'center',justifyContent:'center'}}>
+                        {ph.status==='completed'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>✓</span>}
+                        {ph.status==='active'&&<span style={{fontSize:10,color:'#fff',fontWeight:700}}>▶</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </>;
+          })()}
         </div>
       )}
 
@@ -2297,6 +2335,57 @@ function TimelineTab({ project, setProject }) {
               </div>
             );
           })}
+          {customPhases.map((ph,ci)=>{
+            const color = statusColors[ph.status] || C.border;
+            return (
+              <div key={ph.id} style={{display:'flex',gap:20,marginBottom:20,position:'relative'}}>
+                <div style={{width:40,height:40,borderRadius:'50%',background:color,
+                  border:`3px solid ${ph.status==='active'?C.primary:C.border}`,
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  color:'#fff',fontWeight:700,fontSize:17,flexShrink:0,zIndex:1,
+                  boxShadow:ph.status==='active'?`0 0 0 4px ${C.primary}33`:'none'}}>
+                  {ph.status==='completed'?'✓':PHASES.length+ci+1}
+                </div>
+                <div style={{flex:1,background:C.card,borderRadius:12,padding:16,border:`1px solid ${ph.status==='active'?C.primary:C.border}`}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,gap:8}}>
+                    <input value={ph.name} onChange={e=>updateCustomPhase(ph.id,'name',e.target.value)}
+                      style={{flex:1,fontWeight:700,color:C.text,fontSize:18,background:'transparent',
+                        border:'none',outline:'none',fontFamily:'Heebo,Arial,sans-serif',padding:0}}/>
+                    <Select value={ph.status} onChange={v=>updateCustomPhase(ph.id,'status',v)}
+                      options={[{value:'pending',label:'ממתין'},{value:'active',label:'פעיל'},{value:'completed',label:'הושלם'}]}
+                      style={{width:120}}/>
+                    <button onClick={()=>removeCustomPhase(ph.id)}
+                      style={{background:'none',border:'none',color:C.sub,cursor:'pointer',fontSize:16}}
+                      title="הסר שלב">✕</button>
+                  </div>
+                  {ph.status==='completed' && (
+                    <div style={{marginBottom:8}}>
+                      <input type="date" value={ph.completedDate||''} onChange={e=>updateCustomPhase(ph.id,'completedDate',e.target.value)}
+                        style={{padding:'5px 10px',borderRadius:8,border:`1px solid ${C.border}`,
+                          background:C.inputBg,color:C.text,fontSize:14,outline:'none'}}/>
+                    </div>
+                  )}
+                  <input value={ph.notes||''} onChange={e=>updateCustomPhase(ph.id,'notes',e.target.value)}
+                    placeholder="הוסף הערות..."
+                    style={{width:'100%',padding:'6px 10px',borderRadius:8,border:`1px solid ${C.border}`,
+                      background:C.inputBg,color:C.text,fontSize:14,outline:'none',direction:'rtl',
+                      fontFamily:'Heebo,Arial,sans-serif'}}/>
+                </div>
+              </div>
+            );
+          })}
+          <div style={{display:'flex',gap:20,position:'relative'}}>
+            <div style={{width:40,flexShrink:0}}/>
+            <div style={{flex:1,display:'flex',gap:8,background:C.card,borderRadius:12,padding:16,border:`1px dashed ${C.border}`}}>
+              <input value={newPhaseName} onChange={e=>setNewPhaseName(e.target.value)}
+                onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addCustomPhase();}}}
+                placeholder="הוסף שלב נוסף..."
+                style={{flex:1,padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
+                  background:C.inputBg,color:C.text,fontSize:16,outline:'none',direction:'rtl',
+                  fontFamily:'Heebo,Arial,sans-serif'}}/>
+              <Btn size="sm" onClick={addCustomPhase}>+ הוסף שלב</Btn>
+            </div>
+          </div>
         </div>
       )}
     </div>
