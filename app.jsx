@@ -796,54 +796,45 @@ function ThemeSelector({ currentId, onSelect, onClose }) {
   const themeNames = { lightStone:'Light Stone', warmSand:'Warm Sand', softOlive:'Soft Olive',
     architectDark:'Architect Dark', zahaHadid:'Dubai Concrete', bigBjarke:'Copenhagen Blue',
     tadaoAndo:'Osaka Brutalism', fosterGlass:'London Glass', snohettaNordic:'Oslo Nordic',
-    calqNoir:'Calq Noir', snowWhite:'Snow White', customTheme:'ערכה אישית' };
-
-  // 12 themes → 12 clock positions, one per hour. A rotating hand points at the active theme;
-  // clicking any hour position selects that theme (the 12 o'clock "custom" spot opens the editor).
-  const order = ['lightStone','warmSand','softOlive','architectDark','zahaHadid','bigBjarke',
-    'tadaoAndo','fosterGlass','snohettaNordic','calqNoir','snowWhite','customTheme'];
-  const activeIndex = Math.max(0, order.indexOf(currentId));
-  const size = 260, center = size/2, R = 100;
+    calqNoir:'Calq Noir', snowWhite:'Snow White' };
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', display:'flex',
       alignItems:'center', justifyContent:'center', zIndex:9000 }} onClick={onClose}>
       <div onClick={e=>e.stopPropagation()} style={{ background:C.card, borderRadius:20, padding:28,
-        width:360, maxWidth:'95vw', boxShadow:'0 20px 60px rgba(0,0,0,0.4)', direction:'rtl' }}>
+        width:560, maxWidth:'95vw', boxShadow:'0 20px 60px rgba(0,0,0,0.4)', direction:'rtl' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
           <h3 style={{ color:C.text, fontSize:22, fontWeight:700 }}>בחר ערכת נושא</h3>
           <button onClick={onClose} style={{ background:'none', border:'none', color:C.sub, fontSize:26, cursor:'pointer' }}>×</button>
         </div>
-        <div style={{ position:'relative', width:size, height:size, margin:'0 auto 20px', borderRadius:'50%',
-          background:`conic-gradient(from -2deg, ${C.card}, ${C.bg}, ${C.card}, ${C.bg}, ${C.card})`,
-          border:`4px solid ${C.border}`, boxShadow:'inset 0 2px 8px rgba(0,0,0,0.3)' }}>
-          {/* Rotating hand pointing at the active theme */}
-          <div style={{ position:'absolute', top:center, left:center, width:R-15, height:3,
-            background:C.primary, borderRadius:2, transformOrigin:'0 50%',
-            transform:`rotate(${activeIndex*30-90}deg)`, transition:'transform .35s cubic-bezier(.4,0,.2,1)',
-            boxShadow:`0 0 6px ${C.primary}80` }}/>
-          <div style={{ position:'absolute', top:center-6, left:center-6, width:12, height:12,
-            borderRadius:'50%', background:C.primary }}/>
-          {order.map((id,i) => {
-            const angle = i*30 - 90;
-            const isActive = id===currentId;
-            return (
-              <button key={id}
-                onClick={() => { if (id==='customTheme') { onSelect('customTheme'); setShowCustomEditor(true); }
-                  else { onSelect(id); onClose(); } }}
-                title={themeNames[id]}
-                style={{ position:'absolute', top:'50%', left:'50%', width:36, height:36, borderRadius:'50%',
-                  transform:`translate(-50%,-50%) rotate(${angle}deg) translate(${R}px) rotate(${-angle}deg)`,
-                  background: THEMES[id].primary, border: isActive ? `3px solid ${C.text}` : `2px solid ${C.border}`,
-                  cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
-                  fontSize:15, boxShadow: isActive ? `0 0 10px ${C.primary}90` : 'none', transition:'border .2s' }}>
-                {id==='customTheme' && '✏️'}
-              </button>
-            );
-          })}
-        </div>
-        <div style={{ textAlign:'center', color:C.text, fontWeight:700, fontSize:17 }}>
-          {themeNames[currentId] || 'בחר ערכה'}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
+          {Object.entries(THEMES).filter(([id])=>id!=='customTheme').map(([id, th]) => (
+            <button key={id} onClick={() => { onSelect(id); onClose(); }}
+              style={{ border: id===currentId ? `2px solid ${C.primary}` : `2px solid ${C.border}`,
+                borderRadius:0, padding:12, background: th.card, cursor:'pointer',
+                textAlign:'center', transition:'all .2s' }}>
+              <div style={{ display:'flex', gap:4, justifyContent:'center', marginBottom:8 }}>
+                {[th.primary, th.accent, th.bg, th.sidebar].map((col,i) => (
+                  <div key={i} style={{ width:14, height:14, borderRadius:0, background:col, border:`1px solid ${th.border}` }}/>
+                ))}
+              </div>
+              <div style={{ fontSize:13, fontWeight:600, color:th.text }}>{themeNames[id]}</div>
+            </button>
+          ))}
+          {/* Custom theme card */}
+          <button onClick={() => { onSelect('customTheme'); setShowCustomEditor(true); }}
+            style={{ border: currentId==='customTheme' ? `2px solid ${C.primary}` : `2px dashed ${C.border}`,
+              borderRadius:0, padding:12, background:C.bg, cursor:'pointer',
+              textAlign:'center', transition:'all .2s', position:'relative' }}>
+            <div style={{ display:'flex', gap:4, justifyContent:'center', marginBottom:8 }}>
+              {[THEMES.customTheme.primary, THEMES.customTheme.accent,
+                THEMES.customTheme.bg, THEMES.customTheme.sidebar].map((col,i) => (
+                <div key={i} style={{ width:14, height:14, borderRadius:0, background:col, border:`1px solid ${C.border}` }}/>
+              ))}
+            </div>
+            <div style={{ fontSize:13, fontWeight:600, color:C.text }}>✏️ ערכה אישית</div>
+            <div style={{ fontSize:11, color:C.sub, marginTop:3 }}>ערוך צבעים</div>
+          </button>
         </div>
       </div>
     </div>
