@@ -4294,7 +4294,11 @@ function App() {
     if (!user?.officeId) return;
     const channel = sb.channel('office-'+user.officeId)
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'offices', filter:'id=eq.'+user.officeId },
-        payload => setData(payload.new.data))
+        payload => {
+          // Unchanged large JSONB columns can arrive missing from the replication payload
+          // (Postgres omits unchanged TOASTed values) — never clobber local data with that.
+          if (payload.new.data !== undefined) setData(payload.new.data);
+        })
       .subscribe();
     return () => sb.removeChannel(channel);
   },[user?.officeId]);
@@ -4353,6 +4357,33 @@ function App() {
   );
 }
 
+// ─── ERROR BOUNDARY ─────────────────────────────────────────────────────────
+// Without this, any uncaught render error unmounts the whole tree, leaving a
+// black screen (body background is dark) with no way to recover but a hard refresh.
+class AppErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error, info) { console.error('Uncaught render error:', error, info); }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{width:'100vw',height:'100vh',background:'#080808',display:'flex',
+          alignItems:'center',justifyContent:'center',direction:'rtl',textAlign:'center',color:'#fff'}}>
+          <div>
+            <div style={{fontSize:44,marginBottom:16}}>⚠️</div>
+            <div style={{fontSize:22,fontWeight:700,marginBottom:8}}>משהו השתבש</div>
+            <div style={{color:'#999',fontSize:15,marginBottom:20}}>אירעה שגיאה בלתי צפויה. נסה לרענן את הדף.</div>
+            <button onClick={()=>window.location.reload()}
+              style={{padding:'10px 24px',borderRadius:8,border:'none',background:'#fff',color:'#080808',
+                fontWeight:600,cursor:'pointer',fontSize:15}}>רענן דף</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ─── MOUNT ────────────────────────────────────────────────────────────────────
 const _root = ReactDOM.createRoot(document.getElementById('root'));
-_root.render(React.createElement(App));
+_root.render(React.createElement(AppErrorBoundary, null, React.createElement(App)));
