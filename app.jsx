@@ -1934,16 +1934,20 @@ function DashboardTab({ project, setProject, user, onDeleteProject }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [infoForm, setInfoForm] = React.useState(null);
   const startEditInfo = () => {
-    setInfoForm({ architectName:project.architectName||'', clientName:project.clientName||'',
+    setInfoForm({ name:project.name||'', address:project.address||'',
+      architectName:project.architectName||'', clientName:project.clientName||'',
       area:project.area||'', budget:project.budget||'', startDate:project.startDate||'', endDate:project.endDate||'' });
     setEditingInfo(true);
   };
   const saveInfo = () => {
-    setProject(p=>({ ...p, architectName:infoForm.architectName, clientName:infoForm.clientName,
+    setProject(p=>({ ...p, name:infoForm.name, address:infoForm.address,
+      architectName:infoForm.architectName, clientName:infoForm.clientName,
       area:Number(infoForm.area)||0, budget:Number(infoForm.budget)||0,
       startDate:infoForm.startDate, endDate:infoForm.endDate }));
     setEditingInfo(false);
   };
+  const [editingDesc, setEditingDesc] = React.useState(false);
+  const [descDraft, setDescDraft] = React.useState('');
   const paid = (project.payments||[]).filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
   const total = (project.payments||[]).reduce((s,p)=>s+p.amount,0);
   const pendingApprovals = (project.approvals||[]).filter(a=>a.status==='pending').length;
@@ -1963,10 +1967,12 @@ function DashboardTab({ project, setProject, user, onDeleteProject }) {
 
   return (
     <div style={{padding:24,animation:'fadeIn .3s ease'}}>
+      {/* Unified hero + KPI card — project identity and performance in one cohesive block */}
+      <div style={{borderRadius:18,marginBottom:20,overflow:'hidden',border:`1px solid ${C.border}`,
+        boxShadow:'0 12px 32px rgba(0,0,0,0.18)',background:C.card}}>
       {/* Cover */}
-      <div style={{height:200,borderRadius:16,marginBottom:24,overflow:'hidden',position:'relative',
-        background:`linear-gradient(135deg,${C.primary}33 0%,${C.accent}22 40%,${C.bg} 100%)`,
-        border:`1px solid ${C.border}`}}>
+      <div style={{height:200,position:'relative',
+        background:`linear-gradient(135deg,${C.primary}33 0%,${C.accent}22 40%,${C.bg} 100%)`}}>
         {project.coverImage
           ? <StorageImage path={project.coverImage} style={{width:'100%',height:'100%',objectFit:'cover',filter:'brightness(0.85)'}} alt="cover"/>
           : (
@@ -2013,10 +2019,8 @@ function DashboardTab({ project, setProject, user, onDeleteProject }) {
         </div>
       </div>
 
-      {/* KPI Circles */}
-      <div style={{background:C.card,borderRadius:16,padding:'24px 20px',marginBottom:20,
-        border:`1px solid ${C.border}`,
-        background:`linear-gradient(135deg,${C.card},${C.bg})`}}>
+      {/* KPI Circles — same card, seamlessly continuing below the cover */}
+      <div style={{padding:'22px 20px',background:`linear-gradient(135deg,${C.card},${C.bg})`}}>
         <div style={{fontSize:12,color:C.sub,letterSpacing:'0.12em',fontWeight:700,marginBottom:20,textTransform:'uppercase'}}>
           מדדי ביצוע — KPIs
         </div>
@@ -2025,6 +2029,7 @@ function DashboardTab({ project, setProject, user, onDeleteProject }) {
             <SVGCircle key={i} {...k}/>
           ))}
         </div>
+      </div>
       </div>
 
       {/* Info grid */}
@@ -2040,6 +2045,8 @@ function DashboardTab({ project, setProject, user, onDeleteProject }) {
           </div>
           {editingInfo ? (
             <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              <Input label="שם הפרויקט" value={infoForm.name} onChange={v=>setInfoForm(f=>({...f,name:v}))} required/>
+              <Input label="כתובת" value={infoForm.address} onChange={v=>setInfoForm(f=>({...f,address:v}))}/>
               <Input label="אדריכל" value={infoForm.architectName} onChange={v=>setInfoForm(f=>({...f,architectName:v}))}/>
               <Input label="לקוח" value={infoForm.clientName} onChange={v=>setInfoForm(f=>({...f,clientName:v}))}/>
               <Input label={'שטח (מ"ר)'} type="number" value={infoForm.area} onChange={v=>setInfoForm(f=>({...f,area:v}))}/>
@@ -2052,7 +2059,8 @@ function DashboardTab({ project, setProject, user, onDeleteProject }) {
               </div>
             </div>
           ) : (
-            [['אדריכל',project.architectName],['לקוח',project.clientName],
+            [['שם הפרויקט',project.name],['כתובת',project.address],
+              ['אדריכל',project.architectName],['לקוח',project.clientName],
               ['שטח',project.area?project.area+' מ"ר':'—'],['תקציב',fmtCurrency(project.budget)],
               ['תחילה',fmtDate(project.startDate)],['סיום',fmtDate(project.endDate)]
             ].map(([k,v])=>(
@@ -2066,8 +2074,27 @@ function DashboardTab({ project, setProject, user, onDeleteProject }) {
         </div>
         <div style={{display:'flex',flexDirection:'column',gap:12}}>
           <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`,flex:1}}>
-            <h4 style={{color:C.sub,fontSize:13,fontWeight:700,marginBottom:10,letterSpacing:'0.1em',textTransform:'uppercase'}}>תיאור</h4>
-            <p style={{color:C.text,fontSize:16,lineHeight:1.8}}>{project.description||'אין תיאור.'}</p>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+              <h4 style={{color:C.sub,fontSize:13,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase'}}>תיאור</h4>
+              {user?.role==='admin' && !editingDesc && (
+                <button onClick={()=>{setDescDraft(project.description||'');setEditingDesc(true);}}
+                  style={{background:'none',border:'none',color:C.sub,cursor:'pointer',fontSize:14}}>✏️ ערוך</button>
+              )}
+            </div>
+            {editingDesc ? (
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                <textarea value={descDraft} onChange={e=>setDescDraft(e.target.value)} rows={4}
+                  style={{width:'100%',padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
+                    background:C.inputBg,color:C.text,fontSize:16,resize:'vertical',
+                    fontFamily:'Heebo,Arial,sans-serif',outline:'none',direction:'rtl'}}/>
+                <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+                  <Btn size="sm" variant="ghost" onClick={()=>setEditingDesc(false)}>ביטול</Btn>
+                  <Btn size="sm" onClick={()=>{setProject(p=>({...p,description:descDraft}));setEditingDesc(false);}}>שמור</Btn>
+                </div>
+              </div>
+            ) : (
+              <p style={{color:C.text,fontSize:16,lineHeight:1.8}}>{project.description||'אין תיאור.'}</p>
+            )}
           </div>
           {/* Payment summary mini bar */}
           <div style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
@@ -2399,9 +2426,14 @@ function TimelineTab({ project, setProject }) {
                 </div>
                 <div style={{flex:1,background:C.card,borderRadius:12,padding:16,border:`1px solid ${ph.status==='active'?C.primary:C.border}`}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,gap:8}}>
-                    <input value={ph.name||phase.name} onChange={e=>updatePhase(i,'name',e.target.value)}
-                      style={{flex:1,fontWeight:700,color:C.text,fontSize:18,background:'transparent',
-                        border:'none',outline:'none',fontFamily:'Heebo,Arial,sans-serif',padding:0}}/>
+                    <div style={{display:'flex',alignItems:'center',gap:6,flex:1,
+                      borderBottom:`1px dashed ${C.border}`,paddingBottom:2}}>
+                      <span style={{fontSize:13,opacity:0.6,flexShrink:0}} title="ניתן לערוך שם זה">✏️</span>
+                      <input value={ph.name||phase.name} onChange={e=>updatePhase(i,'name',e.target.value)}
+                        title="לחץ כדי לערוך את שם השלב"
+                        style={{flex:1,fontWeight:700,color:C.text,fontSize:18,background:'transparent',
+                          border:'none',outline:'none',fontFamily:'Heebo,Arial,sans-serif',padding:0}}/>
+                    </div>
                     <Select value={ph.status} onChange={v=>updatePhase(i,'status',v)}
                       options={[{value:'pending',label:'ממתין'},{value:'active',label:'פעיל'},{value:'completed',label:'הושלם'}]}
                       style={{width:120}}/>
@@ -2438,9 +2470,14 @@ function TimelineTab({ project, setProject }) {
                 </div>
                 <div style={{flex:1,background:C.card,borderRadius:12,padding:16,border:`1px solid ${ph.status==='active'?C.primary:C.border}`}}>
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,gap:8}}>
-                    <input value={ph.name} onChange={e=>updateCustomPhase(ph.id,'name',e.target.value)}
-                      style={{flex:1,fontWeight:700,color:C.text,fontSize:18,background:'transparent',
-                        border:'none',outline:'none',fontFamily:'Heebo,Arial,sans-serif',padding:0}}/>
+                    <div style={{display:'flex',alignItems:'center',gap:6,flex:1,
+                      borderBottom:`1px dashed ${C.border}`,paddingBottom:2}}>
+                      <span style={{fontSize:13,opacity:0.6,flexShrink:0}} title="ניתן לערוך שם זה">✏️</span>
+                      <input value={ph.name} onChange={e=>updateCustomPhase(ph.id,'name',e.target.value)}
+                        title="לחץ כדי לערוך את שם השלב"
+                        style={{flex:1,fontWeight:700,color:C.text,fontSize:18,background:'transparent',
+                          border:'none',outline:'none',fontFamily:'Heebo,Arial,sans-serif',padding:0}}/>
+                    </div>
                     <Select value={ph.status} onChange={v=>updateCustomPhase(ph.id,'status',v)}
                       options={[{value:'pending',label:'ממתין'},{value:'active',label:'פעיל'},{value:'completed',label:'הושלם'}]}
                       style={{width:120}}/>
@@ -2500,40 +2537,52 @@ function TasksTab({ project, setProject, user, officeId }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [logHoursId, setLogHoursId] = React.useState(null);
   const [hoursInput, setHoursInput] = React.useState('');
-  const [form, setForm] = React.useState({title:'',desc:'',assigneeId:'',priority:'medium',dueDate:'',notes:''});
+  const [form, setForm] = React.useState({title:'',desc:'',archAssigneeId:'',employeeAssigneeId:'',priority:'medium',dueDate:'',notes:''});
   const [editingId, setEditingId] = React.useState(null);
   const [editForm, setEditForm] = React.useState(null);
   const [members, setMembers] = React.useState(null);
   React.useEffect(()=>{
     sb.from('office_members').select('id,role,display_name').eq('office_id', officeId)
-      .then(({data})=>setMembers((data||[]).filter(m=>m.role==='arch'||m.role==='employee')));
+      .then(({data})=>setMembers(data||[]));
   },[officeId]);
+  const archMembers = (members||[]).filter(m=>m.role==='arch');
+  const employeeMembers = (members||[]).filter(m=>m.role==='employee');
   const tasks = project.tasks || [];
   // Admins see every task; everyone else sees unassigned tasks plus tasks assigned to them —
-  // once the office manager assigns a task to a specific person, only that person (and admins) see it.
-  const visibleTasks = user.role==='admin' ? tasks : tasks.filter(t=>!t.assigneeId || t.assigneeId===user.id);
+  // once the office manager assigns a task to a specific architect and/or employee, only those
+  // people (and admins) see it.
+  const isAssigned = (t) => !!(t.archAssigneeId || t.employeeAssigneeId);
+  const visibleTasks = user.role==='admin' ? tasks
+    : tasks.filter(t=>!isAssigned(t) || t.archAssigneeId===user.id || t.employeeAssigneeId===user.id);
   const nameFor = (id) => (members||[]).find(m=>m.id===id)?.display_name || '';
+  const assigneeLabel = (t) => [t.archAssigneeId&&nameFor(t.archAssigneeId), t.employeeAssigneeId&&nameFor(t.employeeAssigneeId)]
+    .filter(Boolean).join(' + ');
   const add = () => {
     if (!form.title) return;
-    const np = {...form, assignee:nameFor(form.assigneeId), id:'t'+uid(), status:'todo', createdBy:user.name, createdAt:today(), hoursLogged:[]};
+    const np = {...form, id:'t'+uid(), status:'todo', createdBy:user.name, createdAt:today(), hoursLogged:[]};
     setProject(p=>({...p, tasks:[...(p.tasks||tasks),np]}));
-    if (form.assigneeId) {
-      notifyTaskAssignee(officeId, project, user, form.assigneeId, 'משימה חדשה הוקצתה לך: '+form.title, form.desc);
+    if (form.archAssigneeId || form.employeeAssigneeId) {
+      if (form.archAssigneeId) notifyTaskAssignee(officeId, project, user, form.archAssigneeId, 'משימה חדשה הוקצתה לך: '+form.title, form.desc);
+      if (form.employeeAssigneeId) notifyTaskAssignee(officeId, project, user, form.employeeAssigneeId, 'משימה חדשה הוקצתה לך: '+form.title, form.desc);
     } else {
       notifyProjectMembers(officeId, project, user, 'task', 'משימה חדשה: '+form.title, form.desc);
     }
-    setForm({title:'',desc:'',assigneeId:'',priority:'medium',dueDate:'',notes:''}); setShowAdd(false);
+    setForm({title:'',desc:'',archAssigneeId:'',employeeAssigneeId:'',priority:'medium',dueDate:'',notes:''}); setShowAdd(false);
   };
   const updateStatus = (id, s) => setProject(p=>({...p,tasks:(p.tasks||tasks).map(t=>t.id===id?{...t,status:s}:t)}));
   const startEdit = (t) => {
-    setEditForm({title:t.title||'',desc:t.desc||'',assigneeId:t.assigneeId||'',priority:t.priority||'medium',dueDate:t.dueDate||'',notes:t.notes||''});
+    setEditForm({title:t.title||'',desc:t.desc||'',archAssigneeId:t.archAssigneeId||'',employeeAssigneeId:t.employeeAssigneeId||'',
+      priority:t.priority||'medium',dueDate:t.dueDate||'',notes:t.notes||''});
     setEditingId(t.id);
   };
   const saveEdit = () => {
     const prevTask = tasks.find(t=>t.id===editingId);
-    setProject(p=>({...p,tasks:(p.tasks||tasks).map(t=>t.id===editingId?{...t,...editForm,assignee:nameFor(editForm.assigneeId)}:t)}));
-    if (editForm.assigneeId && editForm.assigneeId !== prevTask?.assigneeId) {
-      notifyTaskAssignee(officeId, project, user, editForm.assigneeId, 'משימה הוקצתה לך: '+editForm.title, editForm.desc);
+    setProject(p=>({...p,tasks:(p.tasks||tasks).map(t=>t.id===editingId?{...t,...editForm}:t)}));
+    if (editForm.archAssigneeId && editForm.archAssigneeId !== prevTask?.archAssigneeId) {
+      notifyTaskAssignee(officeId, project, user, editForm.archAssigneeId, 'משימה הוקצתה לך: '+editForm.title, editForm.desc);
+    }
+    if (editForm.employeeAssigneeId && editForm.employeeAssigneeId !== prevTask?.employeeAssigneeId) {
+      notifyTaskAssignee(officeId, project, user, editForm.employeeAssigneeId, 'משימה הוקצתה לך: '+editForm.title, editForm.desc);
     }
     setEditingId(null); setEditForm(null);
   };
@@ -2584,7 +2633,7 @@ function TasksTab({ project, setProject, user, officeId }) {
                   )}
                   <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
                     <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                      {t.assignee && <Badge text={(t.assigneeId?'🔒 ':'')+t.assignee} color={C.info}/>}
+                      {isAssigned(t) && <Badge text={'🔒 '+assigneeLabel(t)} color={C.info}/>}
                       {t.dueDate && <span style={{fontSize:13,color:C.sub}}>{fmtDate(t.dueDate)}</span>}
                     </div>
                     {user.role!=='client' && (
@@ -2629,8 +2678,10 @@ function TasksTab({ project, setProject, user, officeId }) {
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <Input label="כותרת" value={form.title} onChange={v=>setForm(f=>({...f,title:v}))} required/>
             <Input label="תיאור" value={form.desc} onChange={v=>setForm(f=>({...f,desc:v}))}/>
-            <Select label="מוקצה ל" value={form.assigneeId} onChange={v=>setForm(f=>({...f,assigneeId:v}))}
-              options={[{value:'',label:'— ללא הקצאה (גלוי לכולם) —'}, ...(members||[]).map(m=>({value:m.id,label:m.display_name}))]}/>
+            <Select label="מוקצה לאדריכל" value={form.archAssigneeId} onChange={v=>setForm(f=>({...f,archAssigneeId:v}))}
+              options={[{value:'',label:'— ללא —'}, ...archMembers.map(m=>({value:m.id,label:m.display_name}))]}/>
+            <Select label="מוקצה לעובד" value={form.employeeAssigneeId} onChange={v=>setForm(f=>({...f,employeeAssigneeId:v}))}
+              options={[{value:'',label:'— ללא —'}, ...employeeMembers.map(m=>({value:m.id,label:m.display_name}))]}/>
             <Select label="עדיפות" value={form.priority} onChange={v=>setForm(f=>({...f,priority:v}))}
               options={[{value:'high',label:'גבוהה'},{value:'medium',label:'בינונית'},{value:'low',label:'נמוכה'}]}/>
             <Input label="תאריך יעד" type="date" value={form.dueDate} onChange={v=>setForm(f=>({...f,dueDate:v}))}/>
@@ -2654,8 +2705,10 @@ function TasksTab({ project, setProject, user, officeId }) {
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <Input label="כותרת" value={editForm.title} onChange={v=>setEditForm(f=>({...f,title:v}))} required/>
             <Input label="תיאור" value={editForm.desc} onChange={v=>setEditForm(f=>({...f,desc:v}))}/>
-            <Select label="מוקצה ל" value={editForm.assigneeId} onChange={v=>setEditForm(f=>({...f,assigneeId:v}))}
-              options={[{value:'',label:'— ללא הקצאה (גלוי לכולם) —'}, ...(members||[]).map(m=>({value:m.id,label:m.display_name}))]}/>
+            <Select label="מוקצה לאדריכל" value={editForm.archAssigneeId} onChange={v=>setEditForm(f=>({...f,archAssigneeId:v}))}
+              options={[{value:'',label:'— ללא —'}, ...archMembers.map(m=>({value:m.id,label:m.display_name}))]}/>
+            <Select label="מוקצה לעובד" value={editForm.employeeAssigneeId} onChange={v=>setEditForm(f=>({...f,employeeAssigneeId:v}))}
+              options={[{value:'',label:'— ללא —'}, ...employeeMembers.map(m=>({value:m.id,label:m.display_name}))]}/>
             <Select label="עדיפות" value={editForm.priority} onChange={v=>setEditForm(f=>({...f,priority:v}))}
               options={[{value:'high',label:'גבוהה'},{value:'medium',label:'בינונית'},{value:'low',label:'נמוכה'}]}/>
             <Input label="תאריך יעד" type="date" value={editForm.dueDate} onChange={v=>setEditForm(f=>({...f,dueDate:v}))}/>
@@ -2721,8 +2774,8 @@ function MeetingsTab({ project, setProject, user }) {
         <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>פגישות</h3>
         {user.role!=='client' && <Btn onClick={openAdd}>+ פגישה חדשה</Btn>}
       </div>
-      <div style={{display:'flex',flexDirection:'column',gap:12}}>
-        {meetings.length===0 && <div style={{color:C.sub,fontSize:17,textAlign:'center',padding:40}}>אין פגישות מתוכננות</div>}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:16}}>
+        {meetings.length===0 && <div style={{color:C.sub,fontSize:17,textAlign:'center',padding:40,gridColumn:'1/-1'}}>אין פגישות מתוכננות</div>}
         {[...meetings].sort((a,b)=>b.date.localeCompare(a.date)).map(m=>(
           <div key={m.id} style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
@@ -2823,16 +2876,17 @@ function PaymentsTab({ project, setProject }) {
           </div>
         ))}
       </div>
-      {/* Payment progress bar */}
+      {/* Payment progress — donut, matching the main dashboard's KPI circles */}
       {totalAll > 0 && (
-        <div style={{background:C.card,borderRadius:14,padding:16,border:`1px solid ${C.border}`,marginBottom:20}}>
-          <div style={{display:'flex',justifyContent:'space-between',marginBottom:8,fontSize:14}}>
-            <span style={{color:C.sub}}>אחוז גביה</span>
-            <span style={{color:C.success,fontWeight:700}}>{Math.round(totalPaid/totalAll*100)}%</span>
-          </div>
-          <div style={{height:8,background:C.border,borderRadius:4,overflow:'hidden'}}>
-            <div style={{width:Math.round(totalPaid/totalAll*100)+'%',height:'100%',borderRadius:4,
-              background:`linear-gradient(90deg,${C.success}88,${C.success})`,transition:'width 1.5s ease'}}/>
+        <div style={{background:`linear-gradient(135deg,${C.card},${C.bg})`,borderRadius:14,padding:18,
+          border:`1px solid ${C.border}`,marginBottom:20,display:'flex',alignItems:'center',gap:20,flexWrap:'wrap'}}>
+          <SVGCircle value={Math.round(totalPaid/totalAll*100)} max={100} color={C.success} label="מצב גביה" sublabel="%" size={90}/>
+          <div style={{flex:1,minWidth:180}}>
+            <div style={{height:8,background:C.border,borderRadius:4,overflow:'hidden',marginBottom:8}}>
+              <div style={{width:Math.round(totalPaid/totalAll*100)+'%',height:'100%',borderRadius:4,
+                background:`linear-gradient(90deg,${C.success}88,${C.success})`,transition:'width 1.5s ease'}}/>
+            </div>
+            <div style={{color:C.sub,fontSize:14}}>{fmtCurrency(totalPaid)} מתוך {fmtCurrency(totalAll)} התקבלו</div>
           </div>
         </div>
       )}
@@ -2922,8 +2976,8 @@ function PunchListTab({ project, setProject, officeId, user }) {
         </div>
         <Btn onClick={()=>setShowAdd(true)}>+ ממצא חדש</Btn>
       </div>
-      <div style={{display:'flex',flexDirection:'column',gap:12}}>
-        {list.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17}}>אין ממצאים פתוחים</div>}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:16}}>
+        {list.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17,gridColumn:'1/-1'}}>אין ממצאים פתוחים</div>}
         {list.map(item=>(
           <div key={item.id} style={{background:C.card,borderRadius:14,padding:18,
             border:`1px solid ${item.status==='open'?C.danger:item.status==='in-progress'?C.warning:C.border}`,
@@ -3061,8 +3115,8 @@ function RFITab({ project, setProject, user }) {
         </div>
         <Btn onClick={()=>setShowAdd(true)}>+ RFI חדש</Btn>
       </div>
-      <div style={{display:'flex',flexDirection:'column',gap:14}}>
-        {rfis.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17}}>אין בקשות מידע</div>}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:16}}>
+        {rfis.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17,gridColumn:'1/-1'}}>אין בקשות מידע</div>}
         {rfis.map(r=>(
           <div key={r.id} style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${r.reply?C.border:C.warning}`}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
@@ -3309,6 +3363,8 @@ function DocumentsTab({ project, setProject, officeId }) {
 function QuotesTab({ project, setProject, officeId }) {
   const [showAdd, setShowAdd] = React.useState(false);
   const [form, setForm] = React.useState({title:'',amount:'',validUntil:'',fileName:null,filePath:null});
+  const [editingId, setEditingId] = React.useState(null);
+  const [editForm, setEditForm] = React.useState(null);
   const [sigModal, setSigModal] = React.useState(null);
   const [uploadingId, setUploadingId] = React.useState(null);
   const [uploadingForm, setUploadingForm] = React.useState(false);
@@ -3321,6 +3377,15 @@ function QuotesTab({ project, setProject, officeId }) {
     setForm({title:'',amount:'',validUntil:'',fileName:null,filePath:null}); setShowAdd(false);
   };
   const updateStatus = (id,s) => setProject(p=>({...p,quotes:quotes.map(q=>q.id===id?{...q,status:s}:q)}));
+  const startEdit = (q) => {
+    setEditForm({title:q.title||'',amount:q.amount||'',validUntil:q.validUntil||''});
+    setEditingId(q.id);
+  };
+  const saveEdit = () => {
+    setProject(p=>({...p,quotes:(p.quotes||quotes).map(q=>q.id===editingId?{...q,...editForm,amount:Number(editForm.amount)||0}:q)}));
+    setEditingId(null); setEditForm(null);
+  };
+  const removeQuote = (id) => setProject(p=>({...p,quotes:(p.quotes||quotes).filter(q=>q.id!==id)}));
   const addSig = (id,sig) => { setProject(p=>({...p,quotes:quotes.map(q=>q.id===id?{...q,signature:sig,status:'approved'}:q)})); setSigModal(null); };
   const attachFile = async (id, file) => {
     setUploadingId(id);
@@ -3334,7 +3399,8 @@ function QuotesTab({ project, setProject, officeId }) {
         <h3 style={{color:C.text,fontSize:22,fontWeight:700}}>הצעות מחיר</h3>
         <Btn onClick={()=>setShowAdd(true)}>+ הצעת מחיר</Btn>
       </div>
-      <div style={{display:'flex',flexDirection:'column',gap:12}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:16}}>
+        {quotes.length===0 && <div style={{color:C.sub,textAlign:'center',padding:40,fontSize:17,gridColumn:'1/-1'}}>אין הצעות מחיר</div>}
         {quotes.map(q=>(
           <div key={q.id} style={{background:C.card,borderRadius:14,padding:18,border:`1px solid ${C.border}`}}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
@@ -3378,6 +3444,8 @@ function QuotesTab({ project, setProject, officeId }) {
                   <br/><button onclick="window.print()">🖨️ הדפס PDF</button></body></html>`);
                 w.document.close();
               }}>🖨️ PDF</Btn>
+              <Btn size="sm" variant="ghost" onClick={()=>startEdit(q)}>✏️ ערוך</Btn>
+              <Btn size="sm" variant="ghost" onClick={()=>removeQuote(q.id)}>🗑️ מחק</Btn>
             </div>
           </div>
         ))}
@@ -3418,6 +3486,19 @@ function QuotesTab({ project, setProject, officeId }) {
           </div>
         </Modal>
       )}
+      {editingId && (
+        <Modal title="ערוך הצעת מחיר" onClose={()=>{setEditingId(null);setEditForm(null);}} width={440}>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <Input label="כותרת" value={editForm.title} onChange={v=>setEditForm(f=>({...f,title:v}))} required/>
+            <Input label="סכום (₪)" type="number" value={editForm.amount} onChange={v=>setEditForm(f=>({...f,amount:v}))} required/>
+            <Input label="בתוקף עד" type="date" value={editForm.validUntil} onChange={v=>setEditForm(f=>({...f,validUntil:v}))}/>
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
+              <Btn onClick={()=>{setEditingId(null);setEditForm(null);}} variant="ghost">ביטול</Btn>
+              <Btn onClick={saveEdit}>שמור</Btn>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -3454,6 +3535,7 @@ function ApprovalsTab({ project, setProject, user, officeId }) {
     setProject(p=>({...p,approvals:approvals.map(a=>a.id===id?{...a,status:'rejected',approvedBy:user.name,comment}:a)}));
     if (a0) notifyProjectMembers(officeId, project, user, 'approval_decided', 'האישור נדחה: '+a0.title, null);
   };
+  const removeApproval = (id) => setProject(p=>({...p,approvals:(p.approvals||approvals).filter(a=>a.id!==id)}));
   const pending = approvals.filter(a=>a.status==='pending');
   const done    = approvals.filter(a=>a.status!=='pending');
   return (
@@ -3468,8 +3550,9 @@ function ApprovalsTab({ project, setProject, user, officeId }) {
       {pending.length>0 && (
         <div style={{marginBottom:20}}>
           <div style={{fontWeight:700,color:C.warning,fontSize:16,marginBottom:10}}>⏳ ממתינים לאישור</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:16}}>
           {pending.map(a=>(
-            <div key={a.id} style={{background:C.card,borderRadius:14,padding:18,marginBottom:10,
+            <div key={a.id} style={{background:C.card,borderRadius:14,padding:18,
               border:`1px solid ${C.warning}`,position:'relative'}}>
               <div style={{fontWeight:700,color:C.text,fontSize:18,marginBottom:4}}>{a.title}</div>
               <div style={{color:C.sub,fontSize:16,marginBottom:12}}>בקשה מ: {a.requestedBy} · {fmtDate(a.date)}</div>
@@ -3491,17 +3574,20 @@ function ApprovalsTab({ project, setProject, user, officeId }) {
                 <Btn size="sm" variant="ghost" onClick={()=>attachRefs.current[a.id]?.click()} disabled={uploadingId===a.id}>
                   📎 {uploadingId===a.id?'מעלה...':'צרף PDF'}
                 </Btn>
+                {user.role==='admin' && <Btn size="sm" variant="ghost" onClick={()=>removeApproval(a.id)}>🗑️ מחק</Btn>}
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
       {done.length>0 && (
         <div>
           <div style={{fontWeight:700,color:C.sub,fontSize:16,marginBottom:10}}>היסטוריה</div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:16}}>
           {done.map(a=>(
-            <div key={a.id} style={{background:C.card,borderRadius:14,padding:16,marginBottom:10,border:`1px solid ${C.border}`}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div key={a.id} style={{background:C.card,borderRadius:14,padding:16,border:`1px solid ${C.border}`}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
                 <div>
                   <div style={{fontWeight:600,color:C.text,fontSize:17}}>{a.title}</div>
                   <div style={{color:C.sub,fontSize:14,marginTop:4}}>
@@ -3509,10 +3595,17 @@ function ApprovalsTab({ project, setProject, user, officeId }) {
                     {a.comment && ' · '+a.comment}
                   </div>
                 </div>
-                <StatusBadge status={a.status}/>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <StatusBadge status={a.status}/>
+                  {user.role==='admin' && (
+                    <button onClick={()=>removeApproval(a.id)} title="מחק"
+                      style={{background:'none',border:'none',color:C.sub,cursor:'pointer',fontSize:15}}>🗑️</button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
       {showAdd && (
@@ -3558,6 +3651,7 @@ function MessagesTab({ project, setProject, user }) {
     setTimeout(()=>chatRef.current?.scrollTo({top:9999,behavior:'smooth'}),50);
   };
   React.useEffect(()=>{chatRef.current?.scrollTo({top:9999});},[messages.length]);
+  const removeMessage = (id) => setProject(p=>({...p,messages:(p.messages||messages).filter(m=>m.id!==id)}));
   return (
     <div style={{padding:24,height:'calc(100vh - 140px)',display:'flex',flexDirection:'column',animation:'fadeIn .3s ease'}}>
       <h3 style={{color:C.text,fontSize:22,fontWeight:700,marginBottom:16}}>💬 הודעות פנימיות</h3>
@@ -3572,8 +3666,12 @@ function MessagesTab({ project, setProject, user }) {
                 borderTopRightRadius:isMe?4:16,borderTopLeftRadius:isMe?16:4}}>
                 {m.text}
               </div>
-              <div style={{fontSize:13,color:C.sub,marginTop:4,marginRight:isMe?0:4,marginLeft:isMe?4:0}}>
+              <div style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:C.sub,marginTop:4,marginRight:isMe?0:4,marginLeft:isMe?4:0}}>
                 {m.from} · {m.time}
+                {user.role==='admin' && m.id && (
+                  <button onClick={()=>removeMessage(m.id)} title="מחק הודעה"
+                    style={{background:'none',border:'none',color:C.sub,cursor:'pointer',fontSize:12,padding:0}}>🗑️</button>
+                )}
               </div>
             </div>
           );
@@ -3975,7 +4073,6 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
   const allTabs = [
     {id:'dashboard',label:'דשבורד',icon:'📊',feature:'portal'},
     {id:'brief',label:'תקציר',icon:'📋',feature:'brief'},
-    {id:'ai',label:'AI Agent',icon:'🤖',feature:'ai'},
     {id:'timeline',label:'ציר זמן',icon:'📅',feature:'timeline'},
     {id:'tasks',label:'משימות',icon:'✅',feature:'tasks'},
     {id:'meetings',label:'פגישות',icon:'🤝',feature:'meetings'},
@@ -3989,7 +4086,8 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
     {id:'messages',label:'הודעות',icon:'💬',feature:'messages'},
     {id:'bi',label:'BI Reports',icon:'📈',feature:'bi'},
     {id:'clientsuccess',label:'Client Success',icon:'🧠',feature:'clientsuccess'},
-    {id:'customblocks',label:'אזורים חופשיים',icon:'🧩',feature:'portal'}
+    {id:'customblocks',label:'אזורים חופשיים',icon:'🧩',feature:'portal'},
+    {id:'ai',label:'AI Agent',icon:'🤖',feature:'ai'}
   ];
 
   const visibleTabs = user.role==='client'
