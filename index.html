@@ -62,6 +62,38 @@ window.__SUPABASE_ANON_KEY__ = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ
     @keyframes drawLine { from{stroke-dashoffset:1000} to{stroke-dashoffset:0} }
     @keyframes circleGrow { from{stroke-dashoffset:283} }
 
+    /* Honeycomb loading spinner — from Uiverse.io by boryanakrasteva */
+    @keyframes honeycomb {
+      0%, 20%, 80%, 100% { opacity: 0; transform: scale(0); }
+      30%, 70% { opacity: 1; transform: scale(1); }
+    }
+    .honeycomb { height: 24px; position: relative; width: 24px; }
+    .honeycomb div {
+      animation: honeycomb 2.1s infinite backwards;
+      background: currentColor;
+      height: 12px;
+      margin-top: 6px;
+      position: absolute;
+      width: 24px;
+    }
+    .honeycomb div:after, .honeycomb div:before {
+      content: '';
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      position: absolute;
+      left: 0;
+      right: 0;
+    }
+    .honeycomb div:after { top: -6px; border-bottom: 6px solid currentColor; }
+    .honeycomb div:before { bottom: -6px; border-top: 6px solid currentColor; }
+    .honeycomb div:nth-child(1) { animation-delay: 0s;    left: -28px; top: 0; }
+    .honeycomb div:nth-child(2) { animation-delay: 0.1s;  left: -14px; top: 22px; }
+    .honeycomb div:nth-child(3) { animation-delay: 0.2s;  left: 14px;  top: 22px; }
+    .honeycomb div:nth-child(4) { animation-delay: 0.3s;  left: 28px;  top: 0; }
+    .honeycomb div:nth-child(5) { animation-delay: 0.4s;  left: 14px;  top: -22px; }
+    .honeycomb div:nth-child(6) { animation-delay: 0.5s;  left: -14px; top: -22px; }
+    .honeycomb div:nth-child(7) { animation-delay: 0.6s;  left: 0;     top: 0; }
+
     /* Calq-style heading underline */
     .calq-heading::after {
       content: '';
@@ -1613,6 +1645,18 @@ function SVGCircle({
       textTransform: 'uppercase'
     }
   }, label)));
+}
+
+// ─── HONEYCOMB LOADER (shown whenever the system is thinking/loading) ─────────
+function Honeycomb({
+  color
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "honeycomb",
+    style: color ? {
+      color
+    } : undefined
+  }, /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null), /*#__PURE__*/React.createElement("div", null));
 }
 
 // ─── SVG BAR CHART ────────────────────────────────────────────────────────────
@@ -3167,10 +3211,13 @@ function LegalModal({
     }
   }, "\u05DC\u05D0 \u05E0\u05D9\u05EA\u05DF \u05DC\u05D8\u05E2\u05D5\u05DF \u05D0\u05EA \u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05DB\u05E8\u05D2\u05E2. \u05E0\u05E1\u05D5 \u05E9\u05D5\u05D1 \u05DE\u05D0\u05D5\u05D7\u05E8 \u05D9\u05D5\u05EA\u05E8."), !loadError && !docs && /*#__PURE__*/React.createElement("div", {
     style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
       color: C.sub,
       fontSize: 15
     }
-  }, "\u05D8\u05D5\u05E2\u05DF \u05DE\u05E1\u05DE\u05DB\u05D9\u05DD..."), activeDoc && activeDoc.sections.map((item, i) => /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Honeycomb, null), " \u05D8\u05D5\u05E2\u05DF \u05DE\u05E1\u05DE\u05DB\u05D9\u05DD..."), activeDoc && activeDoc.sections.map((item, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       marginBottom: 16,
@@ -3805,6 +3852,12 @@ function SystemDashboard({
   const [slogan, setSlogan] = React.useState(OFFICE_PLAN.slogan || '');
   const [sloganSaved, setSloganSaved] = React.useState(false);
   const [showNewProject, setShowNewProject] = React.useState(false);
+  const [showTheme, setShowTheme] = React.useState(false);
+  const [themeId, setThemeId] = React.useState('lightStone');
+  const handleTheme = id => {
+    C = THEMES[id];
+    setThemeId(id);
+  };
   const [form, setForm] = React.useState({
     name: '',
     address: '',
@@ -3932,10 +3985,22 @@ function SystemDashboard({
     title: "\u05E0\u05D9\u05D4\u05D5\u05DC \u05DE\u05E2\u05E8\u05DB\u05EA",
     subtitle: OFFICE_PLAN.officeName,
     onBack: onBack,
-    rightContent: /*#__PURE__*/React.createElement(NotificationBell, {
+    rightContent: /*#__PURE__*/React.createElement(React.Fragment, null, canUse('themes') && /*#__PURE__*/React.createElement("button", {
+      onClick: () => setShowTheme(true),
+      style: {
+        background: 'none',
+        border: `1px solid ${C.border}`,
+        padding: '5px 12px',
+        color: C.sub,
+        cursor: 'pointer',
+        fontSize: 13,
+        letterSpacing: '0.06em',
+        borderRadius: 0
+      }
+    }, "THEME"), /*#__PURE__*/React.createElement(NotificationBell, {
       user: user,
       onOpenProject: onOpenProject
-    })
+    }))
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       flex: 1,
@@ -4373,7 +4438,11 @@ function SystemDashboard({
     variant: "ghost"
   }, "\u05D1\u05D9\u05D8\u05D5\u05DC"), /*#__PURE__*/React.createElement(Btn, {
     onClick: addProject
-  }, "\u05E6\u05D5\u05E8 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8"))));
+  }, "\u05E6\u05D5\u05E8 \u05E4\u05E8\u05D5\u05D9\u05E7\u05D8"))), showTheme && /*#__PURE__*/React.createElement(ThemeSelector, {
+    currentId: themeId,
+    onSelect: handleTheme,
+    onClose: () => setShowTheme(false)
+  }));
 }
 
 // ─── USERS SCREEN ─────────────────────────────────────────────────────────────
@@ -4925,10 +4994,13 @@ function ProjectAccessEditor({
   };
   if (members === null) return /*#__PURE__*/React.createElement("div", {
     style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
       color: C.sub,
       fontSize: 14
     }
-  }, "\u05D8\u05D5\u05E2\u05DF...");
+  }, /*#__PURE__*/React.createElement(Honeycomb, null), " \u05D8\u05D5\u05E2\u05DF...");
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -5751,26 +5823,13 @@ function AIAgentTab({
       background: C.card,
       border: `1px solid ${C.border}`,
       borderRadius: 16,
-      padding: '12px 16px',
-      color: C.sub,
-      fontSize: 17,
+      padding: '14px 20px',
       display: 'flex',
-      gap: 6,
       alignItems: 'center'
     }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      animation: 'pulse 1s infinite'
-    }
-  }, "\u25CF"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      animation: 'pulse 1s .2s infinite'
-    }
-  }, "\u25CF"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      animation: 'pulse 1s .4s infinite'
-    }
-  }, "\u25CF")))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Honeycomb, {
+    color: C.primary
+  })))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 10
@@ -9847,7 +9906,8 @@ function ProjectView({
   onGoHome = onBack,
   onOpenProject,
   activeTab: activeTabProp,
-  onTabChange
+  onTabChange,
+  onSystemDash
 }) {
   const project = (data.projects || []).find(p => p.id === projectId);
   const [localTab, setLocalTab] = React.useState('dashboard');
@@ -10173,7 +10233,20 @@ function ProjectView({
       fontSize: 13,
       letterSpacing: '0.08em'
     }
-  }, project.progress || 0, "%")), canUse('share') && /*#__PURE__*/React.createElement("button", {
+  }, project.progress || 0, "%")), user.role === 'admin' && onSystemDash && /*#__PURE__*/React.createElement("button", {
+    onClick: onSystemDash,
+    style: {
+      background: 'none',
+      border: `1px solid ${C.border}`,
+      padding: isMobile ? '4px 10px' : '5px 14px',
+      color: C.sub,
+      cursor: 'pointer',
+      fontSize: isMobile ? 12 : 14,
+      letterSpacing: '0.04em',
+      borderRadius: 0,
+      whiteSpace: 'nowrap'
+    }
+  }, isMobile ? '⚙️' : '⚙️ ניהול מערכת'), canUse('share') && /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowShare(true),
     style: {
       background: 'none',
@@ -11188,10 +11261,13 @@ function LegalDocsAdmin() {
   };
   if (!docs) return /*#__PURE__*/React.createElement("div", {
     style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
       color: C.sub,
       fontSize: 16
     }
-  }, "\u05D8\u05D5\u05E2\u05DF \u05DE\u05E1\u05DE\u05DB\u05D9\u05DD...");
+  }, /*#__PURE__*/React.createElement(Honeycomb, null), " \u05D8\u05D5\u05E2\u05DF \u05DE\u05E1\u05DE\u05DB\u05D9\u05DD...");
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -11500,10 +11576,13 @@ function PlatformAdminDashboard({
     }
   }, label))), section === 'legal' && /*#__PURE__*/React.createElement(LegalDocsAdmin, null), section === 'offices' && offices === null && /*#__PURE__*/React.createElement("div", {
     style: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 10,
       color: C.sub,
       fontSize: 16
     }
-  }, "\u05D8\u05D5\u05E2\u05DF..."), section === 'offices' && offices && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Honeycomb, null), " \u05D8\u05D5\u05E2\u05DF..."), section === 'offices' && offices && /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.card,
       borderRadius: 16,
@@ -11887,13 +11966,20 @@ function App() {
       fontSize: 48,
       fontWeight: 800,
       color: C.primary,
-      marginBottom: 12
+      marginBottom: 20
     }
   }, "Tektona"), /*#__PURE__*/React.createElement("div", {
     style: {
+      display: 'flex',
+      justifyContent: 'center',
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement(Honeycomb, {
+    color: C.primary
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
       color: C.sub,
-      fontSize: 17,
-      animation: 'pulse 1s infinite'
+      fontSize: 17
     }
   }, "\u05D8\u05D5\u05E2\u05DF...")));
   if (screen === 'login') return /*#__PURE__*/React.createElement(LoginScreen, {
@@ -11971,7 +12057,8 @@ function App() {
       tab,
       replace: true
     }),
-    onOpenProject: openProject
+    onOpenProject: openProject,
+    onSystemDash: () => navigate('systemdash')
   }), (screen === 'projects' || !['systemdash', 'users', 'backup', 'project', 'platformadmin', 'suspended'].includes(screen)) && /*#__PURE__*/React.createElement(ProjectsList, {
     data: data,
     setData: updateData,

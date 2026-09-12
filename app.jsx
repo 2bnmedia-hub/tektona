@@ -473,6 +473,15 @@ function SVGCircle({ value, max, color, label, sublabel, size=80 }) {
   );
 }
 
+// ─── HONEYCOMB LOADER (shown whenever the system is thinking/loading) ─────────
+function Honeycomb({ color }) {
+  return (
+    <div className="honeycomb" style={color ? { color } : undefined}>
+      <div/><div/><div/><div/><div/><div/><div/>
+    </div>
+  );
+}
+
 // ─── SVG BAR CHART ────────────────────────────────────────────────────────────
 function SVGBarChart({ data, height=120, showValues=true }) {
   if (!data || data.length === 0) return null;
@@ -1138,7 +1147,11 @@ function LegalModal({ tab='terms', onClose }) {
         </div>
         <div style={{ overflowY:'auto', flex:1 }}>
           {loadError && <div style={{ color:C.danger, fontSize:15 }}>לא ניתן לטעון את המסמכים כרגע. נסו שוב מאוחר יותר.</div>}
-          {!loadError && !docs && <div style={{ color:C.sub, fontSize:15 }}>טוען מסמכים...</div>}
+          {!loadError && !docs && (
+            <div style={{ display:'flex', alignItems:'center', gap:10, color:C.sub, fontSize:15 }}>
+              <Honeycomb/> טוען מסמכים...
+            </div>
+          )}
           {activeDoc && activeDoc.sections.map((item, i) => (
             <div key={i} style={{ marginBottom:16, padding:'14px 16px', background:C.bg, borderRadius:10 }}>
               <div style={{ fontWeight:700, color:C.text, fontSize:17, marginBottom:6 }}>{item.h}</div>
@@ -1405,6 +1418,9 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
   const [slogan, setSlogan] = React.useState(OFFICE_PLAN.slogan || '');
   const [sloganSaved, setSloganSaved] = React.useState(false);
   const [showNewProject, setShowNewProject] = React.useState(false);
+  const [showTheme, setShowTheme] = React.useState(false);
+  const [themeId, setThemeId] = React.useState('lightStone');
+  const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
   const [form, setForm] = React.useState({name:'',address:'',clientName:'',architectName:'',architectId:null,clientIds:[],budget:'',area:'',startDate:'',endDate:'',description:'',template:'villa'});
   const addProject = () => {
     if (!form.name) return;
@@ -1448,7 +1464,16 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
       display:'flex', flexDirection:'column' }}>
       {C.archBg && <ArchBackground />}
       <AppNavBar onGoHome={onGoHome} title="ניהול מערכת" subtitle={OFFICE_PLAN.officeName} onBack={onBack}
-        rightContent={<NotificationBell user={user} onOpenProject={onOpenProject}/>}/>
+        rightContent={<>
+          {canUse('themes') && (
+            <button onClick={()=>setShowTheme(true)}
+              style={{background:'none',border:`1px solid ${C.border}`,padding:'5px 12px',
+                color:C.sub,cursor:'pointer',fontSize:13,letterSpacing:'0.06em',borderRadius:0}}>
+              THEME
+            </button>
+          )}
+          <NotificationBell user={user} onOpenProject={onOpenProject}/>
+        </>}/>
       <div style={{ flex:1, overflowY:'auto', padding: isMobile ? 12 : 18, paddingBottom:32, position:'relative', zIndex:1 }}>
         <div style={{ marginBottom:14 }}>
           <h1 style={{ color:C.text, fontSize: isMobile ? 19 : 23, fontWeight:800 }}>⚙️ לוח ניהול מערכת</h1>
@@ -1567,6 +1592,7 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
           </div>
         </Modal>
       )}
+      {showTheme && <ThemeSelector currentId={themeId} onSelect={handleTheme} onClose={()=>setShowTheme(false)}/>}
     </div>
   );
 }
@@ -1766,7 +1792,7 @@ function ProjectAccessEditor({ officeId, architectId, clientIds, onChange }) {
     setInviting(false);
   };
 
-  if (members===null) return <div style={{color:C.sub,fontSize:14}}>טוען...</div>;
+  if (members===null) return <div style={{display:'flex',alignItems:'center',gap:10,color:C.sub,fontSize:14}}><Honeycomb/> טוען...</div>;
 
   return (
     <div style={{display:'flex',flexDirection:'column',gap:16}}>
@@ -2059,11 +2085,9 @@ function AIAgentTab({ project }) {
         ))}
         {loading && (
           <div style={{display:'flex',justifyContent:'flex-end'}}>
-            <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:'12px 16px',
-              color:C.sub,fontSize:17,display:'flex',gap:6,alignItems:'center'}}>
-              <span style={{animation:'pulse 1s infinite'}}>●</span>
-              <span style={{animation:'pulse 1s .2s infinite'}}>●</span>
-              <span style={{animation:'pulse 1s .4s infinite'}}>●</span>
+            <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:'14px 20px',
+              display:'flex',alignItems:'center'}}>
+              <Honeycomb color={C.primary}/>
             </div>
           </div>
         )}
@@ -3516,7 +3540,7 @@ function CustomBlocksTab({ project, setProject }) {
 }
 
 // ─── PROJECT VIEW (main container) ───────────────────────────────────────────
-function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack, onOpenProject, activeTab: activeTabProp, onTabChange }) {
+function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack, onOpenProject, activeTab: activeTabProp, onTabChange, onSystemDash }) {
   const project = (data.projects||[]).find(p=>p.id===projectId);
   const [localTab, setLocalTab] = React.useState('dashboard');
   const activeTab = activeTabProp || localTab;
@@ -3620,6 +3644,14 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
                   {project.progress||0}%
                 </span>
               </div>
+            )}
+            {user.role==='admin' && onSystemDash && (
+              <button onClick={onSystemDash}
+                style={{background:'none',border:`1px solid ${C.border}`,padding: isMobile ? '4px 10px' : '5px 14px',
+                  color:C.sub,cursor:'pointer',fontSize: isMobile ? 12 : 14,letterSpacing:'0.04em',borderRadius:0,
+                  whiteSpace:'nowrap'}}>
+                {isMobile ? '⚙️' : '⚙️ ניהול מערכת'}
+              </button>
             )}
             {canUse('share') && (
               <button onClick={()=>setShowShare(true)}
@@ -4057,7 +4089,7 @@ function LegalDocsAdmin() {
   const iconBtn = { width:30, height:30, borderRadius:8, border:`1px solid ${C.border}`, background:C.inputBg,
     color:C.text, cursor:'pointer', fontSize:14, flexShrink:0 };
 
-  if (!docs) return <div style={{color:C.sub,fontSize:16}}>טוען מסמכים...</div>;
+  if (!docs) return <div style={{display:'flex',alignItems:'center',gap:10,color:C.sub,fontSize:16}}><Honeycomb/> טוען מסמכים...</div>;
 
   return (
     <div>
@@ -4176,7 +4208,7 @@ function PlatformAdminDashboard({ onLogout }) {
           ))}
         </div>
         {section==='legal' && <LegalDocsAdmin/>}
-        {section==='offices' && offices===null && <div style={{color:C.sub,fontSize:16}}>טוען...</div>}
+        {section==='offices' && offices===null && <div style={{display:'flex',alignItems:'center',gap:10,color:C.sub,fontSize:16}}><Honeycomb/> טוען...</div>}
         {section==='offices' && offices && (
           <div style={{background:C.card,borderRadius:16,border:`1px solid ${C.border}`,overflow:'hidden'}}>
             <div style={{overflowX:'auto'}}>
@@ -4399,8 +4431,9 @@ function App() {
   if (screen==='loading') return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,display:'flex',alignItems:'center',justifyContent:'center'}}>
       <div style={{textAlign:'center'}}>
-        <div style={{fontSize:48,fontWeight:800,color:C.primary,marginBottom:12}}>Tektona</div>
-        <div style={{color:C.sub,fontSize:17,animation:'pulse 1s infinite'}}>טוען...</div>
+        <div style={{fontSize:48,fontWeight:800,color:C.primary,marginBottom:20}}>Tektona</div>
+        <div style={{display:'flex',justifyContent:'center',marginBottom:16}}><Honeycomb color={C.primary}/></div>
+        <div style={{color:C.sub,fontSize:17}}>טוען...</div>
       </div>
     </div>
   );
@@ -4433,7 +4466,7 @@ function App() {
         <ProjectView projectId={activeProject} data={data} setData={updateData}
           user={user} onBack={goHome} onGoHome={handleLogout}
           activeTab={activeTab} onTabChange={(tab)=>navigate('project', { projectId: activeProject, tab, replace:true })}
-          onOpenProject={openProject}/>
+          onOpenProject={openProject} onSystemDash={()=>navigate('systemdash')}/>
       )}
       {(screen==='projects' || (!['systemdash','users','backup','project','platformadmin','suspended'].includes(screen))) && (
         <ProjectsList data={data} setData={updateData} user={user} onLogout={handleLogout}
