@@ -1475,24 +1475,10 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
           <NotificationBell user={user} onOpenProject={onOpenProject}/>
         </>}/>
       <div style={{ flex:1, overflowY:'auto', padding: isMobile ? 12 : 18, paddingBottom:32, position:'relative', zIndex:1 }}>
-        <div style={{ marginBottom:14 }}>
-          <h1 style={{ color:C.text, fontSize: isMobile ? 19 : 23, fontWeight:800 }}>⚙️ לוח ניהול מערכת</h1>
-          <div style={{ color:C.sub, fontSize:14 }}>סקירה כללית — {OFFICE_PLAN.officeName}</div>
-        </div>
-        {/* Stats + financials — one compact row, circles truly centered on the page */}
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr auto 1fr', gap:isMobile?18:16,
-          alignItems:'center', marginBottom:14, background:`linear-gradient(135deg,${C.card},${C.bg})`,
+        {/* Stats + financials — circles centered, financials in one row underneath */}
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:18,
+          marginBottom:14, background:`linear-gradient(135deg,${C.card},${C.bg})`,
           padding:'18px', borderRadius:14, border:`1px solid ${C.border}` }}>
-          <div style={{ display:'flex', gap:isMobile?14:24, flexWrap:'wrap', justifyContent: isMobile ? 'center' : 'flex-start' }}>
-            <div>
-              <div style={{ color:C.sub, fontSize:13 }}>הכנסות שהתקבלו</div>
-              <div style={{ fontSize:22, fontWeight:800, color:C.success }}>{fmtCurrency(totalRevenue)}</div>
-            </div>
-            <div>
-              <div style={{ color:C.sub, fontSize:13 }}>תשלומים ממתינים</div>
-              <div style={{ fontSize:22, fontWeight:800, color:C.warning }}>{fmtCurrency(pendingPayments)}</div>
-            </div>
-          </div>
           <div style={{ display:'flex', gap:isMobile?16:26, flexWrap:'wrap', justifyContent:'center' }}>
             <SVGCircle value={projects.length} max={OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}
               color={C.primary} label="סה״כ פרויקטים" sublabel={`/${OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}`} size={176}/>
@@ -1500,7 +1486,16 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
             <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" sublabel="done" size={176}/>
             <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={176}/>
           </div>
-          {!isMobile && <div/>}
+          <div style={{ display:'flex', gap:isMobile?24:48, flexWrap:'wrap', justifyContent:'center' }}>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ color:C.sub, fontSize:13 }}>הכנסות שהתקבלו</div>
+              <div style={{ fontSize:22, fontWeight:800, color:C.success }}>{fmtCurrency(totalRevenue)}</div>
+            </div>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ color:C.sub, fontSize:13 }}>תשלומים ממתינים</div>
+              <div style={{ fontSize:22, fontWeight:800, color:C.warning }}>{fmtCurrency(pendingPayments)}</div>
+            </div>
+          </div>
         </div>
         {/* Branding — logo + slogan side by side */}
         <div style={{background:C.card,borderRadius:14,border:`1px solid ${C.border}`,marginBottom:14,
