@@ -1396,7 +1396,7 @@ function LoginScreen({ onLogin, onSignup }) {
   const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
 
   // Demo accounts — role button just pre-fills the email; a real password is still required.
-  const DEMO_EMAILS = { admin:'admin@tektona.io', arch:'dana@tektona.io', client:'david@levy.co.il' };
+  const DEMO_EMAILS = { admin:'admin@tektona.io', arch:'dana@tektona.io', employee:'noa@tektona.io', client:'david@levy.co.il' };
   const pickRole = (id) => { setEmail(DEMO_EMAILS[id]||''); setLoginError(''); };
 
   const handleLogin = async () => {
