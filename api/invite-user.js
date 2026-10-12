@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   const token = authHeader.replace(/^Bearer\s+/i, '');
   if (!token) return res.status(401).json({ error: 'Missing authorization token' });
 
-  const { officeId, name, email, role } = req.body || {};
+  const { officeId, name, email, role, jobTitle } = req.body || {};
   if (!officeId || !name || !email || !role) {
     return res.status(400).json({ error: 'officeId, name, email, role are required' });
   }
@@ -41,6 +41,7 @@ export default async function handler(req, res) {
       user_id: invited.user.id,
       role,
       display_name: name,
+      job_title: role === 'client' ? null : (typeof jobTitle === 'string' && jobTitle.trim().slice(0, 60)) || null,
       ai_enabled: false,
     });
     if (memberErr) return res.status(400).json({ error: memberErr.message });

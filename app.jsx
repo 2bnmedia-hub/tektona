@@ -111,10 +111,16 @@ const PLAN_FEATURES = {
 };
 // Populated per-office at login time (enterOffice() in App()) from the offices row —
 // real per-tenant branding/plan instead of a hardcoded constant.
-const OFFICE_PLAN = { plan:'pro', logo:null, officeName:'Tektona', slogan:'' };
+const OFFICE_PLAN = { plan:'pro', logo:null, officeName:'Tektona', slogan:'', legacyUntil:null };
 // The entry plan used to be keyed 'starter'; rows or backups that still carry the old key map to 'solo'.
 const normalizePlan = (p) => p==='starter' ? 'solo' : (PLAN_FEATURES[p] ? p : 'solo');
-const canUse = (f) => PLAN_FEATURES[normalizePlan(OFFICE_PLAN.plan)].has(f);
+// Features that moved from the entry plan to Pro. An office moved down to Solo keeps them until
+// offices.legacy_features_until (set by the platform owner), so nothing disappears mid-period.
+const LEGACY_SOLO_FEATURES = new Set(['messages','quotes','signature','punchlist','templates']);
+const LEGACY_GRACE_DAYS = 30;
+const legacyActive = () => normalizePlan(OFFICE_PLAN.plan)==='solo' && !!OFFICE_PLAN.legacyUntil && OFFICE_PLAN.legacyUntil >= today();
+const canUse = (f) => PLAN_FEATURES[normalizePlan(OFFICE_PLAN.plan)].has(f) || (LEGACY_SOLO_FEATURES.has(f) && legacyActive());
+const formatDateHe = (iso) => iso ? iso.split('-').reverse().join('/') : '';
 const PLAN_NAMES = { solo:'Solo', pro:'Pro', studio:'Studio' };
 const PLAN_PROJECT_LIMIT = { solo:5, pro:15, studio:30 };
 const planProjectLimit = () => PLAN_PROJECT_LIMIT[normalizePlan(OFFICE_PLAN.plan)];
@@ -396,7 +402,7 @@ async function saveD(officeId, data) {
 
 async function loadOffice(officeId) {
   const { data, error } = await sb.from('offices')
-    .select('data, name, logo, slogan, plan, active, status').eq('id', officeId).single();
+    .select('data, name, logo, slogan, plan, active, status, legacy_features_until').eq('id', officeId).single();
   if (error || !data) return null;
   return data;
 }
@@ -1658,6 +1664,25 @@ function SignupScreen({ googleUser, onSubmitted, onCancel }) {
   );
 }
 
+// ─── TRANSITION NOTICE ────────────────────────────────────────────────────────
+// Shown to the office manager while a Solo office still has the features that moved to Pro.
+function LegacyFeaturesNotice({ user }) {
+  const [hidden, setHidden] = React.useState(false);
+  if (hidden || !user || user.role!=='admin' || !legacyActive()) return null;
+  return (
+    <div style={{position:'fixed',bottom:64,left:'50%',transform:'translateX(-50%)',zIndex:9980,direction:'rtl',
+      width:'min(640px, calc(100vw - 32px))',background:C.card,border:`1px solid ${C.warning}`,borderRadius:12,
+      padding:'12px 16px',display:'flex',gap:12,alignItems:'flex-start',boxShadow:'0 8px 30px rgba(0,0,0,.35)'}}>
+      <div style={{flex:1,fontSize:14,color:C.text,lineHeight:1.6}}>
+        <b>עדכון מסלול {PLAN_NAMES.solo}:</b> הצעות מחיר, Punch List, חתימה דיגיטלית, תבניות והודעות זמינים כעת ממסלול Pro.
+        הם יישארו פתוחים עבורכם עד {formatDateHe(OFFICE_PLAN.legacyUntil)}. לשדרוג — פנו אלינו.
+      </div>
+      <button onClick={()=>setHidden(true)} aria-label="סגור"
+        style={{background:'none',border:'none',color:C.sub,cursor:'pointer',fontSize:18,lineHeight:1}}>✕</button>
+    </div>
+  );
+}
+
 // ─── PRICING SCREEN ───────────────────────────────────────────────────────────
 function PricingScreen({ onBack }) {
   const [annual, setAnnual] = React.useState(true);
@@ -1743,6 +1768,11 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
   const isMobile = useIsMobile();
   const logoRef = React.useRef();
   const [officeLogo, setOfficeLogo] = React.useState(OFFICE_PLAN.logo);
+  const [memberCount, setMemberCount] = React.useState(null);
+  React.useEffect(()=>{
+    sb.from('office_members').select('id', {count:'exact', head:true}).eq('office_id', officeId)
+      .then(({count, error})=>{ if (!error && count!=null) setMemberCount(count); });
+  },[officeId]);
   const [slogan, setSlogan] = React.useState(OFFICE_PLAN.slogan || '');
   const [sloganSaved, setSloganSaved] = React.useState(false);
   const [showNewProject, setShowNewProject] = React.useState(false);
@@ -1809,7 +1839,7 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
               <SVGCircle value={completed} max={projects.length||1} color={C.info} label="הושלמו" sublabel="done" size={176}/>
             </div>
             <div onClick={onUsers} style={{cursor:onUsers?'pointer':'default'}} title="הצג משתמשים">
-              <SVGCircle value={(data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={176}/>
+              <SVGCircle value={memberCount ?? (data.users||MOCK_USERS).length} max={20} color={C.ai} label="משתמשים" sublabel="users" size={176}/>
             </div>
           </div>
           <div style={{ display:'flex', gap:isMobile?24:48, flexWrap:'wrap', justifyContent:'center' }}>
@@ -1930,7 +1960,27 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
   const [inviteError, setInviteError] = React.useState('');
   const [inviting, setInviting] = React.useState(false);
   const [customTitle, setCustomTitle] = React.useState(null); // {id, value} while typing a free-text title on a card
-  const users = data.users || MOCK_USERS;
+  // The real team list lives in office_members (that is what login and project access use).
+  // data.users is only kept as a source for e-mail addresses and as a fallback if the query fails.
+  const [members, setMembers] = React.useState(null);
+  const loadMembers = async () => {
+    const { data: rows, error } = await sb.from('office_members')
+      .select('id, role, display_name, ai_enabled, job_title').eq('office_id', officeId).order('created_at');
+    if (!error && rows && rows.length) setMembers(rows);
+  };
+  React.useEffect(()=>{ loadMembers(); },[officeId]);
+  const emailByName = {};
+  (data.users||[]).forEach(u=>{ if (u.name && u.email) emailByName[u.name] = u.email; });
+  const users = members
+    ? members.map(m=>({ id:m.id, name:m.display_name, email:emailByName[m.display_name]||'', role:m.role,
+        jobTitle:m.job_title, aiEnabled:m.ai_enabled, active:true, avatar:(m.display_name||'?')[0] }))
+    : (data.users || MOCK_USERS);
+  const patchMember = async (id, patch, localPatch) => {
+    if (!members) { setData(d=>({...d, users:(d.users||MOCK_USERS).map(u=>u.id===id?{...u,...localPatch}:u)})); return; }
+    setMembers(ms=>ms.map(m=>m.id===id?{...m,...patch}:m));
+    const { error } = await sb.from('office_members').update(patch).eq('id', id);
+    if (error) loadMembers();
+  };
   const invite = async () => {
     if (!form.name || !form.email) return;
     const jobTitle = form.role==='client' ? '' : (form.jobTitle==='other' ? form.customTitle.trim() : form.jobTitle) || DEFAULT_JOB_TITLE;
@@ -1939,20 +1989,21 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
       const { data:{ session } } = await sb.auth.getSession();
       const res = await fetch('/api/invite-user', {
         method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+session.access_token},
-        body: JSON.stringify({ officeId, name:form.name, email:form.email, role:form.role })
+        body: JSON.stringify({ officeId, name:form.name, email:form.email, role:form.role, jobTitle })
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || 'שגיאה בהזמנת המשתמש');
       const nu = { id:'u'+uid(), name:form.name, email:form.email, role:form.role, jobTitle, active:true, avatar:form.name[0], projects:[], aiEnabled:false };
-      setData(d=>({...d, users:[...(d.users||MOCK_USERS), nu]}));
+      setData(d=>({...d, users:[...(d.users||[]), nu]}));
+      loadMembers();
       setForm({name:'',email:'',role:'arch',jobTitle:DEFAULT_JOB_TITLE,customTitle:''}); setShowInvite(false);
     } catch(e) {
       setInviteError(e.message);
     }
     setInviting(false);
   };
-  const toggleAI = (uid) => setData(d=>({...d, users:(d.users||MOCK_USERS).map(u=>u.id===uid?{...u,aiEnabled:!u.aiEnabled}:u)}));
-  const setJobTitle = (uid, jobTitle) => setData(d=>({...d, users:(d.users||MOCK_USERS).map(u=>u.id===uid?{...u,jobTitle}:u)}));
+  const toggleAI = (uid) => { const on = !users.find(u=>u.id===uid)?.aiEnabled; patchMember(uid, {ai_enabled:on}, {aiEnabled:on}); };
+  const setJobTitle = (uid, jobTitle) => patchMember(uid, {job_title:jobTitle}, {jobTitle});
   const roleLabel = { admin:'מנהל משרד', arch:'איש מקצוע', employee:'עובד משרד', client:'לקוח' };
   return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
@@ -1972,7 +2023,7 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
                 <div>
                   <div style={{fontWeight:700,color:C.text}}>{u.name}</div>
                   {jobTitleOf(u) && <div style={{fontSize:14,fontWeight:600,color:C.primary}}>{jobTitleOf(u)}</div>}
-                  <div style={{fontSize:14,color:C.sub}}>{u.email}</div>
+                  {u.email && <div style={{fontSize:14,color:C.sub}}>{u.email}</div>}
                 </div>
               </div>
               {u.role!=='client' && (customTitle && customTitle.id===u.id ? (
@@ -5067,7 +5118,7 @@ function PlatformAdminDashboard({ onLogout }) {
 
   const load = async () => {
     const { data: offs } = await sb.from('offices')
-      .select('id, name, plan, active, status, contact_email, contact_phone, created_at, data');
+      .select('id, name, plan, active, status, contact_email, contact_phone, created_at, data, legacy_features_until');
     const { data: members } = await sb.from('office_members').select('office_id, role, display_name');
     const counts = {}; const adminNames = {};
     (members||[]).forEach(m => {
@@ -5080,7 +5131,16 @@ function PlatformAdminDashboard({ onLogout }) {
   };
   React.useEffect(()=>{ load(); },[]);
 
-  const updatePlan = async (id, plan) => { await sb.from('offices').update({plan}).eq('id',id); load(); };
+  const updatePlan = async (id, plan) => {
+    // Moving an office down to Solo starts a transition period for the features that are now Pro-only.
+    const current = normalizePlan((offices||[]).find(o=>o.id===id)?.plan);
+    let legacy_features_until = null;
+    if (plan==='solo' && current!=='solo') {
+      const d = new Date(); d.setDate(d.getDate() + LEGACY_GRACE_DAYS);
+      legacy_features_until = d.toISOString().slice(0,10);
+    }
+    await sb.from('offices').update({plan, legacy_features_until}).eq('id',id); load();
+  };
   const toggleActive = async (id, active) => { await sb.from('offices').update({active:!active}).eq('id',id); load(); };
   const approveOffice = async (id) => { await sb.from('offices').update({status:'active'}).eq('id',id); load(); };
   const rejectOffice = async (id) => { await sb.from('offices').update({status:'rejected'}).eq('id',id); load(); };
@@ -5204,6 +5264,9 @@ function PlatformAdminDashboard({ onLogout }) {
                           <option value="pro">{PLAN_NAMES.pro}</option>
                           <option value="studio">{PLAN_NAMES.studio}</option>
                         </select>
+                        {normalizePlan(o.plan)==='solo' && o.legacy_features_until && o.legacy_features_until >= today() && (
+                          <div style={{fontSize:12,color:C.sub,marginTop:4}}>תקופת מעבר עד {formatDateHe(o.legacy_features_until)}</div>
+                        )}
                       </td>
                       <td style={{padding:'12px 16px'}}>
                         <button onClick={()=>toggleActive(o.id, o.active)}
@@ -5338,6 +5401,7 @@ function App() {
       OFFICE_PLAN.logo = office.logo || null;
       OFFICE_PLAN.officeName = office.name || 'Tektona';
       OFFICE_PLAN.slogan = office.slogan || '';
+      OFFICE_PLAN.legacyUntil = office.legacy_features_until || null;
     }
     const officeData = (office && office.data) || { projects: [], users: [] };
     setData(officeData);
@@ -5497,6 +5561,7 @@ function App() {
   };
   return (
     <>
+      <LegacyFeaturesNotice user={user}/>
       {screen==='systemdash' && <SystemDashboard data={data} setData={updateData} user={user} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}
         onOpenProject={openProject} onUsers={()=>navigate('users')} onFilterProjects={filterProjects}/>}
       {screen==='users' && <UsersScreen data={data} setData={updateData} officeId={user.officeId} onBack={goHome} onGoHome={handleLogout}/>}
