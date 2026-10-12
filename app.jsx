@@ -99,9 +99,10 @@ const THEMES = {
 })();
 
 // ─── PLAN FEATURES ───────────────────────────────────────────────────────────
-const _BASE = ['portal','timeline','documents','gallery','approvals','messages',
-  'meetings','quotes','signature','payments','punchlist','brief','rfi','share','templates'];
-const _PRO  = [..._BASE,'ai','tasks','reports','themes','priority','clientsuccess'];
+const _BASE = ['portal','timeline','documents','gallery','approvals',
+  'meetings','payments','brief','rfi','share'];
+const _PRO  = [..._BASE,'messages','quotes','signature','punchlist','templates',
+  'ai','tasks','reports','themes','priority','clientsuccess'];
 const _STU  = [..._PRO,'whitelabel','bi','api','hours'];
 const PLAN_FEATURES = {
   starter: new Set(_BASE),
@@ -111,7 +112,15 @@ const PLAN_FEATURES = {
 // Populated per-office at login time (enterOffice() in App()) from the offices row —
 // real per-tenant branding/plan instead of a hardcoded constant.
 const OFFICE_PLAN = { plan:'pro', logo:null, officeName:'Tektona', slogan:'' };
-const canUse = (f) => PLAN_FEATURES[OFFICE_PLAN.plan].has(f);
+const canUse = (f) => (PLAN_FEATURES[OFFICE_PLAN.plan] || PLAN_FEATURES.starter).has(f);
+// Display names only — the stored plan key stays 'starter' so existing offices rows keep working.
+const PLAN_NAMES = { starter:'Solo', pro:'Pro', studio:'Studio' };
+const ANNUAL_DISCOUNT = 0.11;
+
+// Professional title shown on a team member's card. Display-only: permissions come from `role`.
+const JOB_TITLES = ['אדריכל','אדריכל רישוי','מהנדס','מהנדס מבנים','מעצב פנים','מנהל פרויקט','שרטט','מתמחה'];
+const DEFAULT_JOB_TITLE = 'אדריכל';
+const jobTitleOf = (u) => u.role==='client' ? '' : (u.jobTitle || DEFAULT_JOB_TITLE);
 
 // ─── PHASES ──────────────────────────────────────────────────────────────────
 const PHASES = [
@@ -1415,7 +1424,7 @@ function LoginScreen({ onLogin, onSignup }) {
 
   const roles = [
     { id:'admin',    label:'מנהל משרד',   desc:'גישה מלאה' },
-    { id:'arch',     label:'אדריכל',        desc:'פרויקטים שהוקצו' },
+    { id:'arch',     label:'מהנדס/אדריכל',  desc:'פרויקטים שהוקצו' },
     { id:'employee', label:'עובד משרד',    desc:'משימות שהוקצו' },
     { id:'client',   label:'לקוח',          desc:'פרויקט אישי' }
   ];
@@ -1474,7 +1483,7 @@ function LoginScreen({ onLogin, onSignup }) {
               margin:'0 auto 16px' }}/>
           <div style={{ width:40, height:1, background:C.sub, margin:'0 auto 20px' }}/>
           <div className="cursor" style={{ color:C.sub, fontSize:17, letterSpacing:'0.1em', textTransform:'uppercase' }}>
-            ניהול משרד אדריכלים
+            ניהול משרדי תכנון ואדריכלות
           </div>
         </div>
 
@@ -1647,11 +1656,12 @@ function SignupScreen({ googleUser, onSubmitted, onCancel }) {
 function PricingScreen({ onBack }) {
   const [annual, setAnnual] = React.useState(true);
   const plans = [
-    { id:'starter', name:'Starter', price:890, projects:5, extra:99,
-      features:['פורטל לקוח','ציר זמן','מסמכים','גלריה','אישורים','הודעות','פגישות','הצעות מחיר','חתימה דיגיטלית','תשלומים','Punch List','תקציר','RFI','שיתוף','תבניות'] },
-    { id:'pro', name:'Pro', price:1690, projects:15, extra:79, popular:true,
-      features:['הכל ב-Starter','AI Agent','משימות','דוחות','ערכות נושא','עדיפות תמיכה','Client Success'] },
-    { id:'studio', name:'Studio', price:2990, projects:30, extra:59,
+    { id:'starter', name:PLAN_NAMES.starter, price:987, projects:5, extra:98,
+      features:['פורטל לקוח','ציר זמן','מסמכים','גלריה','אישורים','פגישות','תשלומים','תקציר','RFI','שיתוף'],
+      proOnly:['הצעות מחיר','Punch List','חתימה דיגיטלית','תבניות','הודעות'] },
+    { id:'pro', name:PLAN_NAMES.pro, price:1967, projects:15, extra:79, popular:true,
+      features:['הכל ב-'+PLAN_NAMES.starter,'הצעות מחיר','Punch List','חתימה דיגיטלית','תבניות','הודעות','AI Agent','משימות','דוחות','ערכות נושא','עדיפות תמיכה','Client Success'] },
+    { id:'studio', name:PLAN_NAMES.studio, price:3145, projects:30, extra:59,
       features:['הכל ב-Pro','White Label','BI Reports','API גישה','שעות עבודה'] }
   ];
   return (
@@ -1673,13 +1683,13 @@ function PricingScreen({ onBack }) {
             <div style={{ position:'absolute', top:3, transition:'left .2s',
               left: annual ? 4 : 24, width:20, height:20, borderRadius:10, background:'#fff' }}/>
           </button>
-          <span style={{ color:C.sub, fontSize:17 }}>שנתי <Badge text="15% הנחה" color={C.success}/></span>
+          <span style={{ color:C.sub, fontSize:17 }}>שנתי <Badge text={`${Math.round(ANNUAL_DISCOUNT*100)}% הנחה`} color={C.success}/></span>
         </div>
       </div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',
         gap:20, maxWidth:960, margin:'0 auto' }}>
         {plans.map(pl => {
-          const price = annual ? Math.round(pl.price * 0.85) : pl.price;
+          const price = annual ? Math.round(pl.price * (1 - ANNUAL_DISCOUNT)) : pl.price;
           return (
             <div key={pl.id} style={{ background:C.card, borderRadius:20, padding:28,
               border: pl.popular ? `2px solid ${C.primary}` : `1px solid ${C.border}`,
@@ -1703,6 +1713,11 @@ function PricingScreen({ onBack }) {
                 {pl.features.map((f,i) => (
                   <li key={i} style={{ fontSize:16, color:C.text, display:'flex', gap:8, alignItems:'center' }}>
                     <span style={{ color:C.success, fontWeight:700 }}>✓</span> {f}
+                  </li>
+                ))}
+                {(pl.proOnly||[]).map((f,i) => (
+                  <li key={'pro'+i} style={{ fontSize:16, color:C.sub, opacity:0.6, display:'flex', gap:8, alignItems:'center' }}>
+                    <span style={{ fontWeight:700 }}>✕</span> {f} <Badge text="ב-Pro" color={C.sub}/>
                   </li>
                 ))}
               </ul>
@@ -1876,8 +1891,8 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
             <Input label={'שטח (מ"ר)'} type="number" value={form.area} onChange={v=>setForm(f=>({...f,area:v}))}/>
             <Input label="תחילת פרויקט" type="date" value={form.startDate} onChange={v=>setForm(f=>({...f,startDate:v}))}/>
             <Input label="סיום צפוי" type="date" value={form.endDate} onChange={v=>setForm(f=>({...f,endDate:v}))}/>
-            <Select label="תבנית" value={form.template} onChange={v=>setForm(f=>({...f,template:v}))} style={{gridColumn:'1/-1'}}
-              options={[{value:'villa',label:'🏡 וילה / בית פרטי'},{value:'renovation',label:'🔧 שיפוץ'},{value:'commercial',label:'🏢 מסחרי'},{value:'addition',label:'➕ תוספת בנייה'}]}/>
+            {canUse('templates') && <Select label="תבנית" value={form.template} onChange={v=>setForm(f=>({...f,template:v}))} style={{gridColumn:'1/-1'}}
+              options={[{value:'villa',label:'🏡 וילה / בית פרטי'},{value:'renovation',label:'🔧 שיפוץ'},{value:'commercial',label:'🏢 מסחרי'},{value:'addition',label:'➕ תוספת בנייה'}]}/>}
             <div style={{gridColumn:'1/-1'}}>
               <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:4}}>תיאור</label>
               <textarea value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))}
@@ -1905,12 +1920,14 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
   const [showTheme, setShowTheme] = React.useState(false);
   const [themeId, setThemeId] = React.useState('lightStone');
   const handleTheme = (id) => { C = THEMES[id]; setThemeId(id); };
-  const [form, setForm] = React.useState({ name:'', email:'', role:'arch' });
+  const [form, setForm] = React.useState({ name:'', email:'', role:'arch', jobTitle:DEFAULT_JOB_TITLE, customTitle:'' });
   const [inviteError, setInviteError] = React.useState('');
   const [inviting, setInviting] = React.useState(false);
+  const [customTitle, setCustomTitle] = React.useState(null); // {id, value} while typing a free-text title on a card
   const users = data.users || MOCK_USERS;
   const invite = async () => {
     if (!form.name || !form.email) return;
+    const jobTitle = form.role==='client' ? '' : (form.jobTitle==='other' ? form.customTitle.trim() : form.jobTitle) || DEFAULT_JOB_TITLE;
     setInviting(true); setInviteError('');
     try {
       const { data:{ session } } = await sb.auth.getSession();
@@ -1920,16 +1937,17 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || 'שגיאה בהזמנת המשתמש');
-      const nu = { id:'u'+uid(), name:form.name, email:form.email, role:form.role, active:true, avatar:form.name[0], projects:[], aiEnabled:false };
+      const nu = { id:'u'+uid(), name:form.name, email:form.email, role:form.role, jobTitle, active:true, avatar:form.name[0], projects:[], aiEnabled:false };
       setData(d=>({...d, users:[...(d.users||MOCK_USERS), nu]}));
-      setForm({name:'',email:'',role:'arch'}); setShowInvite(false);
+      setForm({name:'',email:'',role:'arch',jobTitle:DEFAULT_JOB_TITLE,customTitle:''}); setShowInvite(false);
     } catch(e) {
       setInviteError(e.message);
     }
     setInviting(false);
   };
   const toggleAI = (uid) => setData(d=>({...d, users:(d.users||MOCK_USERS).map(u=>u.id===uid?{...u,aiEnabled:!u.aiEnabled}:u)}));
-  const roleLabel = { admin:'מנהל', arch:'אדריכל', employee:'עובד משרד', client:'לקוח' };
+  const setJobTitle = (uid, jobTitle) => setData(d=>({...d, users:(d.users||MOCK_USERS).map(u=>u.id===uid?{...u,jobTitle}:u)}));
+  const roleLabel = { admin:'מנהל משרד', arch:'איש מקצוע', employee:'עובד משרד', client:'לקוח' };
   return (
     <div style={{width:'100vw',height:'100vh',background:C.bg,direction:'rtl',display:'flex',flexDirection:'column'}}>
       <AppNavBar onGoHome={onGoHome} title="ניהול משתמשים" subtitle={`${users.length} משתמשים`} onBack={onBack}
@@ -1947,9 +1965,31 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
                 </div>
                 <div>
                   <div style={{fontWeight:700,color:C.text}}>{u.name}</div>
+                  {jobTitleOf(u) && <div style={{fontSize:14,fontWeight:600,color:C.primary}}>{jobTitleOf(u)}</div>}
                   <div style={{fontSize:14,color:C.sub}}>{u.email}</div>
                 </div>
               </div>
+              {u.role!=='client' && (customTitle && customTitle.id===u.id ? (
+                <div style={{display:'flex',gap:6,marginBottom:12}}>
+                  <input autoFocus value={customTitle.value} placeholder="תפקיד (הזנה חופשית)"
+                    onChange={e=>setCustomTitle({id:u.id, value:e.target.value})}
+                    style={{flex:1,minWidth:0,padding:'6px 8px',borderRadius:8,border:`1px solid ${C.border}`,background:C.inputBg,
+                      color:C.text,fontSize:14,outline:'none'}}/>
+                  <Btn size="sm" onClick={()=>{ if (customTitle.value.trim()) setJobTitle(u.id, customTitle.value.trim()); setCustomTitle(null); }}>שמור</Btn>
+                  <Btn size="sm" variant="ghost" onClick={()=>setCustomTitle(null)}>ביטול</Btn>
+                </div>
+              ) : (
+                <select value={JOB_TITLES.includes(jobTitleOf(u)) ? jobTitleOf(u) : 'other'}
+                  onChange={e=>{
+                    if (e.target.value==='other') setCustomTitle({id:u.id, value:JOB_TITLES.includes(jobTitleOf(u)) ? '' : jobTitleOf(u)});
+                    else setJobTitle(u.id, e.target.value);
+                  }}
+                  style={{width:'100%',padding:'6px 8px',borderRadius:8,border:`1px solid ${C.border}`,background:C.inputBg,
+                    color:C.text,fontSize:14,outline:'none',marginBottom:12}}>
+                  {JOB_TITLES.map(t=><option key={t} value={t}>{t}</option>)}
+                  <option value="other">{JOB_TITLES.includes(jobTitleOf(u)) ? 'אחר (הזנה חופשית)' : jobTitleOf(u)}</option>
+                </select>
+              ))}
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:u.role==='arch'?10:0}}>
                 <Badge text={roleLabel[u.role]||u.role} color={u.role==='admin'?C.danger:u.role==='arch'?C.primary:C.info}/>
                 <Badge text={u.active?'פעיל':'לא פעיל'} color={u.active?C.success:C.sub}/>
@@ -1975,8 +2015,15 @@ function UsersScreen({ data, setData, officeId, onBack, onGoHome = onBack }) {
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
             <Input label="שם מלא" value={form.name} onChange={v=>setForm(f=>({...f,name:v}))} required/>
             <Input label="אימייל" type="email" value={form.email} onChange={v=>setForm(f=>({...f,email:v}))} required/>
-            <Select label="תפקיד" value={form.role} onChange={v=>setForm(f=>({...f,role:v}))}
-              options={[{value:'arch',label:'אדריכל'},{value:'employee',label:'עובד משרד'},{value:'client',label:'לקוח'},{value:'admin',label:'מנהל'}]}/>
+            <Select label="הרשאה" value={form.role} onChange={v=>setForm(f=>({...f,role:v}))}
+              options={[{value:'arch',label:'איש מקצוע — פרויקטים שהוקצו'},{value:'employee',label:'עובד משרד — משימות שהוקצו'},{value:'client',label:'לקוח'},{value:'admin',label:'מנהל משרד — גישה מלאה'}]}/>
+            {form.role!=='client' && (
+              <Select label="תפקיד (לתצוגה בלבד — לא משפיע על הרשאות)" value={form.jobTitle} onChange={v=>setForm(f=>({...f,jobTitle:v}))}
+                options={[...JOB_TITLES.map(t=>({value:t,label:t})), {value:'other',label:'אחר (הזנה חופשית)'}]}/>
+            )}
+            {form.role!=='client' && form.jobTitle==='other' && (
+              <Input label="תפקיד — הזנה חופשית" value={form.customTitle} onChange={v=>setForm(f=>({...f,customTitle:v}))}/>
+            )}
             {inviteError && <div style={{color:C.danger,fontSize:14}}>{inviteError}</div>}
             <div style={{display:'flex',gap:10,justifyContent:'flex-end',marginTop:8}}>
               <Btn onClick={()=>setShowInvite(false)} variant="ghost">ביטול</Btn>
@@ -3334,7 +3381,7 @@ function RFITab({ project, setProject, user }) {
   const [form, setForm] = React.useState({title:'',desc:'',from:'',priority:'medium',dueDate:''});
   const [replyForm, setReplyForm] = React.useState({});
   const rfis = project.rfis || [];
-  const roleLabel = { admin:'מנהל', arch:'אדריכל', employee:'עובד משרד', client:'לקוח' };
+  const roleLabel = { admin:'מנהל', arch:'מהנדס/אדריכל', employee:'עובד משרד', client:'לקוח' };
   const add = () => {
     if (!form.title) return;
     setProject(p=>({...p,rfis:[...rfis,{...form,id:'r'+uid(),number:rfis.length+1,img:null,reply:null,repliedBy:null,repliedAt:null}]}));
@@ -3662,7 +3709,7 @@ function QuotesTab({ project, setProject, officeId }) {
             )}
             <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
               {q.status==='pending' && <Btn size="sm" onClick={()=>updateStatus(q.id,'approved')}>✓ אשר</Btn>}
-              {q.status==='pending' && <Btn size="sm" variant="ghost" onClick={()=>setSigModal(q.id)}>✍️ חתימה</Btn>}
+              {q.status==='pending' && canUse('signature') && <Btn size="sm" variant="ghost" onClick={()=>setSigModal(q.id)}>✍️ חתימה</Btn>}
               {q.status==='pending' && <Btn size="sm" variant="ghost" onClick={()=>updateStatus(q.id,'rejected')}>דחה</Btn>}
               <input type="file" accept=".pdf,image/*" style={{display:'none'}}
                 ref={el=>fileRefs.current[q.id]=el}
@@ -4334,7 +4381,7 @@ function ProjectView({ projectId, data, setData, user, onBack, onGoHome = onBack
   ];
 
   const visibleTabs = user.role==='client'
-    ? allTabs.filter(t=>['dashboard','brief','gallery','approvals','messages','payments','quotes','rfi'].includes(t.id))
+    ? allTabs.filter(t=>['dashboard','brief','gallery','approvals','messages','payments','quotes','rfi'].includes(t.id) && canUse(t.feature))
     : (user.role==='arch' || user.role==='employee')
       ? allTabs.filter(t=>canUse(t.feature) && !['payments','quotes'].includes(t.id) && (t.id!=='ai' || user.aiEnabled))
       : allTabs.filter(t=>canUse(t.feature));
@@ -4807,8 +4854,8 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
             <Input label={'שטח (מ"ר)'} type="number" value={form.area} onChange={v=>setForm(f=>({...f,area:v}))}/>
             <Input label="תחילת פרויקט" type="date" value={form.startDate} onChange={v=>setForm(f=>({...f,startDate:v}))}/>
             <Input label="סיום צפוי" type="date" value={form.endDate} onChange={v=>setForm(f=>({...f,endDate:v}))}/>
-            <Select label="תבנית" value={form.template} onChange={v=>setForm(f=>({...f,template:v}))} style={{gridColumn:'1/-1'}}
-              options={[{value:'villa',label:'🏡 וילה / בית פרטי'},{value:'renovation',label:'🔧 שיפוץ'},{value:'commercial',label:'🏢 מסחרי'},{value:'addition',label:'➕ תוספת בנייה'}]}/>
+            {canUse('templates') && <Select label="תבנית" value={form.template} onChange={v=>setForm(f=>({...f,template:v}))} style={{gridColumn:'1/-1'}}
+              options={[{value:'villa',label:'🏡 וילה / בית פרטי'},{value:'renovation',label:'🔧 שיפוץ'},{value:'commercial',label:'🏢 מסחרי'},{value:'addition',label:'➕ תוספת בנייה'}]}/>}
             <div style={{gridColumn:'1/-1'}}>
               <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:4}}>תיאור</label>
               <textarea value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))}
@@ -5147,9 +5194,9 @@ function PlatformAdminDashboard({ onLogout }) {
                       <td style={{padding:'12px 16px'}}>
                         <select value={o.plan} onChange={e=>updatePlan(o.id, e.target.value)}
                           style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:C.inputBg,color:C.text,fontSize:14,outline:'none'}}>
-                          <option value="starter">Starter</option>
-                          <option value="pro">Pro</option>
-                          <option value="studio">Studio</option>
+                          <option value="starter">{PLAN_NAMES.starter}</option>
+                          <option value="pro">{PLAN_NAMES.pro}</option>
+                          <option value="studio">{PLAN_NAMES.studio}</option>
                         </select>
                       </td>
                       <td style={{padding:'12px 16px'}}>
