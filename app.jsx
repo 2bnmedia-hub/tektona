@@ -105,16 +105,19 @@ const _PRO  = [..._BASE,'messages','quotes','signature','punchlist','templates',
   'ai','tasks','reports','themes','priority','clientsuccess'];
 const _STU  = [..._PRO,'whitelabel','bi','api','hours'];
 const PLAN_FEATURES = {
-  starter: new Set(_BASE),
+  solo:    new Set(_BASE),
   pro:     new Set(_PRO),
   studio:  new Set(_STU)
 };
 // Populated per-office at login time (enterOffice() in App()) from the offices row —
 // real per-tenant branding/plan instead of a hardcoded constant.
 const OFFICE_PLAN = { plan:'pro', logo:null, officeName:'Tektona', slogan:'' };
-const canUse = (f) => (PLAN_FEATURES[OFFICE_PLAN.plan] || PLAN_FEATURES.starter).has(f);
-// Display names only — the stored plan key stays 'starter' so existing offices rows keep working.
-const PLAN_NAMES = { starter:'Solo', pro:'Pro', studio:'Studio' };
+// The entry plan used to be keyed 'starter'; rows or backups that still carry the old key map to 'solo'.
+const normalizePlan = (p) => p==='starter' ? 'solo' : (PLAN_FEATURES[p] ? p : 'solo');
+const canUse = (f) => PLAN_FEATURES[normalizePlan(OFFICE_PLAN.plan)].has(f);
+const PLAN_NAMES = { solo:'Solo', pro:'Pro', studio:'Studio' };
+const PLAN_PROJECT_LIMIT = { solo:5, pro:15, studio:30 };
+const planProjectLimit = () => PLAN_PROJECT_LIMIT[normalizePlan(OFFICE_PLAN.plan)];
 const ANNUAL_DISCOUNT = 0.11;
 
 // Professional title shown on a team member's card. Display-only: permissions come from `role`.
@@ -1485,6 +1488,9 @@ function LoginScreen({ onLogin, onSignup }) {
           <div className="cursor" style={{ color:C.sub, fontSize:17, letterSpacing:'0.1em', textTransform:'uppercase' }}>
             ניהול משרדי תכנון ואדריכלות
           </div>
+          <div style={{ color:C.sub, fontSize:14, marginTop:12, opacity:0.75, maxWidth:640, marginInline:'auto', lineHeight:1.6, textWrap:'balance' }}>
+            פלטפורמה אחת לניהול פרויקטים, לקוחות וצוות — למשרדי אדריכלות, תכנון והנדסה
+          </div>
         </div>
 
         {/* Role buttons - calq style (pre-fill demo email only; password still required) */}
@@ -1535,7 +1541,7 @@ function LoginScreen({ onLogin, onSignup }) {
         <button onClick={onSignup} style={{ marginTop:24, background:'none', border:'none',
           color:C.sub, cursor:'pointer', fontSize:14, textDecoration:'underline',
           fontFamily:"'Space Grotesk',sans-serif" }}>
-          משרד אדריכלים? הצטרפו אלינו
+          משרד תכנון או אדריכלות? הצטרפו אלינו
         </button>
       </div>
 
@@ -1615,7 +1621,7 @@ function SignupScreen({ googleUser, onSubmitted, onCancel }) {
         <div style={{ textAlign:'center', maxWidth:420, width:'100%' }}>
           <div style={{ fontSize:22, fontWeight:700, color:C.text, marginBottom:8 }}>הצטרפות למערכת Tektona</div>
           <div style={{ color:C.sub, fontSize:16, marginBottom:28, lineHeight:1.6 }}>
-            משרד אדריכלים? הירשמו ומלאו פרטי משרד, ואנו נדאג לחזור אליכם בהקדם.
+            משרד תכנון או אדריכלות? הירשמו ומלאו פרטי משרד, ואנו נדאג לחזור אליכם בהקדם.
           </div>
           <button onClick={handleGoogleSignup}
             style={{ width:'100%', padding:'14px 20px', background:C.text, color:C.bg, border:'none',
@@ -1656,11 +1662,11 @@ function SignupScreen({ googleUser, onSubmitted, onCancel }) {
 function PricingScreen({ onBack }) {
   const [annual, setAnnual] = React.useState(true);
   const plans = [
-    { id:'starter', name:PLAN_NAMES.starter, price:987, projects:5, extra:98,
+    { id:'solo', name:PLAN_NAMES.solo, price:987, projects:5, extra:98,
       features:['פורטל לקוח','ציר זמן','מסמכים','גלריה','אישורים','פגישות','תשלומים','תקציר','RFI','שיתוף'],
       proOnly:['הצעות מחיר','Punch List','חתימה דיגיטלית','תבניות','הודעות'] },
     { id:'pro', name:PLAN_NAMES.pro, price:1967, projects:15, extra:79, popular:true,
-      features:['הכל ב-'+PLAN_NAMES.starter,'הצעות מחיר','Punch List','חתימה דיגיטלית','תבניות','הודעות','AI Agent','משימות','דוחות','ערכות נושא','עדיפות תמיכה','Client Success'] },
+      features:['הכל ב-'+PLAN_NAMES.solo,'הצעות מחיר','Punch List','חתימה דיגיטלית','תבניות','הודעות','AI Agent','משימות','דוחות','ערכות נושא','עדיפות תמיכה','Client Success'] },
     { id:'studio', name:PLAN_NAMES.studio, price:3145, projects:30, extra:59,
       features:['הכל ב-Pro','White Label','BI Reports','API גישה','שעות עבודה'] }
   ];
@@ -1794,8 +1800,8 @@ function SystemDashboard({ data, setData, user, officeId, onBack, onGoHome = onB
           marginBottom:14, background:`linear-gradient(135deg,${C.card},${C.bg})`,
           padding:'18px', borderRadius:14, border:`1px solid ${C.border}` }}>
           <div style={{ display:'flex', gap:isMobile?16:26, flexWrap:'wrap', justifyContent:'center' }}>
-            <SVGCircle value={projects.length} max={OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}
-              color={C.primary} label="סה״כ פרויקטים" sublabel={`/${OFFICE_PLAN.plan==='studio'?30:OFFICE_PLAN.plan==='pro'?15:5}`} size={176}/>
+            <SVGCircle value={projects.length} max={planProjectLimit()}
+              color={C.primary} label="סה״כ פרויקטים" sublabel={`/${planProjectLimit()}`} size={176}/>
             <div onClick={()=>onFilterProjects && onFilterProjects('active')} style={{cursor:onFilterProjects?'pointer':'default'}} title="הצג פרויקטים פעילים">
               <SVGCircle value={active} max={projects.length||1} color={C.success} label="פעילים" sublabel="active" size={176}/>
             </div>
@@ -2161,14 +2167,14 @@ function ProjectAccessEditor({ officeId, architectId, clientIds, employeeIds, on
   return (
     <div style={{display:'flex',flexDirection:'column',gap:16}}>
       <div>
-        <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>אדריכל אחראי</label>
+        <label style={{fontSize:14,fontWeight:600,color:C.sub,display:'block',marginBottom:6}}>מהנדס/אדריכל אחראי</label>
         {archs.length===0
-          ? <div style={{color:C.sub,fontSize:14}}>אין אדריכלים במשרד — הזמן דרך "ניהול משתמשים"</div>
+          ? <div style={{color:C.sub,fontSize:14}}>אין מהנדסים/אדריכלים במשרד — הזמן דרך "ניהול משתמשים"</div>
           : (
             <select value={architectId||''} onChange={e=>setArchitect(e.target.value)}
               style={{width:'100%',padding:'9px 12px',borderRadius:8,border:`1px solid ${C.border}`,
                 background:C.inputBg,color:C.text,fontSize:16,outline:'none'}}>
-              <option value="">בחר אדריכל...</option>
+              <option value="">בחר מהנדס/אדריכל...</option>
               {archs.map(a=><option key={a.id} value={a.id}>{a.display_name}</option>)}
             </select>
           )}
@@ -2330,7 +2336,7 @@ function DashboardTab({ project, setProject, user, onDeleteProject }) {
             <div style={{display:'flex',flexDirection:'column',gap:8}}>
               <Input label="שם הפרויקט" value={infoForm.name} onChange={v=>setInfoForm(f=>({...f,name:v}))} required/>
               <Input label="כתובת" value={infoForm.address} onChange={v=>setInfoForm(f=>({...f,address:v}))}/>
-              <Input label="אדריכל" value={infoForm.architectName} onChange={v=>setInfoForm(f=>({...f,architectName:v}))}/>
+              <Input label="מהנדס/אדריכל" value={infoForm.architectName} onChange={v=>setInfoForm(f=>({...f,architectName:v}))}/>
               <Input label="לקוח" value={infoForm.clientName} onChange={v=>setInfoForm(f=>({...f,clientName:v}))}/>
               <Input label={'שטח (מ"ר)'} type="number" value={infoForm.area} onChange={v=>setInfoForm(f=>({...f,area:v}))}/>
               <Input label="תקציב (₪)" type="number" value={infoForm.budget} onChange={v=>setInfoForm(f=>({...f,budget:v}))}/>
@@ -2343,7 +2349,7 @@ function DashboardTab({ project, setProject, user, onDeleteProject }) {
             </div>
           ) : (
             [['שם הפרויקט',project.name],['כתובת',project.address],
-              ['אדריכל',project.architectName],['לקוח',project.clientName],
+              ['מהנדס/אדריכל',project.architectName],['לקוח',project.clientName],
               ['שטח',project.area?project.area+' מ"ר':'—'],['תקציב',fmtCurrency(project.budget)],
               ['תחילה',fmtDate(project.startDate)],['סיום',fmtDate(project.endDate)]
             ].map(([k,v])=>(
@@ -2965,7 +2971,7 @@ function TasksTab({ project, setProject, user, officeId }) {
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <Input label="כותרת" value={form.title} onChange={v=>setForm(f=>({...f,title:v}))} required/>
             <Input label="תיאור" value={form.desc} onChange={v=>setForm(f=>({...f,desc:v}))}/>
-            <Select label="מוקצה לאדריכל" value={form.archAssigneeId} onChange={v=>setForm(f=>({...f,archAssigneeId:v}))}
+            <Select label="מוקצה למהנדס/אדריכל" value={form.archAssigneeId} onChange={v=>setForm(f=>({...f,archAssigneeId:v}))}
               options={[{value:'',label:'— ללא —'}, ...archMembers.map(m=>({value:m.id,label:m.display_name}))]}/>
             <Select label="מוקצה לעובד" value={form.employeeAssigneeId} onChange={v=>setForm(f=>({...f,employeeAssigneeId:v}))}
               options={[{value:'',label:'— ללא —'}, ...employeeMembers.map(m=>({value:m.id,label:m.display_name}))]}/>
@@ -2992,7 +2998,7 @@ function TasksTab({ project, setProject, user, officeId }) {
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             <Input label="כותרת" value={editForm.title} onChange={v=>setEditForm(f=>({...f,title:v}))} required/>
             <Input label="תיאור" value={editForm.desc} onChange={v=>setEditForm(f=>({...f,desc:v}))}/>
-            <Select label="מוקצה לאדריכל" value={editForm.archAssigneeId} onChange={v=>setEditForm(f=>({...f,archAssigneeId:v}))}
+            <Select label="מוקצה למהנדס/אדריכל" value={editForm.archAssigneeId} onChange={v=>setEditForm(f=>({...f,archAssigneeId:v}))}
               options={[{value:'',label:'— ללא —'}, ...archMembers.map(m=>({value:m.id,label:m.display_name}))]}/>
             <Select label="מוקצה לעובד" value={editForm.employeeAssigneeId} onChange={v=>setEditForm(f=>({...f,employeeAssigneeId:v}))}
               options={[{value:'',label:'— ללא —'}, ...employeeMembers.map(m=>({value:m.id,label:m.display_name}))]}/>
@@ -4658,7 +4664,7 @@ function ProjectsList({ data, setData, user, onLogout, onOpenProject, onSystemDa
           animation:'pageEnter .4s ease',overflowX:'auto',flexWrap:'nowrap',
           scrollbarWidth:'none',msOverflowStyle:'none'}}>
           {[
-            {label:'PROJECTS', value:projects.length, max:OFFICE_PLAN.plan==='studio'?30:15, color:C.text},
+            {label:'PROJECTS', value:projects.length, max:planProjectLimit(), color:C.text},
             {label:'ACTIVE', value:active, max:projects.length||1, color:C.success},
             {label:'PLANNING', value:projects.filter(p=>p.status==='planning').length, max:projects.length||1, color:C.info},
             {label:'COMPLETED', value:completed, max:projects.length||1, color:C.sub}
@@ -5192,9 +5198,9 @@ function PlatformAdminDashboard({ onLogout }) {
                     <tr key={o.id} style={{borderBottom:`1px solid ${C.border}`}}>
                       <td style={{padding:'12px 16px',fontSize:16,fontWeight:600,color:C.text}}>{o.name}</td>
                       <td style={{padding:'12px 16px'}}>
-                        <select value={o.plan} onChange={e=>updatePlan(o.id, e.target.value)}
+                        <select value={normalizePlan(o.plan)} onChange={e=>updatePlan(o.id, e.target.value)}
                           style={{padding:'4px 8px',borderRadius:6,border:`1px solid ${C.border}`,background:C.inputBg,color:C.text,fontSize:14,outline:'none'}}>
-                          <option value="starter">{PLAN_NAMES.starter}</option>
+                          <option value="solo">{PLAN_NAMES.solo}</option>
                           <option value="pro">{PLAN_NAMES.pro}</option>
                           <option value="studio">{PLAN_NAMES.studio}</option>
                         </select>
@@ -5328,7 +5334,7 @@ function App() {
     if (office && office.status === 'rejected') { navigate('rejected', { replace:true }); return; }
     if (office && office.active === false) { navigate('suspended', { replace:true }); return; }
     if (office) {
-      OFFICE_PLAN.plan = office.plan || 'pro';
+      OFFICE_PLAN.plan = normalizePlan(office.plan || 'pro');
       OFFICE_PLAN.logo = office.logo || null;
       OFFICE_PLAN.officeName = office.name || 'Tektona';
       OFFICE_PLAN.slogan = office.slogan || '';
